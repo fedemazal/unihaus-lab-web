@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/fedemazal/Desktop/**)",
+      "Bash(npx create-next-app@14 unihaus-site-next --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm)",
+      "Bash(curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh)",
+      "Bash(bash)",
+      "Bash(mkdir -p unihaus-site-backup)",
+      "Bash(cp -r unihaus-site/assets unihaus-site/index.html unihaus-site/admin unihaus-site-backup/)",
+      "Bash(rm -rf unihaus-site/.DS_Store unihaus-site/admin unihaus-site/index.html)",
+      "Bash(cp -r unihaus-next-temp/. unihaus-site/)",
+      "Bash(cp -r unihaus-site-backup/assets/img unihaus-site/public/img)",
+      "Bash(mkdir -p unihaus-site/public/img)",
+      "Bash(cp unihaus-site-backup/assets/img/logo.png unihaus-site/public/img/)",
+      "Bash(rm -rf /Users/fedemazal/Desktop/unihaus-site/assets)",
+      "Bash(rm -rf /Users/fedemazal/Desktop/unihaus-next-temp)"
+    ]
+  }
+}
