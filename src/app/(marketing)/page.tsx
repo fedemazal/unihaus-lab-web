@@ -24,7 +24,7 @@ export default function HomePage() {
           loop
           muted
           playsInline
-          className="absolute inset-0 w-full h-full object-cover opacity-20 scale-105"
+          className="absolute inset-0 w-full h-full object-cover opacity-25 scale-105"
         >
           <source src="/img/hero-bg.mp4" type="video/mp4" />
         </video>
@@ -63,6 +63,7 @@ export default function HomePage() {
               { value: "+100",   label: "Clientes felices" },
               { value: "+75k",   label: "Fotos tomadas" },
               { value: "+200hs", label: "Videos realizados" },
+              { value: "48hs",   label: "Entrega del material" },
             ].map((m) => (
               <div key={m.label}>
                 <div className="text-2xl md:text-3xl font-bold text-[#F2B968]">{m.value}</div>
@@ -131,7 +132,11 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="text-center mt-14">
+          <p className="text-center text-gray-400 mt-12 text-base">
+            Una sola plataforma para gestionar todas tus producciones y descargas.
+          </p>
+
+          <div className="text-center mt-8">
             <Link
               href="/registro"
               className="inline-flex items-center gap-2 bg-[#F2B968] hover:bg-[#d9a050] text-black font-semibold py-3 px-8 rounded-full transition"
@@ -208,7 +213,7 @@ export default function HomePage() {
           loop
           muted
           playsInline
-          className="absolute inset-0 w-full h-full object-cover opacity-10 scale-105"
+          className="absolute inset-0 w-full h-full object-cover opacity-25 scale-105"
         >
           <source src="/img/hero-bg.mp4" type="video/mp4" />
         </video>

@@ -13,7 +13,23 @@
       "Bash(mkdir -p unihaus-site/public/img)",
       "Bash(cp unihaus-site-backup/assets/img/logo.png unihaus-site/public/img/)",
       "Bash(rm -rf /Users/fedemazal/Desktop/unihaus-site/assets)",
-      "Bash(rm -rf /Users/fedemazal/Desktop/unihaus-next-temp)"
+      "Bash(rm -rf /Users/fedemazal/Desktop/unihaus-next-temp)",
+      "Bash(find /Users/fedemazal/Desktop/unihaus-site -type f -name *.ts -path *api* -o -type f -name *route*)",
+      "Bash(node -e \"const pkg = require\\(''./package.json''\\); console.log\\(Object.keys\\(pkg.dependencies\\).filter\\(d => d.includes\\(''firebase''\\)\\)\\)\")",
+      "Bash(source ~/.nvm/nvm.sh)",
+      "Bash(node /tmp/fix-admin.js)",
+      "Bash(NODE_PATH=/Users/fedemazal/Desktop/unihaus-site/node_modules node /tmp/fix-admin.js)",
+      "Bash(NODE_PATH=/Users/fedemazal/Desktop/unihaus-site/node_modules node /tmp/list-users.js)",
+      "Bash(npx next:*)",
+      "Bash(npm install:*)",
+      "Bash(nvm use:*)",
+      "Bash(lsof -ti:3000)",
+      "Bash(xargs kill:*)",
+      "Bash(node -e \":*)",
+      "Bash(curl -s http://localhost:3000/admin/producciones)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(python3 -c \"import reportlab; print\\('ok'\\)\")",
+      "Bash(python3 /private/tmp/claude-501/-Users-fedemazal-Desktop-unihaus-site--claude-worktrees-thirsty-robinson-60bf4e/4c379c52-6998-4772-bd6a-811dfc16a3fe/scratchpad/gen_pdf.py)"
     ]
   }
 }
