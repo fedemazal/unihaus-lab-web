@@ -56,7 +56,7 @@ export default function HomePage() {
           </div>
 
           {/* Métricas */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-6 mt-16 max-w-5xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-6 mt-16 max-w-5xl mx-auto">
             {[
               { value: "+1.100", label: "Producciones realizadas" },
               { value: "+6",     label: "Años de experiencia" },
@@ -82,6 +82,9 @@ export default function HomePage() {
               Simple y rápido
             </span>
             <h2 className="text-4xl md:text-5xl font-bold mt-3">Cómo funciona</h2>
+            <p className="text-gray-400 mt-4 text-base">
+              Una sola plataforma para gestionar todas tus producciones y descargas.
+            </p>
           </div>
 
           <div className="relative">
@@ -132,11 +135,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <p className="text-center text-gray-400 mt-12 text-base">
-            Una sola plataforma para gestionar todas tus producciones y descargas.
-          </p>
-
-          <div className="text-center mt-8">
+          <div className="text-center mt-14">
             <Link
               href="/registro"
               className="inline-flex items-center gap-2 bg-[#F2B968] hover:bg-[#d9a050] text-black font-semibold py-3 px-8 rounded-full transition"
