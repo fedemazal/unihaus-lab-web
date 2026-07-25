@@ -3,6 +3,7 @@ import {
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   User,
 } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
@@ -49,6 +50,10 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
   const docSnap = await getDoc(docRef);
   if (!docSnap.exists()) return null;
   return { ...docSnap.data(), uid: docSnap.id } as UserProfile;
+}
+
+export async function resetPassword(email: string) {
+  return sendPasswordResetEmail(getFirebaseAuth(), email);
 }
 
 export function onAuthChange(callback: (user: User | null) => void) {

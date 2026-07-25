@@ -4,7 +4,7 @@ import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { loginUser, getUserProfile } from "@/lib/firebase/auth";
+import { loginUser, getUserProfile, resetPassword } from "@/lib/firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +27,8 @@ function LoginContent() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,6 +63,20 @@ function LoginContent() {
       setError("Email o contraseña incorrectos. Intentá de nuevo.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleReset = async () => {
+    if (!email) { setError("Ingresá tu email para recuperar la contraseña."); return; }
+    setResetLoading(true);
+    try {
+      await resetPassword(email);
+      setResetSent(true);
+      setError("");
+    } catch {
+      setError("No encontramos una cuenta con ese email.");
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -132,6 +148,23 @@ function LoginContent() {
               className="bg-gray-900 border-gray-700 text-white placeholder:text-gray-500 mt-1"
             />
           </div>
+
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={handleReset}
+              disabled={resetLoading}
+              className="text-xs text-gray-500 hover:text-gray-300 transition"
+            >
+              {resetLoading ? "Enviando..." : "¿Olvidaste tu contraseña?"}
+            </button>
+          </div>
+
+          {resetSent && (
+            <p className="text-green-400 text-sm text-center">
+              Te enviamos un email para restablecer tu contraseña.
+            </p>
+          )}
 
           <Button
             type="submit"
