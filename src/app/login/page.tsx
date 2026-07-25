@@ -59,8 +59,17 @@ function LoginContent() {
       } else {
         router.push("/dashboard");
       }
-    } catch {
-      setError("Email o contraseña incorrectos. Intentá de nuevo.");
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code;
+      if (code === "auth/wrong-password" || code === "auth/invalid-credential") {
+        setError("Contraseña incorrecta. Usá '¿Olvidaste tu contraseña?' para resetearla.");
+      } else if (code === "auth/user-not-found") {
+        setError("No existe una cuenta con ese email.");
+      } else if (code === "auth/too-many-requests") {
+        setError("Cuenta bloqueada temporalmente por muchos intentos. Esperá unos minutos o resetéa la contraseña.");
+      } else {
+        setError(`Error: ${code || "desconocido"}. Contactá al administrador.`);
+      }
     } finally {
       setLoading(false);
     }
