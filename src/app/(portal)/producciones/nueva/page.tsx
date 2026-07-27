@@ -29,7 +29,7 @@ import dynamic from "next/dynamic";
 
 const AddressInput = dynamic(() => import("@/components/shared/AddressMap"), {
   ssr: false,
-  loading: () => <div className="h-10 rounded-md border border-gray-200 bg-gray-50" />,
+  loading: () => <div className="h-10 rounded-md border border-[#263040] bg-[#0D1117]" />,
 });
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6;
@@ -42,21 +42,17 @@ export default function NuevaProduccionPage() {
   const [submitted, setSubmitted] = useState(false);
   const [descuento, setDescuento] = useState(0);
 
-  // Step 1
   const [tipoPropiedad, setTipoPropiedad] = useState<PropertyType | null>(null);
 
-  // Step 2
   const [direccion, setDireccion] = useState("");
   const [superficie, setSuperficie] = useState<number>(0);
   const [construida, setConstruida] = useState<number>(0);
   const [descubierta, setDescubierta] = useState<number>(0);
   const [amenidades, setAmenidades] = useState<number>(0);
 
-  // Step 3
   const [ocupacion, setOcupacion] = useState<PropertyOccupation>("vacia");
   const [tipoOcupacion, setTipoOcupacion] = useState<OccupationType>("propietario");
 
-  // Step 4
   const [servicios, setServicios] = useState<ProductionServices>({
     soloFotos: false,
     videoAdicional: false,
@@ -67,11 +63,9 @@ export default function NuevaProduccionPage() {
     cantidadFotosAmobladas: 0,
   });
 
-  // Step 5
   const [horarios, setHorarios] = useState("");
   const [observaciones, setObservaciones] = useState("");
 
-  // Load discount
   useEffect(() => {
     async function loadDiscount() {
       if (profile?.inmobiliariaId) {
@@ -101,7 +95,6 @@ export default function NuevaProduccionPage() {
     });
   };
 
-  // Calculate price
   const calcResult = tipoPropiedad === "departamento"
     ? calcularPrecioDepto({
         superficie,
@@ -190,14 +183,14 @@ export default function NuevaProduccionPage() {
   if (submitted) {
     return (
       <div className="max-w-lg mx-auto text-center py-16">
-        <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-6" />
-        <h1 className="text-2xl font-bold text-[#2C2C2C] mb-4">¡Producción solicitada!</h1>
-        <p className="text-[#5A5A5A] mb-8">
+        <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-6" />
+        <h1 className="text-2xl font-bold text-[#C5D3E0] mb-4">¡Producción solicitada!</h1>
+        <p className="text-[#4A6070] mb-8">
           Tu solicitud fue enviada. Te notificaremos cuando confirmemos el horario.
         </p>
         <Button
           onClick={() => router.push("/producciones")}
-          className="bg-[#C07856] hover:bg-[#a8654a]"
+          className="bg-[#F2B968] hover:bg-[#d9a050] text-[#0D1117] font-semibold"
         >
           Ver mis producciones
         </Button>
@@ -207,8 +200,8 @@ export default function NuevaProduccionPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-[#2C2C2C] mb-2">Nueva Producción</h1>
-      <p className="text-[#5A5A5A] mb-8">Paso {step} de 6</p>
+      <h1 className="text-2xl font-bold text-[#C5D3E0] mb-2">Nueva Producción</h1>
+      <p className="text-[#4A6070] mb-8">Paso {step} de 6</p>
 
       {/* Progress bar */}
       <div className="flex gap-1 mb-8">
@@ -216,7 +209,7 @@ export default function NuevaProduccionPage() {
           <div
             key={s}
             className={`h-1.5 flex-1 rounded-full transition ${
-              s <= step ? "bg-[#C07856]" : "bg-gray-200"
+              s <= step ? "bg-[#F2B968]" : "bg-[#263040]"
             }`}
           />
         ))}
@@ -225,29 +218,29 @@ export default function NuevaProduccionPage() {
       {/* Step 1: Tipo de propiedad */}
       {step === 1 && (
         <div>
-          <h2 className="text-lg font-semibold text-[#2C2C2C] mb-6">Tipo de propiedad</h2>
+          <h2 className="text-lg font-semibold text-[#C5D3E0] mb-6">Tipo de propiedad</h2>
           <div className="grid grid-cols-2 gap-4">
             <button
               onClick={() => setTipoPropiedad("departamento")}
               className={`p-6 rounded-xl border-2 transition text-left ${
                 tipoPropiedad === "departamento"
-                  ? "border-[#C07856] bg-[#C07856]/5"
-                  : "border-gray-200 hover:border-gray-300"
+                  ? "border-[#F2B968] bg-[#F2B968]/8"
+                  : "border-[#263040] hover:border-[#3A4A60]"
               }`}
             >
-              <Building2 className={`w-8 h-8 mb-3 ${tipoPropiedad === "departamento" ? "text-[#C07856]" : "text-gray-400"}`} />
-              <p className="font-semibold text-[#2C2C2C]">Departamento</p>
+              <Building2 className={`w-8 h-8 mb-3 ${tipoPropiedad === "departamento" ? "text-[#F2B968]" : "text-[#4A6070]"}`} />
+              <p className="font-semibold text-[#C5D3E0]">Departamento</p>
             </button>
             <button
               onClick={() => setTipoPropiedad("casa")}
               className={`p-6 rounded-xl border-2 transition text-left ${
                 tipoPropiedad === "casa"
-                  ? "border-[#C07856] bg-[#C07856]/5"
-                  : "border-gray-200 hover:border-gray-300"
+                  ? "border-[#F2B968] bg-[#F2B968]/8"
+                  : "border-[#263040] hover:border-[#3A4A60]"
               }`}
             >
-              <Home className={`w-8 h-8 mb-3 ${tipoPropiedad === "casa" ? "text-[#C07856]" : "text-gray-400"}`} />
-              <p className="font-semibold text-[#2C2C2C]">Casa</p>
+              <Home className={`w-8 h-8 mb-3 ${tipoPropiedad === "casa" ? "text-[#F2B968]" : "text-[#4A6070]"}`} />
+              <p className="font-semibold text-[#C5D3E0]">Casa</p>
             </button>
           </div>
         </div>
@@ -256,10 +249,10 @@ export default function NuevaProduccionPage() {
       {/* Step 2: Datos de propiedad */}
       {step === 2 && (
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-[#2C2C2C] mb-6">Datos de la propiedad</h2>
+          <h2 className="text-lg font-semibold text-[#C5D3E0] mb-6">Datos de la propiedad</h2>
 
           <div>
-            <Label className="text-[#2C2C2C] mb-1.5 block">Dirección completa</Label>
+            <Label className="text-[#C5D3E0] mb-1.5 block">Dirección completa</Label>
             <AddressInput
               address={direccion}
               onAddressChange={setDireccion}
@@ -268,54 +261,54 @@ export default function NuevaProduccionPage() {
 
           {tipoPropiedad === "departamento" ? (
             <div>
-              <Label className="text-[#2C2C2C]">Superficie (m²)</Label>
+              <Label className="text-[#C5D3E0]">Superficie (m²)</Label>
               <Input
                 type="number"
                 min={1}
                 value={superficie || ""}
                 onChange={(e) => setSuperficie(Number(e.target.value))}
                 placeholder="85"
-                className="mt-1 bg-white border-gray-200"
+                className="mt-1 bg-[#0D1117] border-[#263040] text-[#C5D3E0] placeholder:text-[#4A6070]"
               />
             </div>
           ) : (
             <>
               <div>
-                <Label className="text-[#2C2C2C]">Superficie construida (m²)</Label>
+                <Label className="text-[#C5D3E0]">Superficie construida (m²)</Label>
                 <Input
                   type="number"
                   min={1}
                   value={construida || ""}
                   onChange={(e) => setConstruida(Number(e.target.value))}
                   placeholder="180"
-                  className="mt-1 bg-white border-gray-200"
+                  className="mt-1 bg-[#0D1117] border-[#263040] text-[#C5D3E0] placeholder:text-[#4A6070]"
                 />
               </div>
               <div>
-                <Label className="text-[#2C2C2C]">Superficie descubierta (m²)</Label>
+                <Label className="text-[#C5D3E0]">Superficie descubierta (m²)</Label>
                 <Input
                   type="number"
                   min={0}
                   value={descubierta || ""}
                   onChange={(e) => setDescubierta(Number(e.target.value))}
                   placeholder="250"
-                  className="mt-1 bg-white border-gray-200"
+                  className="mt-1 bg-[#0D1117] border-[#263040] text-[#C5D3E0] placeholder:text-[#4A6070]"
                 />
               </div>
             </>
           )}
 
           <div>
-            <Label className="text-[#2C2C2C]">Amenidades (cantidad)</Label>
+            <Label className="text-[#C5D3E0]">Amenidades (cantidad)</Label>
             <Input
               type="number"
               min={0}
               value={amenidades || ""}
               onChange={(e) => setAmenidades(Number(e.target.value))}
               placeholder="2"
-              className="mt-1 bg-white border-gray-200"
+              className="mt-1 bg-[#0D1117] border-[#263040] text-[#C5D3E0] placeholder:text-[#4A6070]"
             />
-            <p className="text-xs text-[#5A5A5A] mt-1">Pileta, quincho, SUM, gimnasio, etc.</p>
+            <p className="text-xs text-[#4A6070] mt-1">Pileta, quincho, SUM, gimnasio, etc.</p>
           </div>
         </div>
       )}
@@ -323,9 +316,9 @@ export default function NuevaProduccionPage() {
       {/* Step 3: Estado de propiedad */}
       {step === 3 && (
         <div className="space-y-6">
-          <h2 className="text-lg font-semibold text-[#2C2C2C] mb-6">Estado de la propiedad</h2>
+          <h2 className="text-lg font-semibold text-[#C5D3E0] mb-6">Estado de la propiedad</h2>
           <div>
-            <Label className="text-[#2C2C2C] mb-3 block">Ocupación</Label>
+            <Label className="text-[#C5D3E0] mb-3 block">Ocupación</Label>
             <div className="flex gap-3">
               {(["vacia", "ocupada"] as const).map((opt) => (
                 <button
@@ -333,8 +326,8 @@ export default function NuevaProduccionPage() {
                   onClick={() => setOcupacion(opt)}
                   className={`px-6 py-3 rounded-lg border-2 font-medium transition ${
                     ocupacion === opt
-                      ? "border-[#C07856] bg-[#C07856]/5 text-[#C07856]"
-                      : "border-gray-200 text-[#5A5A5A] hover:border-gray-300"
+                      ? "border-[#F2B968] bg-[#F2B968]/8 text-[#F2B968]"
+                      : "border-[#263040] text-[#4A6070] hover:border-[#3A4A60] hover:text-[#C5D3E0]"
                   }`}
                 >
                   {opt === "vacia" ? "Vacía" : "Ocupada"}
@@ -345,7 +338,7 @@ export default function NuevaProduccionPage() {
 
           {ocupacion === "ocupada" && (
             <div>
-              <Label className="text-[#2C2C2C] mb-3 block">¿Quién la ocupa?</Label>
+              <Label className="text-[#C5D3E0] mb-3 block">¿Quién la ocupa?</Label>
               <div className="flex gap-3">
                 {(["propietario", "inquilino"] as const).map((opt) => (
                   <button
@@ -353,8 +346,8 @@ export default function NuevaProduccionPage() {
                     onClick={() => setTipoOcupacion(opt)}
                     className={`px-6 py-3 rounded-lg border-2 font-medium transition ${
                       tipoOcupacion === opt
-                        ? "border-[#C07856] bg-[#C07856]/5 text-[#C07856]"
-                        : "border-gray-200 text-[#5A5A5A] hover:border-gray-300"
+                        ? "border-[#F2B968] bg-[#F2B968]/8 text-[#F2B968]"
+                        : "border-[#263040] text-[#4A6070] hover:border-[#3A4A60] hover:text-[#C5D3E0]"
                     }`}
                   >
                     {opt === "propietario" ? "Propietario" : "Inquilino"}
@@ -369,17 +362,16 @@ export default function NuevaProduccionPage() {
       {/* Step 4: Servicios */}
       {step === 4 && (
         <div className="space-y-3">
-          <h2 className="text-lg font-semibold text-[#2C2C2C] mb-6">Servicios</h2>
+          <h2 className="text-lg font-semibold text-[#C5D3E0] mb-6">Servicios</h2>
 
-          {/* Base service - always included */}
-          <div className="w-full p-4 rounded-xl border-2 border-[#C07856] bg-[#C07856]/5 text-left">
+          <div className="w-full p-4 rounded-xl border-2 border-[#F2B968] bg-[#F2B968]/8 text-left">
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2">
-                  <p className="font-medium text-[#2C2C2C]">Fotos + Video</p>
-                  <span className="text-xs bg-[#C07856] text-white px-2 py-0.5 rounded-full">Base</span>
+                  <p className="font-medium text-[#C5D3E0]">Fotos + Video</p>
+                  <span className="text-xs bg-[#F2B968] text-[#0D1117] px-2 py-0.5 rounded-full font-semibold">Base</span>
                 </div>
-                <p className="text-sm text-[#5A5A5A]">
+                <p className="text-sm text-[#4A6070]">
                   {tipoPropiedad === "departamento"
                     ? (() => {
                         const supTotal = superficie + amenidades * 7;
@@ -389,11 +381,11 @@ export default function NuevaProduccionPage() {
                     : "Calculado según superficie construida y descubierta"}
                 </p>
               </div>
-              <CheckCircle className="w-5 h-5 text-[#C07856] shrink-0" />
+              <CheckCircle className="w-5 h-5 text-[#F2B968] shrink-0" />
             </div>
           </div>
 
-          <p className="text-xs text-[#5A5A5A] font-medium uppercase tracking-wide pt-2">Modificadores y extras</p>
+          <p className="text-xs text-[#4A6070] font-medium uppercase tracking-wide pt-2">Modificadores y extras</p>
 
           {[
             { key: "soloFotos" as const, label: "Solo Fotos (sin video)", desc: "30% descuento sobre base" },
@@ -408,23 +400,23 @@ export default function NuevaProduccionPage() {
                 onClick={() => toggleServicio(item.key)}
                 className={`w-full p-4 rounded-xl border-2 transition text-left flex items-center justify-between ${
                   servicios[item.key]
-                    ? "border-[#C07856] bg-[#C07856]/5"
-                    : "border-gray-200 hover:border-gray-300"
+                    ? "border-[#F2B968] bg-[#F2B968]/8"
+                    : "border-[#263040] hover:border-[#3A4A60]"
                 }`}
               >
                 <div>
-                  <p className="font-medium text-[#2C2C2C]">{item.label}</p>
-                  <p className="text-sm text-[#5A5A5A]">{item.desc}</p>
+                  <p className="font-medium text-[#C5D3E0]">{item.label}</p>
+                  <p className="text-sm text-[#4A6070]">{item.desc}</p>
                 </div>
                 <div
                   className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 ${
                     servicios[item.key]
-                      ? "border-[#C07856] bg-[#C07856]"
-                      : "border-gray-300"
+                      ? "border-[#F2B968] bg-[#F2B968]"
+                      : "border-[#263040]"
                   }`}
                 >
                   {servicios[item.key] && (
-                    <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none">
+                    <svg className="w-3 h-3 text-[#0D1117]" viewBox="0 0 12 12" fill="none">
                       <path d="M2 6L5 9L10 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   )}
@@ -433,7 +425,7 @@ export default function NuevaProduccionPage() {
 
               {item.key === "amoblamiento" && servicios.amoblamiento && (
                 <div className="mt-2 ml-4">
-                  <Label className="text-[#2C2C2C]">Cantidad de fotos a amoblar</Label>
+                  <Label className="text-[#C5D3E0]">Cantidad de fotos a amoblar</Label>
                   <Input
                     type="number"
                     min={1}
@@ -445,7 +437,7 @@ export default function NuevaProduccionPage() {
                       }))
                     }
                     placeholder="3"
-                    className="mt-1 bg-white border-gray-200 w-32"
+                    className="mt-1 bg-[#0D1117] border-[#263040] text-[#C5D3E0] placeholder:text-[#4A6070] w-32"
                   />
                 </div>
               )}
@@ -457,25 +449,25 @@ export default function NuevaProduccionPage() {
       {/* Step 5: Coordinación */}
       {step === 5 && (
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-[#2C2C2C] mb-6">Coordinación</h2>
+          <h2 className="text-lg font-semibold text-[#C5D3E0] mb-6">Coordinación</h2>
           <div>
-            <Label className="text-[#2C2C2C]">Sugerí 2-3 rangos horarios</Label>
+            <Label className="text-[#C5D3E0]">Sugerí 2-3 rangos horarios</Label>
             <textarea
               value={horarios}
               onChange={(e) => setHorarios(e.target.value)}
               placeholder={"Lunes 18/3 de 9-11hs\nMartes 19/3 de 14-16hs\nMiércoles 20/3 de 10-12hs"}
               rows={4}
-              className="mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C07856] resize-none"
+              className="mt-1 w-full rounded-md border border-[#263040] bg-[#0D1117] px-3 py-2 text-sm text-[#C5D3E0] placeholder:text-[#4A6070] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F2B968] resize-none"
             />
           </div>
           <div>
-            <Label className="text-[#2C2C2C]">Observaciones</Label>
+            <Label className="text-[#C5D3E0]">Observaciones</Label>
             <textarea
               value={observaciones}
               onChange={(e) => setObservaciones(e.target.value)}
               placeholder={"¿Desde dónde iniciar el video?\n¿Algo que quieras resaltar?\n¿Hay mascotas en la propiedad?"}
               rows={4}
-              className="mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C07856] resize-none"
+              className="mt-1 w-full rounded-md border border-[#263040] bg-[#0D1117] px-3 py-2 text-sm text-[#C5D3E0] placeholder:text-[#4A6070] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F2B968] resize-none"
             />
           </div>
         </div>
@@ -484,97 +476,94 @@ export default function NuevaProduccionPage() {
       {/* Step 6: Resumen y precio */}
       {step === 6 && calcResult && (
         <div className="space-y-6">
-          <h2 className="text-lg font-semibold text-[#2C2C2C] mb-6">Resumen y precio</h2>
+          <h2 className="text-lg font-semibold text-[#C5D3E0] mb-6">Resumen y precio</h2>
 
-          {/* Property summary */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
-            <h3 className="font-semibold text-[#2C2C2C]">Propiedad</h3>
+          <div className="bg-[#161C26] rounded-xl border border-[#263040] p-5 space-y-3">
+            <h3 className="font-semibold text-[#C5D3E0]">Propiedad</h3>
             <div className="grid grid-cols-2 gap-2 text-sm">
-              <span className="text-[#5A5A5A]">Tipo:</span>
-              <span className="text-[#2C2C2C] capitalize">{tipoPropiedad}</span>
-              <span className="text-[#5A5A5A]">Dirección:</span>
-              <span className="text-[#2C2C2C]">{direccion}</span>
+              <span className="text-[#4A6070]">Tipo:</span>
+              <span className="text-[#C5D3E0] capitalize">{tipoPropiedad}</span>
+              <span className="text-[#4A6070]">Dirección:</span>
+              <span className="text-[#C5D3E0]">{direccion}</span>
               {tipoPropiedad === "departamento" ? (
                 <>
-                  <span className="text-[#5A5A5A]">Superficie:</span>
-                  <span className="text-[#2C2C2C]">{superficie} m²</span>
+                  <span className="text-[#4A6070]">Superficie:</span>
+                  <span className="text-[#C5D3E0]">{superficie} m²</span>
                 </>
               ) : (
                 <>
-                  <span className="text-[#5A5A5A]">Construida:</span>
-                  <span className="text-[#2C2C2C]">{construida} m²</span>
-                  <span className="text-[#5A5A5A]">Descubierta:</span>
-                  <span className="text-[#2C2C2C]">{descubierta} m²</span>
+                  <span className="text-[#4A6070]">Construida:</span>
+                  <span className="text-[#C5D3E0]">{construida} m²</span>
+                  <span className="text-[#4A6070]">Descubierta:</span>
+                  <span className="text-[#C5D3E0]">{descubierta} m²</span>
                 </>
               )}
-              <span className="text-[#5A5A5A]">Amenidades:</span>
-              <span className="text-[#2C2C2C]">{amenidades}</span>
-              <span className="text-[#5A5A5A]">Estado:</span>
-              <span className="text-[#2C2C2C] capitalize">{ocupacion}</span>
+              <span className="text-[#4A6070]">Amenidades:</span>
+              <span className="text-[#C5D3E0]">{amenidades}</span>
+              <span className="text-[#4A6070]">Estado:</span>
+              <span className="text-[#C5D3E0] capitalize">{ocupacion}</span>
             </div>
           </div>
 
-          {/* Services summary */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
-            <h3 className="font-semibold text-[#2C2C2C]">Servicios</h3>
+          <div className="bg-[#161C26] rounded-xl border border-[#263040] p-5 space-y-3">
+            <h3 className="font-semibold text-[#C5D3E0]">Servicios</h3>
             <div className="text-sm space-y-1">
-              <p className="text-[#2C2C2C]">
+              <p className="text-[#C5D3E0]">
                 {servicios.soloFotos ? "Solo Fotos" : "Fotos + Video"}
               </p>
-              {servicios.videoAdicional && <p className="text-[#2C2C2C]">+ Video Adicional</p>}
-              {servicios.plano2d && <p className="text-[#2C2C2C]">+ Plano 2D</p>}
-              {servicios.tour360 && <p className="text-[#2C2C2C]">+ Tour 360°</p>}
-              {servicios.drone && <p className="text-[#2C2C2C]">+ Drone</p>}
+              {servicios.videoAdicional && <p className="text-[#C5D3E0]">+ Video Adicional</p>}
+              {servicios.plano2d && <p className="text-[#C5D3E0]">+ Plano 2D</p>}
+              {servicios.tour360 && <p className="text-[#C5D3E0]">+ Tour 360°</p>}
+              {servicios.drone && <p className="text-[#C5D3E0]">+ Drone</p>}
               {servicios.amoblamiento && (
-                <p className="text-[#2C2C2C]">+ Amoblamiento Virtual ({servicios.cantidadFotosAmobladas} fotos)</p>
+                <p className="text-[#C5D3E0]">+ Amoblamiento Virtual ({servicios.cantidadFotosAmobladas} fotos)</p>
               )}
             </div>
           </div>
 
-          {/* Price breakdown */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
-            <h3 className="font-semibold text-[#2C2C2C]">Desglose de precio</h3>
+          <div className="bg-[#161C26] rounded-xl border border-[#263040] p-5 space-y-3">
+            <h3 className="font-semibold text-[#C5D3E0]">Desglose de precio</h3>
             <div className="text-sm space-y-2">
               <div className="flex justify-between">
-                <span className="text-[#5A5A5A]">
+                <span className="text-[#4A6070]">
                   Precio base {servicios.soloFotos ? "(solo fotos)" : "(fotos + video)"}
                 </span>
-                <span className="text-[#2C2C2C] font-mono">${calcResult.precioBase.toFixed(2)}</span>
+                <span className="text-[#C5D3E0] font-mono">${calcResult.precioBase.toFixed(2)}</span>
               </div>
 
               {calcResult.desglose.map((item: PriceBreakdownItem, i: number) => (
                 <div key={i} className="flex justify-between">
-                  <span className="text-[#5A5A5A]">
+                  <span className="text-[#4A6070]">
                     {item.concepto}
                     <span className="text-xs ml-1">({item.calculo})</span>
                   </span>
-                  <span className="text-[#2C2C2C] font-mono">${item.monto.toFixed(2)}</span>
+                  <span className="text-[#C5D3E0] font-mono">${item.monto.toFixed(2)}</span>
                 </div>
               ))}
 
-              <hr className="border-gray-100" />
+              <hr className="border-[#263040]" />
 
               <div className="flex justify-between">
-                <span className="text-[#5A5A5A]">Subtotal</span>
-                <span className="text-[#2C2C2C] font-mono">${calcResult.subtotal.toFixed(2)}</span>
+                <span className="text-[#4A6070]">Subtotal</span>
+                <span className="text-[#C5D3E0] font-mono">${calcResult.subtotal.toFixed(2)}</span>
               </div>
 
               {calcResult.descuentoInmobiliaria > 0 && (
-                <div className="flex justify-between text-green-600">
+                <div className="flex justify-between text-green-400">
                   <span>Descuento inmobiliaria ({calcResult.porcentajeDescuento}%)</span>
                   <span className="font-mono">-${calcResult.descuentoInmobiliaria.toFixed(2)}</span>
                 </div>
               )}
 
               {calcResult.minimoAplicado && (
-                <p className="text-xs text-amber-600">* Se aplica mínimo de $50 USD</p>
+                <p className="text-xs text-amber-400">* Se aplica mínimo de $50 USD</p>
               )}
 
-              <hr className="border-gray-200" />
+              <hr className="border-[#263040]" />
 
               <div className="flex justify-between items-center pt-1">
-                <span className="text-lg font-bold text-[#2C2C2C]">TOTAL</span>
-                <span className="text-2xl font-bold text-[#C07856] font-mono">
+                <span className="text-lg font-bold text-[#C5D3E0]">TOTAL</span>
+                <span className="text-2xl font-bold text-[#F2B968] font-mono">
                   ${calcResult.total.toFixed(2)} USD
                 </span>
               </div>
@@ -589,7 +578,7 @@ export default function NuevaProduccionPage() {
           <Button
             variant="outline"
             onClick={() => setStep((step - 1) as Step)}
-            className="border-gray-200"
+            className="border-[#263040] text-[#C5D3E0] hover:bg-[#1E2A38]"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Anterior
@@ -598,7 +587,7 @@ export default function NuevaProduccionPage() {
           <Button
             variant="outline"
             onClick={() => router.push("/dashboard")}
-            className="border-gray-200"
+            className="border-[#263040] text-[#C5D3E0] hover:bg-[#1E2A38]"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Volver
@@ -609,7 +598,7 @@ export default function NuevaProduccionPage() {
           <Button
             onClick={() => setStep((step + 1) as Step)}
             disabled={!canNext()}
-            className="bg-[#C07856] hover:bg-[#a8654a]"
+            className="bg-[#F2B968] hover:bg-[#d9a050] text-[#0D1117] font-semibold"
           >
             Siguiente
             <ArrowRight className="w-4 h-4 ml-2" />
@@ -618,7 +607,7 @@ export default function NuevaProduccionPage() {
           <Button
             onClick={handleSubmit}
             disabled={loading}
-            className="bg-[#C07856] hover:bg-[#a8654a]"
+            className="bg-[#F2B968] hover:bg-[#d9a050] text-[#0D1117] font-semibold"
           >
             {loading ? (
               <>

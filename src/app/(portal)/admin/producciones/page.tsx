@@ -23,10 +23,10 @@ import {
 } from "lucide-react";
 
 const statusConfig: Record<ProductionStatus, { label: string; color: string; next?: ProductionStatus; nextLabel?: string }> = {
-  pendiente: { label: "Pendiente", color: "bg-amber-100 text-amber-800 border-amber-200", next: "en_proceso", nextLabel: "Pasar a En Proceso" },
-  en_proceso: { label: "En proceso", color: "bg-blue-100 text-blue-800 border-blue-200", next: "listo", nextLabel: "Marcar como Listo" },
-  listo: { label: "Listo", color: "bg-green-100 text-green-800 border-green-200" },
-  cancelado: { label: "Cancelado", color: "bg-red-100 text-red-800 border-red-200" },
+  pendiente: { label: "Pendiente", color: "bg-amber-500/15 text-amber-300 border-amber-500/30", next: "en_proceso", nextLabel: "Pasar a En Proceso" },
+  en_proceso: { label: "En proceso", color: "bg-blue-500/15 text-blue-300 border-blue-500/30", next: "listo", nextLabel: "Marcar como Listo" },
+  listo: { label: "Listo", color: "bg-green-500/15 text-green-300 border-green-500/30" },
+  cancelado: { label: "Cancelado", color: "bg-red-500/15 text-red-300 border-red-500/30" },
 };
 
 const SUGGESTED_TAGS = ["Premium", "Urgente", "Con Drone", "Video Vertical", "Amoblamiento", "Tour 360"];
@@ -116,14 +116,12 @@ export default function AdminProduccionesPage() {
     try {
       let calendarEventId: string | null = null;
       try {
-        // Get agent email for calendar invite
         let agenteEmail = "";
         try {
           const agente = await getUser(prod.agenteId);
           if (agente) agenteEmail = agente.email;
         } catch {}
 
-        // Build services list for calendar notes
         const serviciosList: string[] = [];
         if (prod.servicios.soloFotos) {
           serviciosList.push("Fotos");
@@ -136,7 +134,6 @@ export default function AdminProduccionesPage() {
         if (prod.servicios.drone) serviciosList.push("Drone");
         if (prod.servicios.amoblamiento) serviciosList.push(`Amoblamiento Virtual (${prod.servicios.cantidadFotosAmobladas} fotos)`);
 
-        // Build metraje info
         let metraje = "";
         if (prod.tipoPropiedad === "departamento") {
           metraje = `${prod.superficie || 0}m²`;
@@ -187,7 +184,6 @@ export default function AdminProduccionesPage() {
     if (!confirm(`¿Cancelar la producción en ${prod.direccion}?`)) return;
     try {
       await updateProduction(prod.id, { estado: "cancelado" as ProductionStatus });
-      // If there's a calendar event, try to delete it
       if (prod.horarioConfirmado?.googleCalendarEventId) {
         try {
           await fetch("/api/calendar", {
@@ -234,27 +230,27 @@ export default function AdminProduccionesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 className="w-6 h-6 animate-spin text-[#C07856]" />
+        <Loader2 className="w-6 h-6 animate-spin text-[#F2B968]" />
       </div>
     );
   }
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-[#2C2C2C] mb-8">Gestión de Producciones</h1>
+      <h1 className="text-2xl font-bold text-[#C5D3E0] mb-8">Gestión de Producciones</h1>
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#4A6070]" />
           <Input
             placeholder="Buscar por dirección, agente o inmobiliaria..."
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            className="pl-10 bg-white border-gray-200"
+            className="pl-10 bg-[#0D1117] border-[#263040] text-[#C5D3E0] placeholder:text-[#4A6070]"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {["todos", "pendiente", "en_proceso", "listo", "cancelado"].map((estado) => {
             const count = estado === "todos"
               ? producciones.length
@@ -265,12 +261,12 @@ export default function AdminProduccionesPage() {
                 onClick={() => setFiltroEstado(estado)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1.5 ${
                   filtroEstado === estado
-                    ? "bg-[#C07856] text-white"
-                    : "bg-white text-[#5A5A5A] border border-gray-200 hover:bg-gray-50"
+                    ? "bg-[#F2B968] text-[#0D1117]"
+                    : "bg-[#161C26] text-[#4A6070] border border-[#263040] hover:bg-[#1E2A38] hover:text-[#C5D3E0]"
                 }`}
               >
                 {estado === "todos" ? "Todos" : statusConfig[estado as ProductionStatus].label}
-                <span className={`text-xs ${filtroEstado === estado ? "text-white/70" : "text-gray-400"}`}>
+                <span className={`text-xs ${filtroEstado === estado ? "text-[#0D1117]/60" : "text-[#4A6070]"}`}>
                   ({count})
                 </span>
               </button>
@@ -281,8 +277,8 @@ export default function AdminProduccionesPage() {
 
       {/* List */}
       {filtered.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-          <p className="text-[#5A5A5A]">No hay producciones</p>
+        <div className="text-center py-12 bg-[#161C26] rounded-xl border border-[#263040]">
+          <p className="text-[#4A6070]">No hay producciones</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -291,27 +287,27 @@ export default function AdminProduccionesPage() {
             const isExpanded = expandedId === prod.id;
 
             return (
-              <div key={prod.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <div key={prod.id} className="bg-[#161C26] rounded-xl border border-[#263040] overflow-hidden">
                 {/* Row header */}
                 <button
                   onClick={() => setExpandedId(isExpanded ? null : prod.id)}
-                  className="w-full p-5 text-left flex items-center justify-between hover:bg-gray-50 transition"
+                  className="w-full p-5 text-left flex items-center justify-between hover:bg-[#1E2A38] transition"
                 >
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <Badge className={`${status.color} border text-xs`}>{status.label}</Badge>
-                      <span className="text-xs text-[#5A5A5A] capitalize">{prod.tipoPropiedad}</span>
+                      <span className="text-xs text-[#4A6070] capitalize">{prod.tipoPropiedad}</span>
                       {prod.tags.map((tag) => (
-                        <Badge key={tag} className="bg-gray-100 text-gray-600 border border-gray-200 text-xs">
+                        <Badge key={tag} className="bg-[#1E2A38] text-[#4A6070] border border-[#263040] text-xs">
                           {tag}
                         </Badge>
                       ))}
                     </div>
-                    <div className="flex items-center gap-1.5 text-[#2C2C2C] font-medium">
-                      <MapPin className="w-4 h-4 text-[#5A5A5A] shrink-0" />
+                    <div className="flex items-center gap-1.5 text-[#C5D3E0] font-medium">
+                      <MapPin className="w-4 h-4 text-[#4A6070] shrink-0" />
                       <span className="truncate">{prod.direccion}</span>
                     </div>
-                    <div className="flex flex-wrap gap-4 mt-1.5 text-sm text-[#5A5A5A]">
+                    <div className="flex flex-wrap gap-4 mt-1.5 text-sm text-[#4A6070]">
                       <span>{prod.agenteNombre}</span>
                       {prod.inmobiliariaNombre && <span>{prod.inmobiliariaNombre}</span>}
                       <span className="flex items-center gap-1">
@@ -320,40 +316,42 @@ export default function AdminProduccionesPage() {
                       </span>
                     </div>
                   </div>
-                  {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+                  {isExpanded
+                    ? <ChevronUp className="w-5 h-5 text-[#4A6070]" />
+                    : <ChevronDown className="w-5 h-5 text-[#4A6070]" />}
                 </button>
 
                 {/* Expanded detail */}
                 {isExpanded && (
-                  <div className="border-t border-gray-100 p-5 space-y-5">
+                  <div className="border-t border-[#263040] p-5 space-y-5">
                     {/* Property details */}
                     <div className="grid sm:grid-cols-2 gap-4 text-sm">
                       <div>
-                        <p className="text-[#5A5A5A]">Tipo: <span className="text-[#2C2C2C] capitalize">{prod.tipoPropiedad}</span></p>
-                        {prod.superficie && <p className="text-[#5A5A5A]">Superficie: <span className="text-[#2C2C2C]">{prod.superficie} m²</span></p>}
-                        {prod.construida && <p className="text-[#5A5A5A]">Construida: <span className="text-[#2C2C2C]">{prod.construida} m²</span></p>}
-                        {prod.descubierta !== undefined && prod.descubierta > 0 && <p className="text-[#5A5A5A]">Descubierta: <span className="text-[#2C2C2C]">{prod.descubierta} m²</span></p>}
-                        <p className="text-[#5A5A5A]">Amenidades: <span className="text-[#2C2C2C]">{prod.amenidades}</span></p>
-                        <p className="text-[#5A5A5A]">Estado: <span className="text-[#2C2C2C] capitalize">{prod.estadoPropiedad?.ocupacion}</span></p>
+                        <p className="text-[#4A6070]">Tipo: <span className="text-[#C5D3E0] capitalize">{prod.tipoPropiedad}</span></p>
+                        {prod.superficie && <p className="text-[#4A6070]">Superficie: <span className="text-[#C5D3E0]">{prod.superficie} m²</span></p>}
+                        {prod.construida && <p className="text-[#4A6070]">Construida: <span className="text-[#C5D3E0]">{prod.construida} m²</span></p>}
+                        {prod.descubierta !== undefined && prod.descubierta > 0 && <p className="text-[#4A6070]">Descubierta: <span className="text-[#C5D3E0]">{prod.descubierta} m²</span></p>}
+                        <p className="text-[#4A6070]">Amenidades: <span className="text-[#C5D3E0]">{prod.amenidades}</span></p>
+                        <p className="text-[#4A6070]">Estado: <span className="text-[#C5D3E0] capitalize">{prod.estadoPropiedad?.ocupacion}</span></p>
                       </div>
                       <div>
-                        <p className="font-medium text-[#2C2C2C] mb-1">Servicios:</p>
-                        <p className="text-[#2C2C2C]">{prod.servicios?.soloFotos ? "Solo Fotos" : "Fotos + Video"}</p>
-                        {prod.servicios?.videoAdicional && <p className="text-[#2C2C2C]">+ Video Adicional</p>}
-                        {prod.servicios?.plano2d && <p className="text-[#2C2C2C]">+ Plano 2D</p>}
-                        {prod.servicios?.tour360 && <p className="text-[#2C2C2C]">+ Tour 360°</p>}
-                        {prod.servicios?.drone && <p className="text-[#2C2C2C]">+ Drone</p>}
-                        {prod.servicios?.amoblamiento && <p className="text-[#2C2C2C]">+ Amoblamiento ({prod.servicios.cantidadFotosAmobladas} fotos)</p>}
+                        <p className="font-medium text-[#C5D3E0] mb-1">Servicios:</p>
+                        <p className="text-[#C5D3E0]">{prod.servicios?.soloFotos ? "Solo Fotos" : "Fotos + Video"}</p>
+                        {prod.servicios?.videoAdicional && <p className="text-[#C5D3E0]">+ Video Adicional</p>}
+                        {prod.servicios?.plano2d && <p className="text-[#C5D3E0]">+ Plano 2D</p>}
+                        {prod.servicios?.tour360 && <p className="text-[#C5D3E0]">+ Tour 360°</p>}
+                        {prod.servicios?.drone && <p className="text-[#C5D3E0]">+ Drone</p>}
+                        {prod.servicios?.amoblamiento && <p className="text-[#C5D3E0]">+ Amoblamiento ({prod.servicios.cantidadFotosAmobladas} fotos)</p>}
                       </div>
                     </div>
 
                     {/* Schedule */}
                     {prod.horariosSugeridos?.length > 0 && (
                       <div>
-                        <p className="text-sm font-medium text-[#2C2C2C] mb-1 flex items-center gap-1">
+                        <p className="text-sm font-medium text-[#C5D3E0] mb-1 flex items-center gap-1">
                           <Calendar className="w-4 h-4" /> Horarios sugeridos:
                         </p>
-                        <ul className="text-sm text-[#5A5A5A] space-y-0.5">
+                        <ul className="text-sm text-[#4A6070] space-y-0.5">
                           {prod.horariosSugeridos.map((h, i) => (
                             <li key={i}>• {h}</li>
                           ))}
@@ -363,44 +361,44 @@ export default function AdminProduccionesPage() {
 
                     {/* Confirm schedule */}
                     {prod.horarioConfirmado ? (
-                      <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                        <p className="text-sm font-medium text-green-800 flex items-center gap-1">
+                      <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+                        <p className="text-sm font-medium text-green-400 flex items-center gap-1">
                           <Calendar className="w-4 h-4" /> Horario confirmado
                         </p>
-                        <p className="text-sm text-green-700 mt-1">
+                        <p className="text-sm text-green-300 mt-1">
                           {prod.horarioConfirmado.fecha} — {prod.horarioConfirmado.horario}
                         </p>
                       </div>
                     ) : prod.estado === "pendiente" ? (
-                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                        <p className="text-sm font-medium text-amber-800 mb-2 flex items-center gap-1">
+                      <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+                        <p className="text-sm font-medium text-amber-400 mb-2 flex items-center gap-1">
                           <Calendar className="w-4 h-4" /> Confirmar horario
                         </p>
-                        <div className="flex gap-2 items-end">
+                        <div className="flex gap-2 items-end flex-wrap">
                           <div>
-                            <Label className="text-xs text-amber-700">Fecha</Label>
+                            <Label className="text-xs text-amber-400">Fecha</Label>
                             <Input
                               type="date"
                               value={scheduleDate}
                               onChange={(e) => setScheduleDate(e.target.value)}
-                              className="h-8 text-sm bg-white border-amber-200"
+                              className="h-8 text-sm bg-[#0D1117] border-amber-500/30 text-[#C5D3E0]"
                             />
                           </div>
                           <div>
-                            <Label className="text-xs text-amber-700">Horario</Label>
+                            <Label className="text-xs text-amber-400">Horario</Label>
                             <Input
                               type="text"
                               placeholder="09:00 - 11:00"
                               value={scheduleTime}
                               onChange={(e) => setScheduleTime(e.target.value)}
-                              className="h-8 text-sm bg-white border-amber-200"
+                              className="h-8 text-sm bg-[#0D1117] border-amber-500/30 text-[#C5D3E0] placeholder:text-[#4A6070]"
                             />
                           </div>
                           <Button
                             size="sm"
                             onClick={() => confirmSchedule(prod)}
                             disabled={!scheduleDate || !scheduleTime}
-                            className="bg-amber-600 hover:bg-amber-700 h-8"
+                            className="bg-amber-500 hover:bg-amber-600 text-[#0D1117] font-semibold h-8"
                           >
                             Confirmar
                           </Button>
@@ -410,39 +408,39 @@ export default function AdminProduccionesPage() {
 
                     {prod.observaciones && (
                       <div>
-                        <p className="text-sm font-medium text-[#2C2C2C] mb-1">Observaciones:</p>
-                        <p className="text-sm text-[#5A5A5A] whitespace-pre-line">{prod.observaciones}</p>
+                        <p className="text-sm font-medium text-[#C5D3E0] mb-1">Observaciones:</p>
+                        <p className="text-sm text-[#4A6070] whitespace-pre-line">{prod.observaciones}</p>
                       </div>
                     )}
 
                     {/* Price */}
-                    <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="bg-[#0D1117] rounded-lg p-4 border border-[#263040]">
                       <div className="flex justify-between text-sm">
-                        <span className="text-[#5A5A5A]">Base</span>
-                        <span className="font-mono">${prod.precioBase?.toFixed(2)}</span>
+                        <span className="text-[#4A6070]">Base</span>
+                        <span className="font-mono text-[#C5D3E0]">${prod.precioBase?.toFixed(2)}</span>
                       </div>
                       {prod.precioExtras > 0 && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-[#5A5A5A]">Extras</span>
-                          <span className="font-mono">${prod.precioExtras?.toFixed(2)}</span>
+                          <span className="text-[#4A6070]">Extras</span>
+                          <span className="font-mono text-[#C5D3E0]">${prod.precioExtras?.toFixed(2)}</span>
                         </div>
                       )}
                       {prod.descuentoAplicado > 0 && (
-                        <div className="flex justify-between text-sm text-green-600">
+                        <div className="flex justify-between text-sm text-green-400">
                           <span>Descuento</span>
                           <span className="font-mono">-${prod.descuentoAplicado?.toFixed(2)}</span>
                         </div>
                       )}
-                      <hr className="my-2 border-gray-200" />
+                      <hr className="my-2 border-[#263040]" />
                       <div className="flex justify-between font-bold">
-                        <span>Total</span>
-                        <span className="text-[#C07856] font-mono">${prod.precioFinal?.toFixed(2)} USD</span>
+                        <span className="text-[#C5D3E0]">Total</span>
+                        <span className="text-[#F2B968] font-mono">${prod.precioFinal?.toFixed(2)} USD</span>
                       </div>
                     </div>
 
                     {/* Tags */}
                     <div>
-                      <p className="text-sm font-medium text-[#2C2C2C] mb-2 flex items-center gap-1">
+                      <p className="text-sm font-medium text-[#C5D3E0] mb-2 flex items-center gap-1">
                         <Tag className="w-4 h-4" /> Tags:
                       </p>
                       <div className="flex flex-wrap gap-2">
@@ -452,8 +450,8 @@ export default function AdminProduccionesPage() {
                             onClick={() => toggleTag(prod, tag)}
                             className={`text-xs px-3 py-1 rounded-full border transition ${
                               prod.tags.includes(tag)
-                                ? "bg-[#C07856] text-white border-[#C07856]"
-                                : "bg-white text-[#5A5A5A] border-gray-200 hover:border-gray-300"
+                                ? "bg-[#F2B968] text-[#0D1117] border-[#F2B968]"
+                                : "bg-[#0D1117] text-[#4A6070] border-[#263040] hover:border-[#3A4A60] hover:text-[#C5D3E0]"
                             }`}
                           >
                             {tag}
@@ -462,10 +460,10 @@ export default function AdminProduccionesPage() {
                       </div>
                     </div>
 
-                    {/* File upload for en_proceso */}
+                    {/* File upload */}
                     {prod.estado === "en_proceso" && (
                       <div>
-                        <Label className="text-[#2C2C2C] flex items-center gap-1 mb-1">
+                        <Label className="text-[#C5D3E0] flex items-center gap-1 mb-1">
                           <Upload className="w-4 h-4" /> Link de archivos (ZIP)
                         </Label>
                         <div className="flex gap-2">
@@ -473,9 +471,13 @@ export default function AdminProduccionesPage() {
                             value={fileUrl}
                             onChange={(e) => setFileUrl(e.target.value)}
                             placeholder="https://drive.google.com/..."
-                            className="bg-white border-gray-200"
+                            className="bg-[#0D1117] border-[#263040] text-[#C5D3E0] placeholder:text-[#4A6070]"
                           />
-                          <Button onClick={() => saveFileUrl(prod)} size="sm" className="bg-[#C07856] hover:bg-[#a8654a] shrink-0">
+                          <Button
+                            onClick={() => saveFileUrl(prod)}
+                            size="sm"
+                            className="bg-[#F2B968] hover:bg-[#d9a050] text-[#0D1117] font-semibold shrink-0"
+                          >
                             Guardar
                           </Button>
                         </div>
@@ -487,7 +489,7 @@ export default function AdminProduccionesPage() {
                       {status.next && status.nextLabel && (
                         <Button
                           onClick={() => changeStatus(prod, status.next!)}
-                          className="bg-[#C07856] hover:bg-[#a8654a]"
+                          className="bg-[#F2B968] hover:bg-[#d9a050] text-[#0D1117] font-semibold"
                         >
                           {status.nextLabel}
                         </Button>
@@ -496,7 +498,7 @@ export default function AdminProduccionesPage() {
                         <Button
                           variant="outline"
                           onClick={() => changeStatus(prod, "en_proceso")}
-                          className="border-gray-200"
+                          className="border-[#263040] text-[#C5D3E0] hover:bg-[#1E2A38]"
                         >
                           Volver a En Proceso
                         </Button>
@@ -505,7 +507,7 @@ export default function AdminProduccionesPage() {
                         <Button
                           variant="outline"
                           onClick={() => cancelProduction(prod)}
-                          className="border-red-200 text-red-600 hover:bg-red-50"
+                          className="border-red-500/40 text-red-400 hover:bg-red-500/10"
                         >
                           <XCircle className="w-4 h-4 mr-1" />
                           Cancelar
@@ -515,7 +517,7 @@ export default function AdminProduccionesPage() {
                         <Button
                           variant="outline"
                           onClick={() => handleDelete(prod)}
-                          className="border-red-300 text-red-700 hover:bg-red-100"
+                          className="border-red-500/50 text-red-400 hover:bg-red-500/15"
                         >
                           <Trash2 className="w-4 h-4 mr-1" />
                           Eliminar

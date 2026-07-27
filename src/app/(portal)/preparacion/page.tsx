@@ -103,20 +103,20 @@ export default function PreparacionPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-[#2C2C2C] mb-2">Preparación de Propiedad</h1>
-      <p className="text-[#5A5A5A] mb-6">
+      <h1 className="text-2xl font-bold text-[#C5D3E0] mb-2">Preparación de Propiedad</h1>
+      <p className="text-[#4A6070] mb-6">
         Seguí esta guía para que tu propiedad luzca increíble en las fotos y videos.
       </p>
 
       {/* Progress */}
-      <div className="bg-white border border-gray-200 rounded-xl p-4 mb-8">
+      <div className="bg-[#161C26] border border-[#263040] rounded-xl p-4 mb-8">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-[#2C2C2C]">Progreso</span>
-          <span className="text-sm text-[#5A5A5A]">{checkedCount} / {totalItems}</span>
+          <span className="text-sm font-medium text-[#C5D3E0]">Progreso</span>
+          <span className="text-sm text-[#4A6070]">{checkedCount} / {totalItems}</span>
         </div>
-        <div className="w-full bg-gray-100 rounded-full h-2">
+        <div className="w-full bg-[#1E2A38] rounded-full h-2">
           <div
-            className="bg-[#C07856] h-2 rounded-full transition-all duration-300"
+            className="bg-[#F2B968] h-2 rounded-full transition-all duration-300"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -129,33 +129,33 @@ export default function PreparacionPage() {
           const allDone = sectionChecked === section.items.length;
 
           return (
-            <div key={section.title} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-              <div className={`px-5 py-3 border-b border-gray-100 flex items-center justify-between ${allDone ? "bg-green-50" : ""}`}>
-                <h2 className="font-semibold text-[#2C2C2C]">{section.title}</h2>
-                <span className={`text-xs font-medium ${allDone ? "text-green-600" : "text-[#5A5A5A]"}`}>
+            <div key={section.title} className="bg-[#161C26] border border-[#263040] rounded-xl overflow-hidden">
+              <div className={`px-5 py-3 border-b border-[#263040] flex items-center justify-between ${allDone ? "bg-green-500/10" : ""}`}>
+                <h2 className="font-semibold text-[#C5D3E0]">{section.title}</h2>
+                <span className={`text-xs font-medium ${allDone ? "text-green-400" : "text-[#4A6070]"}`}>
                   {sectionChecked}/{section.items.length}
                 </span>
               </div>
-              <div className="divide-y divide-gray-50">
+              <div className="divide-y divide-[#1E2A38]">
                 {section.items.map((item) => {
                   const isChecked = checked.has(item.id);
                   return (
                     <button
                       key={item.id}
                       onClick={() => toggle(item.id)}
-                      className="w-full px-5 py-3 flex items-start gap-3 text-left hover:bg-gray-50 transition"
+                      className="w-full px-5 py-3 flex items-start gap-3 text-left hover:bg-[#1E2A38] transition"
                     >
                       {isChecked ? (
-                        <CheckCircle className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+                        <CheckCircle className="w-5 h-5 text-green-400 shrink-0 mt-0.5" />
                       ) : (
-                        <Circle className="w-5 h-5 text-gray-300 shrink-0 mt-0.5" />
+                        <Circle className="w-5 h-5 text-[#263040] shrink-0 mt-0.5" />
                       )}
                       <div>
-                        <p className={`text-sm ${isChecked ? "text-[#5A5A5A] line-through" : "text-[#2C2C2C]"}`}>
+                        <p className={`text-sm ${isChecked ? "text-[#4A6070] line-through" : "text-[#C5D3E0]"}`}>
                           {item.label}
                         </p>
                         {item.tip && (
-                          <p className="text-xs text-[#5A5A5A] mt-0.5">{item.tip}</p>
+                          <p className="text-xs text-[#4A6070] mt-0.5">{item.tip}</p>
                         )}
                       </div>
                     </button>

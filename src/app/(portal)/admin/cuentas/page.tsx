@@ -19,7 +19,6 @@ export default function CuentasPage() {
   const [tab, setTab] = useState<Tab>("pendiente");
   const [busqueda, setBusqueda] = useState("");
 
-  // Modal state
   const [approving, setApproving] = useState<UserProfile | null>(null);
   const [selectedInmobiliaria, setSelectedInmobiliaria] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
@@ -41,7 +40,6 @@ export default function CuentasPage() {
       setInmobiliarias(inmobData);
     } catch (err) {
       console.error("Error loading inmobiliarias:", err);
-      // Try without filter
       try {
         const allInmob = await getInmobiliarias(false);
         setInmobiliarias(allInmob.filter((i) => i.activa));
@@ -107,14 +105,14 @@ export default function CuentasPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 className="w-6 h-6 animate-spin text-[#C07856]" />
+        <Loader2 className="w-6 h-6 animate-spin text-[#F2B968]" />
       </div>
     );
   }
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-[#2C2C2C] mb-8">Gestión de Cuentas</h1>
+      <h1 className="text-2xl font-bold text-[#C5D3E0] mb-8">Gestión de Cuentas</h1>
 
       {/* Tabs */}
       <div className="flex gap-2 mb-6">
@@ -124,14 +122,14 @@ export default function CuentasPage() {
             onClick={() => setTab(t)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 ${
               tab === t
-                ? "bg-[#C07856] text-white"
-                : "bg-white text-[#5A5A5A] border border-gray-200 hover:bg-gray-50"
+                ? "bg-[#F2B968] text-[#0D1117]"
+                : "bg-[#161C26] text-[#4A6070] border border-[#263040] hover:bg-[#1E2A38] hover:text-[#C5D3E0]"
             }`}
           >
             {t === "pendiente" ? "Pendientes" : t === "aprobado" ? "Aprobadas" : "Rechazadas"}
             {counts[t] > 0 && (
               <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                tab === t ? "bg-white/20" : "bg-gray-100"
+                tab === t ? "bg-[#0D1117]/20" : "bg-[#1E2A38]"
               }`}>
                 {counts[t]}
               </span>
@@ -142,28 +140,30 @@ export default function CuentasPage() {
 
       {/* Search */}
       <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#4A6070]" />
         <Input
           placeholder="Buscar por nombre o email..."
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
-          className="pl-10 bg-white border-gray-200"
+          className="pl-10 bg-[#0D1117] border-[#263040] text-[#C5D3E0] placeholder:text-[#4A6070]"
         />
       </div>
 
       {/* List */}
       {filtered.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-          <p className="text-[#5A5A5A]">No hay cuentas {tab === "pendiente" ? "pendientes" : tab === "aprobado" ? "aprobadas" : "rechazadas"}</p>
+        <div className="text-center py-12 bg-[#161C26] rounded-xl border border-[#263040]">
+          <p className="text-[#4A6070]">
+            No hay cuentas {tab === "pendiente" ? "pendientes" : tab === "aprobado" ? "aprobadas" : "rechazadas"}
+          </p>
         </div>
       ) : (
         <div className="space-y-3">
           {filtered.map((user) => (
-            <div key={user.uid} className="bg-white rounded-xl border border-gray-200 p-5">
+            <div key={user.uid} className="bg-[#161C26] rounded-xl border border-[#263040] p-5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <p className="font-semibold text-[#2C2C2C]">{user.nombre}</p>
-                  <div className="flex flex-wrap gap-3 mt-1.5 text-sm text-[#5A5A5A]">
+                  <p className="font-semibold text-[#C5D3E0]">{user.nombre}</p>
+                  <div className="flex flex-wrap gap-3 mt-1.5 text-sm text-[#4A6070]">
                     <span className="flex items-center gap-1">
                       <Mail className="w-3.5 h-3.5" />
                       {user.email}
@@ -195,7 +195,7 @@ export default function CuentasPage() {
                       onClick={() => handleReject(user)}
                       size="sm"
                       variant="outline"
-                      className="border-red-200 text-red-600 hover:bg-red-50"
+                      className="border-red-500/40 text-red-400 hover:bg-red-500/10"
                     >
                       <XCircle className="w-4 h-4 mr-1" />
                       Rechazar
@@ -204,7 +204,7 @@ export default function CuentasPage() {
                 )}
 
                 {tab === "aprobado" && (
-                  <Badge className="bg-green-100 text-green-800 border border-green-200">
+                  <Badge className="bg-green-500/15 text-green-300 border border-green-500/30">
                     Aprobado
                   </Badge>
                 )}
@@ -216,19 +216,19 @@ export default function CuentasPage() {
 
       {/* Approve Modal */}
       {approving && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setApproving(null)}>
-          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-bold text-[#2C2C2C] mb-4">Aprobar cuenta</h2>
-            <p className="text-sm text-[#5A5A5A] mb-4">
-              Aprobando a <strong>{approving.nombre}</strong> ({approving.email})
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setApproving(null)}>
+          <div className="bg-[#161C26] border border-[#263040] rounded-xl p-6 w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-lg font-bold text-[#C5D3E0] mb-4">Aprobar cuenta</h2>
+            <p className="text-sm text-[#4A6070] mb-4">
+              Aprobando a <strong className="text-[#C5D3E0]">{approving.nombre}</strong> ({approving.email})
             </p>
 
             <div className="mb-6">
-              <Label className="text-[#2C2C2C]">Asignar inmobiliaria</Label>
+              <Label className="text-[#C5D3E0]">Asignar inmobiliaria</Label>
               <select
                 value={selectedInmobiliaria}
                 onChange={(e) => setSelectedInmobiliaria(e.target.value)}
-                className="mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C07856]"
+                className="mt-1 w-full rounded-md border border-[#263040] bg-[#0D1117] px-3 py-2 text-sm text-[#C5D3E0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F2B968]"
               >
                 <option value="">Seleccioná una inmobiliaria</option>
                 {inmobiliarias.map((i) => (
@@ -240,7 +240,11 @@ export default function CuentasPage() {
             </div>
 
             <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setApproving(null)} className="border-gray-200">
+              <Button
+                variant="outline"
+                onClick={() => setApproving(null)}
+                className="border-[#263040] text-[#C5D3E0] hover:bg-[#1E2A38]"
+              >
                 Cancelar
               </Button>
               <Button

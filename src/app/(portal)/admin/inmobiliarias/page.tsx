@@ -17,7 +17,6 @@ export default function InmobiliariasPage() {
   const [inmobiliarias, setInmobiliarias] = useState<Inmobiliaria[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Form state
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Inmobiliaria | null>(null);
   const [formData, setFormData] = useState({
@@ -91,7 +90,7 @@ export default function InmobiliariasPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 className="w-6 h-6 animate-spin text-[#C07856]" />
+        <Loader2 className="w-6 h-6 animate-spin text-[#F2B968]" />
       </div>
     );
   }
@@ -99,8 +98,8 @@ export default function InmobiliariasPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold text-[#2C2C2C]">Gestión de Inmobiliarias</h1>
-        <Button onClick={openCreate} className="bg-[#C07856] hover:bg-[#a8654a]">
+        <h1 className="text-2xl font-bold text-[#C5D3E0]">Gestión de Inmobiliarias</h1>
+        <Button onClick={openCreate} className="bg-[#F2B968] hover:bg-[#d9a050] text-[#0D1117] font-semibold">
           <Plus className="w-4 h-4 mr-2" />
           Nueva inmobiliaria
         </Button>
@@ -108,36 +107,41 @@ export default function InmobiliariasPage() {
 
       {/* List */}
       {inmobiliarias.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-          <p className="text-[#5A5A5A] mb-4">No hay inmobiliarias creadas</p>
-          <Button onClick={openCreate} className="bg-[#C07856] hover:bg-[#a8654a]">
+        <div className="text-center py-12 bg-[#161C26] rounded-xl border border-[#263040]">
+          <p className="text-[#4A6070] mb-4">No hay inmobiliarias creadas</p>
+          <Button onClick={openCreate} className="bg-[#F2B968] hover:bg-[#d9a050] text-[#0D1117] font-semibold">
             Crear primera inmobiliaria
           </Button>
         </div>
       ) : (
         <div className="space-y-3">
           {inmobiliarias.map((inmob) => (
-            <div key={inmob.id} className="bg-white rounded-xl border border-gray-200 p-5">
+            <div key={inmob.id} className="bg-[#161C26] rounded-xl border border-[#263040] p-5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <p className="font-semibold text-[#2C2C2C]">{inmob.nombre}</p>
+                    <p className="font-semibold text-[#C5D3E0]">{inmob.nombre}</p>
                     <Badge className={inmob.activa
-                      ? "bg-green-100 text-green-800 border border-green-200"
-                      : "bg-gray-100 text-gray-600 border border-gray-200"
+                      ? "bg-green-500/15 text-green-300 border border-green-500/30"
+                      : "bg-[#1E2A38] text-[#4A6070] border border-[#263040]"
                     }>
                       {inmob.activa ? "Activa" : "Inactiva"}
                     </Badge>
                   </div>
-                  <p className="text-sm text-[#5A5A5A]">
-                    Descuento: <strong>{inmob.descuento}%</strong>
+                  <p className="text-sm text-[#4A6070]">
+                    Descuento: <strong className="text-[#C5D3E0]">{inmob.descuento}%</strong>
                   </p>
                   {inmob.beneficios && (
-                    <p className="text-sm text-[#5A5A5A] mt-1 whitespace-pre-line">{inmob.beneficios}</p>
+                    <p className="text-sm text-[#4A6070] mt-1 whitespace-pre-line">{inmob.beneficios}</p>
                   )}
                 </div>
                 <div className="flex gap-2 shrink-0">
-                  <Button variant="outline" size="sm" onClick={() => openEdit(inmob)} className="border-gray-200">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openEdit(inmob)}
+                    className="border-[#263040] text-[#C5D3E0] hover:bg-[#1E2A38]"
+                  >
                     <Pencil className="w-4 h-4 mr-1" />
                     Editar
                   </Button>
@@ -145,7 +149,7 @@ export default function InmobiliariasPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => toggleActive(inmob)}
-                    className="border-gray-200"
+                    className="border-[#263040] text-[#C5D3E0] hover:bg-[#1E2A38]"
                   >
                     {inmob.activa ? "Desactivar" : "Activar"}
                   </Button>
@@ -158,24 +162,24 @@ export default function InmobiliariasPage() {
 
       {/* Create/Edit Modal */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowForm(false)}>
-          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-bold text-[#2C2C2C] mb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowForm(false)}>
+          <div className="bg-[#161C26] border border-[#263040] rounded-xl p-6 w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-lg font-bold text-[#C5D3E0] mb-4">
               {editing ? "Editar inmobiliaria" : "Nueva inmobiliaria"}
             </h2>
 
             <div className="space-y-4">
               <div>
-                <Label className="text-[#2C2C2C]">Nombre</Label>
+                <Label className="text-[#C5D3E0]">Nombre</Label>
                 <Input
                   value={formData.nombre}
                   onChange={(e) => setFormData((p) => ({ ...p, nombre: e.target.value }))}
                   placeholder="REMAX Palermo"
-                  className="mt-1 bg-white border-gray-200"
+                  className="mt-1 bg-[#0D1117] border-[#263040] text-[#C5D3E0] placeholder:text-[#4A6070]"
                 />
               </div>
               <div>
-                <Label className="text-[#2C2C2C]">Descuento (%)</Label>
+                <Label className="text-[#C5D3E0]">Descuento (%)</Label>
                 <Input
                   type="number"
                   min={0}
@@ -183,17 +187,17 @@ export default function InmobiliariasPage() {
                   value={formData.descuento || ""}
                   onChange={(e) => setFormData((p) => ({ ...p, descuento: Number(e.target.value) }))}
                   placeholder="15"
-                  className="mt-1 bg-white border-gray-200 w-32"
+                  className="mt-1 bg-[#0D1117] border-[#263040] text-[#C5D3E0] placeholder:text-[#4A6070] w-32"
                 />
               </div>
               <div>
-                <Label className="text-[#2C2C2C]">Beneficios</Label>
+                <Label className="text-[#C5D3E0]">Beneficios</Label>
                 <textarea
                   value={formData.beneficios}
                   onChange={(e) => setFormData((p) => ({ ...p, beneficios: e.target.value }))}
                   placeholder={"• Video adicional gratis en propiedades +150m²\n• Prioridad en agenda"}
                   rows={4}
-                  className="mt-1 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C07856] resize-none"
+                  className="mt-1 w-full rounded-md border border-[#263040] bg-[#0D1117] px-3 py-2 text-sm text-[#C5D3E0] placeholder:text-[#4A6070] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F2B968] resize-none"
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -202,20 +206,24 @@ export default function InmobiliariasPage() {
                   id="activa"
                   checked={formData.activa}
                   onChange={(e) => setFormData((p) => ({ ...p, activa: e.target.checked }))}
-                  className="rounded border-gray-300"
+                  className="rounded border-[#263040]"
                 />
-                <Label htmlFor="activa" className="text-[#2C2C2C]">Activa</Label>
+                <Label htmlFor="activa" className="text-[#C5D3E0]">Activa</Label>
               </div>
             </div>
 
             <div className="flex justify-end gap-3 mt-6">
-              <Button variant="outline" onClick={() => setShowForm(false)} className="border-gray-200">
+              <Button
+                variant="outline"
+                onClick={() => setShowForm(false)}
+                className="border-[#263040] text-[#C5D3E0] hover:bg-[#1E2A38]"
+              >
                 Cancelar
               </Button>
               <Button
                 onClick={handleSave}
                 disabled={!formData.nombre || saving}
-                className="bg-[#C07856] hover:bg-[#a8654a]"
+                className="bg-[#F2B968] hover:bg-[#d9a050] text-[#0D1117] font-semibold"
               >
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : editing ? "Guardar" : "Crear"}
               </Button>

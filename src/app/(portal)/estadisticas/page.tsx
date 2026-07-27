@@ -29,7 +29,7 @@ export default function EstadisticasPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 className="w-6 h-6 animate-spin text-[#C07856]" />
+        <Loader2 className="w-6 h-6 animate-spin text-[#F2B968]" />
       </div>
     );
   }
@@ -38,7 +38,6 @@ export default function EstadisticasPage() {
   const totalInvertido = producciones.reduce((sum, p) => sum + (p.precioFinal || 0), 0);
   const totalAhorrado = producciones.reduce((sum, p) => sum + (p.descuentoAplicado || 0), 0);
 
-  // Group by month (last 6)
   const monthlyData: Record<string, { count: number; amount: number }> = {};
   producciones.forEach((p) => {
     if (!p.fechaSolicitud) return;
@@ -57,45 +56,43 @@ export default function EstadisticasPage() {
     .reverse();
 
   const maxCount = Math.max(...months.map(([, d]) => d.count), 1);
-
-  // Last 5 productions
   const recent = producciones.slice(0, 5);
 
   return (
     <div className="max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold text-[#2C2C2C] mb-8">Mis Estadísticas</h1>
+      <h1 className="text-2xl font-bold text-[#C5D3E0] mb-8">Mis Estadísticas</h1>
 
       {/* Metric cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <div className="bg-white border border-gray-200 rounded-xl p-5">
-          <div className="flex items-center gap-2 text-[#C07856] mb-2">
+        <div className="bg-[#161C26] border border-[#263040] rounded-xl p-5">
+          <div className="flex items-center gap-2 text-[#F2B968] mb-2">
             <FolderOpen className="w-5 h-5" />
-            <span className="text-sm font-medium">Total producciones</span>
+            <span className="text-sm font-medium text-[#C5D3E0]">Total producciones</span>
           </div>
-          <p className="text-3xl font-bold text-[#2C2C2C]">{totalProducciones}</p>
+          <p className="text-3xl font-bold text-[#C5D3E0]">{totalProducciones}</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-5">
-          <div className="flex items-center gap-2 text-[#C07856] mb-2">
+        <div className="bg-[#161C26] border border-[#263040] rounded-xl p-5">
+          <div className="flex items-center gap-2 text-[#F2B968] mb-2">
             <DollarSign className="w-5 h-5" />
-            <span className="text-sm font-medium">Total invertido</span>
+            <span className="text-sm font-medium text-[#C5D3E0]">Total invertido</span>
           </div>
-          <p className="text-3xl font-bold text-[#2C2C2C]">${totalInvertido.toFixed(0)}</p>
-          <p className="text-xs text-[#5A5A5A]">USD</p>
+          <p className="text-3xl font-bold text-[#C5D3E0]">${totalInvertido.toFixed(0)}</p>
+          <p className="text-xs text-[#4A6070]">USD</p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-5">
-          <div className="flex items-center gap-2 text-green-600 mb-2">
+        <div className="bg-[#161C26] border border-[#263040] rounded-xl p-5">
+          <div className="flex items-center gap-2 text-green-400 mb-2">
             <TrendingDown className="w-5 h-5" />
-            <span className="text-sm font-medium">Total ahorrado</span>
+            <span className="text-sm font-medium text-[#C5D3E0]">Total ahorrado</span>
           </div>
-          <p className="text-3xl font-bold text-green-600">${totalAhorrado.toFixed(0)}</p>
-          <p className="text-xs text-[#5A5A5A]">USD en descuentos</p>
+          <p className="text-3xl font-bold text-green-400">${totalAhorrado.toFixed(0)}</p>
+          <p className="text-xs text-[#4A6070]">USD en descuentos</p>
         </div>
       </div>
 
-      {/* Monthly chart (simple bars) */}
+      {/* Monthly chart */}
       {months.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-xl p-5 mb-8">
-          <h2 className="font-semibold text-[#2C2C2C] mb-4">Producciones por mes</h2>
+        <div className="bg-[#161C26] border border-[#263040] rounded-xl p-5 mb-8">
+          <h2 className="font-semibold text-[#C5D3E0] mb-4">Producciones por mes</h2>
           <div className="flex items-end gap-2 h-32">
             {months.map(([month, data]) => {
               const height = (data.count / maxCount) * 100;
@@ -103,12 +100,12 @@ export default function EstadisticasPage() {
               const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
               return (
                 <div key={month} className="flex-1 flex flex-col items-center gap-1">
-                  <span className="text-xs font-mono text-[#2C2C2C]">{data.count}</span>
+                  <span className="text-xs font-mono text-[#C5D3E0]">{data.count}</span>
                   <div
-                    className="w-full bg-[#C07856] rounded-t-md transition-all"
+                    className="w-full bg-[#F2B968] rounded-t-md transition-all opacity-80"
                     style={{ height: `${Math.max(height, 4)}%` }}
                   />
-                  <span className="text-xs text-[#5A5A5A]">
+                  <span className="text-xs text-[#4A6070]">
                     {monthNames[parseInt(m) - 1]} {y.slice(2)}
                   </span>
                 </div>
@@ -120,8 +117,8 @@ export default function EstadisticasPage() {
 
       {/* Recent productions */}
       {recent.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-xl p-5">
-          <h2 className="font-semibold text-[#2C2C2C] mb-4">Últimas producciones</h2>
+        <div className="bg-[#161C26] border border-[#263040] rounded-xl p-5">
+          <h2 className="font-semibold text-[#C5D3E0] mb-4">Últimas producciones</h2>
           <div className="space-y-3">
             {recent.map((prod) => {
               const d = prod.fechaSolicitud
@@ -130,16 +127,16 @@ export default function EstadisticasPage() {
                   : new Date(prod.fechaSolicitud)
                 : null;
               return (
-                <div key={prod.id} className="flex items-center justify-between text-sm">
+                <div key={prod.id} className="flex items-center justify-between text-sm border-b border-[#1E2A38] pb-3 last:border-0 last:pb-0">
                   <div className="flex items-center gap-2 min-w-0">
-                    <MapPin className="w-4 h-4 text-[#5A5A5A] shrink-0" />
-                    <span className="text-[#2C2C2C] truncate">{prod.direccion}</span>
+                    <MapPin className="w-4 h-4 text-[#4A6070] shrink-0" />
+                    <span className="text-[#C5D3E0] truncate">{prod.direccion}</span>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-[#5A5A5A]">
+                    <span className="text-[#4A6070]">
                       {d ? d.toLocaleDateString("es-AR") : "—"}
                     </span>
-                    <span className="font-mono font-medium text-[#2C2C2C]">
+                    <span className="font-mono font-medium text-[#F2B968]">
                       ${prod.precioFinal?.toFixed(0)}
                     </span>
                   </div>
@@ -151,8 +148,8 @@ export default function EstadisticasPage() {
       )}
 
       {totalProducciones === 0 && (
-        <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-          <p className="text-[#5A5A5A]">Todavía no tenés producciones para mostrar estadísticas.</p>
+        <div className="text-center py-12 bg-[#161C26] rounded-xl border border-[#263040]">
+          <p className="text-[#4A6070]">Todavía no tenés producciones para mostrar estadísticas.</p>
         </div>
       )}
     </div>

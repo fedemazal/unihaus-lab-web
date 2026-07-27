@@ -29,7 +29,7 @@ export default function BeneficiosPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 className="w-6 h-6 animate-spin text-[#C07856]" />
+        <Loader2 className="w-6 h-6 animate-spin text-[#F2B968]" />
       </div>
     );
   }
@@ -37,15 +37,14 @@ export default function BeneficiosPage() {
   if (!inmobiliaria) {
     return (
       <div>
-        <h1 className="text-2xl font-bold text-[#2C2C2C] mb-6">Mis Beneficios</h1>
-        <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-          <p className="text-[#5A5A5A]">No tenés una inmobiliaria asignada todavía.</p>
+        <h1 className="text-2xl font-bold text-[#C5D3E0] mb-6">Mis Beneficios</h1>
+        <div className="text-center py-12 bg-[#161C26] rounded-xl border border-[#263040]">
+          <p className="text-[#4A6070]">No tenés una inmobiliaria asignada todavía.</p>
         </div>
       </div>
     );
   }
 
-  // Example savings
   const examples = [
     { label: "Depto 80m² (Fotos + Video)", base: 96, savings: (96 * inmobiliaria.descuento) / 100 },
     { label: "Depto 100m² + Plano 2D", base: 145, savings: (145 * inmobiliaria.descuento) / 100 },
@@ -54,38 +53,38 @@ export default function BeneficiosPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-[#2C2C2C] mb-8">Mis Beneficios</h1>
+      <h1 className="text-2xl font-bold text-[#C5D3E0] mb-8">Mis Beneficios</h1>
 
       {/* Inmobiliaria card */}
-      <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+      <div className="bg-[#161C26] border border-[#263040] rounded-xl p-6 mb-6">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-xl bg-[#C07856]/10 flex items-center justify-center">
-            <Building2 className="w-6 h-6 text-[#C07856]" />
+          <div className="w-12 h-12 rounded-xl bg-[#F2B968]/10 flex items-center justify-center">
+            <Building2 className="w-6 h-6 text-[#F2B968]" />
           </div>
           <div>
-            <p className="text-sm text-[#5A5A5A]">Tu inmobiliaria</p>
-            <p className="text-lg font-bold text-[#2C2C2C]">{inmobiliaria.nombre}</p>
+            <p className="text-sm text-[#4A6070]">Tu inmobiliaria</p>
+            <p className="text-lg font-bold text-[#C5D3E0]">{inmobiliaria.nombre}</p>
           </div>
         </div>
 
         {/* Discount highlight */}
-        <div className="bg-[#C07856]/5 border border-[#C07856]/20 rounded-xl p-5 mb-5">
+        <div className="bg-[#F2B968]/8 border border-[#F2B968]/20 rounded-xl p-5 mb-5">
           <div className="flex items-center gap-2 mb-1">
-            <Percent className="w-5 h-5 text-[#C07856]" />
-            <span className="font-semibold text-[#C07856]">Descuento exclusivo</span>
+            <Percent className="w-5 h-5 text-[#F2B968]" />
+            <span className="font-semibold text-[#F2B968]">Descuento exclusivo</span>
           </div>
-          <p className="text-3xl font-bold text-[#C07856]">{inmobiliaria.descuento}%</p>
-          <p className="text-sm text-[#5A5A5A] mt-1">En todas tus producciones</p>
+          <p className="text-3xl font-bold text-[#F2B968]">{inmobiliaria.descuento}%</p>
+          <p className="text-sm text-[#4A6070] mt-1">En todas tus producciones</p>
         </div>
 
         {/* Benefits */}
         {inmobiliaria.beneficios && (
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <Gift className="w-5 h-5 text-[#C07856]" />
-              <span className="font-semibold text-[#2C2C2C]">Beneficios extra</span>
+              <Gift className="w-5 h-5 text-[#F2B968]" />
+              <span className="font-semibold text-[#C5D3E0]">Beneficios extra</span>
             </div>
-            <div className="text-sm text-[#5A5A5A] whitespace-pre-line leading-relaxed">
+            <div className="text-sm text-[#4A6070] whitespace-pre-line leading-relaxed">
               {inmobiliaria.beneficios}
             </div>
           </div>
@@ -94,13 +93,13 @@ export default function BeneficiosPage() {
 
       {/* Example savings */}
       {inmobiliaria.descuento > 0 && (
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
-          <h2 className="font-semibold text-[#2C2C2C] mb-4">Ejemplos de ahorro</h2>
+        <div className="bg-[#161C26] border border-[#263040] rounded-xl p-6">
+          <h2 className="font-semibold text-[#C5D3E0] mb-4">Ejemplos de ahorro</h2>
           <div className="space-y-3">
             {examples.map((ex) => (
-              <div key={ex.label} className="flex items-center justify-between text-sm">
-                <span className="text-[#5A5A5A]">{ex.label}</span>
-                <span className="font-medium text-green-600">
+              <div key={ex.label} className="flex items-center justify-between text-sm border-b border-[#1E2A38] pb-3 last:border-0 last:pb-0">
+                <span className="text-[#4A6070]">{ex.label}</span>
+                <span className="font-medium text-green-400">
                   Ahorrás ${ex.savings.toFixed(0)} USD
                 </span>
               </div>

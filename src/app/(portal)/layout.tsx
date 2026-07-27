@@ -56,14 +56,14 @@ export default function PortalLayout({
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-[#F5F5F0]">
+      <div className="min-h-screen bg-[#0D1117]">
         {/* Top bar */}
-        <header className="fixed top-0 w-full z-40 bg-white border-b border-gray-200 h-16">
+        <header className="fixed top-0 w-full z-40 bg-[#161C26] border-b border-[#263040] h-16">
           <div className="h-full px-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="lg:hidden text-[#2C2C2C]"
+                className="lg:hidden text-[#C5D3E0]"
               >
                 {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </button>
@@ -79,10 +79,10 @@ export default function PortalLayout({
             </div>
 
             <div className="flex items-center gap-4">
-              <span className="text-sm text-[#5A5A5A] hidden sm:block">
+              <span className="text-sm text-[#4A6070] hidden sm:block">
                 {profile?.nombre}
               </span>
-              <div className="w-8 h-8 rounded-full bg-[#C07856] flex items-center justify-center text-white text-sm font-medium">
+              <div className="w-8 h-8 rounded-full bg-[#F2B968] flex items-center justify-center text-[#0D1117] text-sm font-bold">
                 {profile?.nombre?.charAt(0).toUpperCase()}
               </div>
             </div>
@@ -91,7 +91,7 @@ export default function PortalLayout({
 
         {/* Sidebar */}
         <aside
-          className={`fixed top-16 left-0 z-30 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200 transition-transform duration-200 ${
+          className={`fixed top-16 left-0 z-30 h-[calc(100vh-4rem)] w-64 bg-[#161C26] border-r border-[#263040] transition-transform duration-200 ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           } lg:translate-x-0`}
         >
@@ -105,8 +105,8 @@ export default function PortalLayout({
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${
                     isActive
-                      ? "bg-[#C07856]/10 text-[#C07856]"
-                      : "text-[#5A5A5A] hover:bg-gray-100 hover:text-[#2C2C2C]"
+                      ? "bg-[#F2B968]/10 text-[#F2B968]"
+                      : "text-[#4A6070] hover:bg-[#1E2A38] hover:text-[#C5D3E0]"
                   }`}
                 >
                   <item.icon className="w-5 h-5" />
@@ -115,11 +115,11 @@ export default function PortalLayout({
               );
             })}
 
-            <hr className="my-4 border-gray-200" />
+            <hr className="my-4 border-[#263040]" />
 
             <button
               onClick={handleLogout}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#5A5A5A] hover:bg-gray-100 hover:text-[#2C2C2C] transition w-full"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#4A6070] hover:bg-[#1E2A38] hover:text-[#C5D3E0] transition w-full"
             >
               <LogOut className="w-5 h-5" />
               Cerrar sesión
@@ -130,7 +130,7 @@ export default function PortalLayout({
         {/* Overlay for mobile sidebar */}
         {sidebarOpen && (
           <div
-            className="fixed inset-0 z-20 bg-black/30 lg:hidden"
+            className="fixed inset-0 z-20 bg-black/60 lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
