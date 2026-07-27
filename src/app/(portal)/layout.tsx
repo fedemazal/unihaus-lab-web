@@ -18,6 +18,7 @@ import {
   Shield,
   Menu,
   X,
+  FileStack,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -34,6 +35,7 @@ const adminNav = [
   { href: "/admin/cuentas", label: "Cuentas", icon: Settings },
   { href: "/admin/inmobiliarias", label: "Inmobiliarias", icon: Settings },
   { href: "/admin/producciones", label: "Producciones", icon: FolderOpen },
+  { href: "/admin/materiales", label: "Materiales", icon: FileStack },
   { href: "/admin/estadisticas", label: "Estadísticas", icon: BarChart3 },
 ];
 
@@ -63,7 +65,7 @@ export default function PortalLayout({
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="lg:hidden text-[#C5D3E0]"
+                className="lg:hidden text-[#E2ECF4]"
               >
                 {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </button>
@@ -79,7 +81,7 @@ export default function PortalLayout({
             </div>
 
             <div className="flex items-center gap-4">
-              <span className="text-sm text-[#4A6070] hidden sm:block">
+              <span className="text-sm text-[#7A96A8] hidden sm:block">
                 {profile?.nombre}
               </span>
               <div className="w-8 h-8 rounded-full bg-[#F2B968] flex items-center justify-center text-[#0D1117] text-sm font-bold">
@@ -106,7 +108,7 @@ export default function PortalLayout({
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${
                     isActive
                       ? "bg-[#F2B968]/10 text-[#F2B968]"
-                      : "text-[#4A6070] hover:bg-[#1E2A38] hover:text-[#C5D3E0]"
+                      : "text-[#7A96A8] hover:bg-[#1E2A38] hover:text-[#E2ECF4]"
                   }`}
                 >
                   <item.icon className="w-5 h-5" />
@@ -119,7 +121,7 @@ export default function PortalLayout({
 
             <button
               onClick={handleLogout}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#4A6070] hover:bg-[#1E2A38] hover:text-[#C5D3E0] transition w-full"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#7A96A8] hover:bg-[#1E2A38] hover:text-[#E2ECF4] transition w-full"
             >
               <LogOut className="w-5 h-5" />
               Cerrar sesión

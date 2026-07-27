@@ -3,16 +3,19 @@ import {
   doc,
   addDoc,
   updateDoc,
+  deleteDoc,
   getDoc,
   getDocs,
   query,
   where,
+  orderBy,
   serverTimestamp,
   Timestamp,
 } from "firebase/firestore";
 import { getFirebaseDb } from "./config";
 import type {
   Inmobiliaria,
+  MaterialPreparacion,
   Production,
   UserProfile,
 } from "@/types";
@@ -130,7 +133,6 @@ export async function getProduction(id: string) {
 }
 
 export async function deleteProduction(id: string) {
-  const { deleteDoc } = await import("firebase/firestore");
   const ref = doc(getFirebaseDb(), "producciones", id);
   await deleteDoc(ref);
 }
@@ -138,6 +140,42 @@ export async function deleteProduction(id: string) {
 export async function updateProduction(id: string, data: Partial<Production>) {
   const ref = doc(getFirebaseDb(), "producciones", id);
   await updateDoc(ref, { ...data, updatedAt: serverTimestamp() });
+}
+
+// ============================================
+// MATERIALES DE PREPARACIÓN
+// ============================================
+
+export async function getMateriales() {
+  const ref = collection(getFirebaseDb(), "materiales_preparacion");
+  let snapshot;
+  try {
+    const q = query(ref, orderBy("orden", "asc"));
+    snapshot = await getDocs(q);
+  } catch {
+    snapshot = await getDocs(query(ref));
+  }
+  return snapshot.docs.map((d) => ({ ...d.data(), id: d.id } as MaterialPreparacion));
+}
+
+export async function createMaterial(data: Omit<MaterialPreparacion, "id" | "createdAt" | "updatedAt">) {
+  const ref = collection(getFirebaseDb(), "materiales_preparacion");
+  const docRef = await addDoc(ref, {
+    ...data,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+export async function updateMaterial(id: string, data: Partial<MaterialPreparacion>) {
+  const ref = doc(getFirebaseDb(), "materiales_preparacion", id);
+  await updateDoc(ref, { ...data, updatedAt: serverTimestamp() });
+}
+
+export async function deleteMaterial(id: string) {
+  const ref = doc(getFirebaseDb(), "materiales_preparacion", id);
+  await deleteDoc(ref);
 }
 
 // Helper to convert Firestore Timestamp to Date

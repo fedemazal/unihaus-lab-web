@@ -43,10 +43,10 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-[#C5D3E0] mb-2">
+      <h1 className="text-2xl font-bold text-[#E2ECF4] mb-2">
         ¡Hola, {profile?.nombre?.split(" ")[0]}!
       </h1>
-      <p className="text-[#4A6070] mb-8">Bienvenido a tu portal de producciones</p>
+      <p className="text-[#7A96A8] mb-8">Bienvenido a tu portal de producciones</p>
 
       {/* Metrics */}
       {!loading && producciones.length > 0 && (
@@ -56,28 +56,28 @@ export default function DashboardPage() {
               <Clock className="w-4 h-4" />
               <span className="text-sm font-medium">Pendientes</span>
             </div>
-            <p className="text-2xl font-bold text-[#C5D3E0]">{pendientes}</p>
+            <p className="text-2xl font-bold text-[#E2ECF4]">{pendientes}</p>
           </div>
           <div className="bg-[#161C26] border border-[#263040] rounded-xl p-4">
             <div className="flex items-center gap-2 text-blue-400 mb-2">
               <Loader2 className="w-4 h-4" />
               <span className="text-sm font-medium">En proceso</span>
             </div>
-            <p className="text-2xl font-bold text-[#C5D3E0]">{enProceso}</p>
+            <p className="text-2xl font-bold text-[#E2ECF4]">{enProceso}</p>
           </div>
           <div className="bg-[#161C26] border border-[#263040] rounded-xl p-4">
             <div className="flex items-center gap-2 text-green-400 mb-2">
               <CheckCircle className="w-4 h-4" />
               <span className="text-sm font-medium">Listas</span>
             </div>
-            <p className="text-2xl font-bold text-[#C5D3E0]">{listas}</p>
+            <p className="text-2xl font-bold text-[#E2ECF4]">{listas}</p>
           </div>
           <div className="bg-[#161C26] border border-[#263040] rounded-xl p-4">
             <div className="flex items-center gap-2 text-[#F2B968] mb-2">
               <DollarSign className="w-4 h-4" />
               <span className="text-sm font-medium">Invertido</span>
             </div>
-            <p className="text-2xl font-bold text-[#C5D3E0]">${totalInvertido.toFixed(0)}</p>
+            <p className="text-2xl font-bold text-[#E2ECF4]">${totalInvertido.toFixed(0)}</p>
           </div>
         </div>
       )}
@@ -98,8 +98,8 @@ export default function DashboardPage() {
           className="bg-[#161C26] border border-[#263040] hover:border-[#F2B968]/50 p-6 rounded-xl transition group"
         >
           <FolderOpen className="w-8 h-8 mb-3 text-[#F2B968] group-hover:scale-110 transition-transform" />
-          <h2 className="text-lg font-semibold text-[#C5D3E0] mb-1">Mis producciones</h2>
-          <p className="text-[#4A6070] text-sm">Mirá el estado de tus producciones</p>
+          <h2 className="text-lg font-semibold text-[#E2ECF4] mb-1">Mis producciones</h2>
+          <p className="text-[#7A96A8] text-sm">Mirá el estado de tus producciones</p>
         </Link>
 
         <Link
@@ -107,8 +107,8 @@ export default function DashboardPage() {
           className="bg-[#161C26] border border-[#263040] hover:border-[#F2B968]/50 p-6 rounded-xl transition group"
         >
           <BarChart3 className="w-8 h-8 mb-3 text-[#F2B968] group-hover:scale-110 transition-transform" />
-          <h2 className="text-lg font-semibold text-[#C5D3E0] mb-1">Estadísticas</h2>
-          <p className="text-[#4A6070] text-sm">Revisá tus métricas y actividad</p>
+          <h2 className="text-lg font-semibold text-[#E2ECF4] mb-1">Estadísticas</h2>
+          <p className="text-[#7A96A8] text-sm">Revisá tus métricas y actividad</p>
         </Link>
 
         <Link
@@ -116,8 +116,8 @@ export default function DashboardPage() {
           className="bg-[#161C26] border border-[#263040] hover:border-[#F2B968]/50 p-6 rounded-xl transition group"
         >
           <Gift className="w-8 h-8 mb-3 text-[#F2B968] group-hover:scale-110 transition-transform" />
-          <h2 className="text-lg font-semibold text-[#C5D3E0] mb-1">Beneficios</h2>
-          <p className="text-[#4A6070] text-sm">Descubrí los beneficios de tu inmobiliaria</p>
+          <h2 className="text-lg font-semibold text-[#E2ECF4] mb-1">Beneficios</h2>
+          <p className="text-[#7A96A8] text-sm">Descubrí los beneficios de tu inmobiliaria</p>
         </Link>
       </div>
     </div>

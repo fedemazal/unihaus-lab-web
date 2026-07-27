@@ -87,12 +87,25 @@ export interface Production {
   descuentoAplicado: number;
   precioFinal: number;
   desglose: PriceBreakdownItem[];
+  valorEstimado?: number;
   estado: ProductionStatus;
   tags: string[];
   archivos: ProductionFiles;
   fechaSolicitud: Date;
   fechaEnProceso: Date | null;
   fechaListo: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface MaterialPreparacion {
+  id: string;
+  titulo: string;
+  descripcion: string;
+  url: string;
+  tipo: "pdf" | "imagen" | "link";
+  orden: number;
+  activo: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

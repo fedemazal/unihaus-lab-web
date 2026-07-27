@@ -56,7 +56,7 @@ export default function ProduccionesPage() {
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-        <h1 className="text-2xl font-bold text-[#C5D3E0]">Mis Producciones</h1>
+        <h1 className="text-2xl font-bold text-[#E2ECF4]">Mis Producciones</h1>
         <Link href="/producciones/nueva">
           <Button className="bg-[#F2B968] hover:bg-[#d9a050] text-[#0D1117] font-semibold">
             <Plus className="w-4 h-4 mr-2" />
@@ -68,12 +68,12 @@ export default function ProduccionesPage() {
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#4A6070]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#7A96A8]" />
           <Input
             placeholder="Buscar por dirección..."
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            className="pl-10 bg-[#0D1117] border-[#263040] text-[#C5D3E0] placeholder:text-[#4A6070]"
+            className="pl-10 bg-[#0D1117] border-[#263040] text-[#E2ECF4] placeholder:text-[#7A96A8]"
           />
         </div>
         <div className="flex gap-2">
@@ -84,7 +84,7 @@ export default function ProduccionesPage() {
               className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                 filtroEstado === estado
                   ? "bg-[#F2B968] text-[#0D1117]"
-                  : "bg-[#161C26] text-[#4A6070] border border-[#263040] hover:bg-[#1E2A38] hover:text-[#C5D3E0]"
+                  : "bg-[#161C26] text-[#7A96A8] border border-[#263040] hover:bg-[#1E2A38] hover:text-[#E2ECF4]"
               }`}
             >
               {estado === "todos" ? "Todos" : statusConfig[estado as ProductionStatus].label}
@@ -96,7 +96,7 @@ export default function ProduccionesPage() {
       {/* List */}
       {filtered.length === 0 ? (
         <div className="text-center py-16 bg-[#161C26] rounded-xl border border-[#263040]">
-          <p className="text-[#4A6070] mb-4">
+          <p className="text-[#7A96A8] mb-4">
             {producciones.length === 0
               ? "Todavía no tenés producciones"
               : "No se encontraron resultados"}
@@ -125,13 +125,13 @@ export default function ProduccionesPage() {
                       <Badge className={`${status.color} border text-xs`}>
                         {status.label}
                       </Badge>
-                      <span className="text-xs text-[#4A6070] capitalize">{prod.tipoPropiedad}</span>
+                      <span className="text-xs text-[#7A96A8] capitalize">{prod.tipoPropiedad}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 text-[#C5D3E0] font-medium">
-                      <MapPin className="w-4 h-4 text-[#4A6070] shrink-0" />
+                    <div className="flex items-center gap-1.5 text-[#E2ECF4] font-medium">
+                      <MapPin className="w-4 h-4 text-[#7A96A8] shrink-0" />
                       <span className="truncate">{prod.direccion}</span>
                     </div>
-                    <div className="flex items-center gap-4 mt-2 text-sm text-[#4A6070]">
+                    <div className="flex items-center gap-4 mt-2 text-sm text-[#7A96A8]">
                       <span className="flex items-center gap-1">
                         <Calendar className="w-3.5 h-3.5" />
                         {prod.fechaSolicitud

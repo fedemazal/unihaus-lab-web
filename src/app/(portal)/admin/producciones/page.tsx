@@ -237,17 +237,17 @@ export default function AdminProduccionesPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-[#C5D3E0] mb-8">Gestión de Producciones</h1>
+      <h1 className="text-2xl font-bold text-[#E2ECF4] mb-8">Gestión de Producciones</h1>
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#4A6070]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#7A96A8]" />
           <Input
             placeholder="Buscar por dirección, agente o inmobiliaria..."
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            className="pl-10 bg-[#0D1117] border-[#263040] text-[#C5D3E0] placeholder:text-[#4A6070]"
+            className="pl-10 bg-[#0D1117] border-[#263040] text-[#E2ECF4] placeholder:text-[#7A96A8]"
           />
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -262,11 +262,11 @@ export default function AdminProduccionesPage() {
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1.5 ${
                   filtroEstado === estado
                     ? "bg-[#F2B968] text-[#0D1117]"
-                    : "bg-[#161C26] text-[#4A6070] border border-[#263040] hover:bg-[#1E2A38] hover:text-[#C5D3E0]"
+                    : "bg-[#161C26] text-[#7A96A8] border border-[#263040] hover:bg-[#1E2A38] hover:text-[#E2ECF4]"
                 }`}
               >
                 {estado === "todos" ? "Todos" : statusConfig[estado as ProductionStatus].label}
-                <span className={`text-xs ${filtroEstado === estado ? "text-[#0D1117]/60" : "text-[#4A6070]"}`}>
+                <span className={`text-xs ${filtroEstado === estado ? "text-[#0D1117]/60" : "text-[#7A96A8]"}`}>
                   ({count})
                 </span>
               </button>
@@ -278,7 +278,7 @@ export default function AdminProduccionesPage() {
       {/* List */}
       {filtered.length === 0 ? (
         <div className="text-center py-12 bg-[#161C26] rounded-xl border border-[#263040]">
-          <p className="text-[#4A6070]">No hay producciones</p>
+          <p className="text-[#7A96A8]">No hay producciones</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -296,18 +296,18 @@ export default function AdminProduccionesPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <Badge className={`${status.color} border text-xs`}>{status.label}</Badge>
-                      <span className="text-xs text-[#4A6070] capitalize">{prod.tipoPropiedad}</span>
+                      <span className="text-xs text-[#7A96A8] capitalize">{prod.tipoPropiedad}</span>
                       {prod.tags.map((tag) => (
-                        <Badge key={tag} className="bg-[#1E2A38] text-[#4A6070] border border-[#263040] text-xs">
+                        <Badge key={tag} className="bg-[#1E2A38] text-[#7A96A8] border border-[#263040] text-xs">
                           {tag}
                         </Badge>
                       ))}
                     </div>
-                    <div className="flex items-center gap-1.5 text-[#C5D3E0] font-medium">
-                      <MapPin className="w-4 h-4 text-[#4A6070] shrink-0" />
+                    <div className="flex items-center gap-1.5 text-[#E2ECF4] font-medium">
+                      <MapPin className="w-4 h-4 text-[#7A96A8] shrink-0" />
                       <span className="truncate">{prod.direccion}</span>
                     </div>
-                    <div className="flex flex-wrap gap-4 mt-1.5 text-sm text-[#4A6070]">
+                    <div className="flex flex-wrap gap-4 mt-1.5 text-sm text-[#7A96A8]">
                       <span>{prod.agenteNombre}</span>
                       {prod.inmobiliariaNombre && <span>{prod.inmobiliariaNombre}</span>}
                       <span className="flex items-center gap-1">
@@ -317,8 +317,8 @@ export default function AdminProduccionesPage() {
                     </div>
                   </div>
                   {isExpanded
-                    ? <ChevronUp className="w-5 h-5 text-[#4A6070]" />
-                    : <ChevronDown className="w-5 h-5 text-[#4A6070]" />}
+                    ? <ChevronUp className="w-5 h-5 text-[#7A96A8]" />
+                    : <ChevronDown className="w-5 h-5 text-[#7A96A8]" />}
                 </button>
 
                 {/* Expanded detail */}
@@ -327,31 +327,31 @@ export default function AdminProduccionesPage() {
                     {/* Property details */}
                     <div className="grid sm:grid-cols-2 gap-4 text-sm">
                       <div>
-                        <p className="text-[#4A6070]">Tipo: <span className="text-[#C5D3E0] capitalize">{prod.tipoPropiedad}</span></p>
-                        {prod.superficie && <p className="text-[#4A6070]">Superficie: <span className="text-[#C5D3E0]">{prod.superficie} m²</span></p>}
-                        {prod.construida && <p className="text-[#4A6070]">Construida: <span className="text-[#C5D3E0]">{prod.construida} m²</span></p>}
-                        {prod.descubierta !== undefined && prod.descubierta > 0 && <p className="text-[#4A6070]">Descubierta: <span className="text-[#C5D3E0]">{prod.descubierta} m²</span></p>}
-                        <p className="text-[#4A6070]">Amenidades: <span className="text-[#C5D3E0]">{prod.amenidades}</span></p>
-                        <p className="text-[#4A6070]">Estado: <span className="text-[#C5D3E0] capitalize">{prod.estadoPropiedad?.ocupacion}</span></p>
+                        <p className="text-[#7A96A8]">Tipo: <span className="text-[#E2ECF4] capitalize">{prod.tipoPropiedad}</span></p>
+                        {prod.superficie && <p className="text-[#7A96A8]">Superficie: <span className="text-[#E2ECF4]">{prod.superficie} m²</span></p>}
+                        {prod.construida && <p className="text-[#7A96A8]">Construida: <span className="text-[#E2ECF4]">{prod.construida} m²</span></p>}
+                        {prod.descubierta !== undefined && prod.descubierta > 0 && <p className="text-[#7A96A8]">Descubierta: <span className="text-[#E2ECF4]">{prod.descubierta} m²</span></p>}
+                        <p className="text-[#7A96A8]">Amenidades: <span className="text-[#E2ECF4]">{prod.amenidades}</span></p>
+                        <p className="text-[#7A96A8]">Estado: <span className="text-[#E2ECF4] capitalize">{prod.estadoPropiedad?.ocupacion}</span></p>
                       </div>
                       <div>
-                        <p className="font-medium text-[#C5D3E0] mb-1">Servicios:</p>
-                        <p className="text-[#C5D3E0]">{prod.servicios?.soloFotos ? "Solo Fotos" : "Fotos + Video"}</p>
-                        {prod.servicios?.videoAdicional && <p className="text-[#C5D3E0]">+ Video Adicional</p>}
-                        {prod.servicios?.plano2d && <p className="text-[#C5D3E0]">+ Plano 2D</p>}
-                        {prod.servicios?.tour360 && <p className="text-[#C5D3E0]">+ Tour 360°</p>}
-                        {prod.servicios?.drone && <p className="text-[#C5D3E0]">+ Drone</p>}
-                        {prod.servicios?.amoblamiento && <p className="text-[#C5D3E0]">+ Amoblamiento ({prod.servicios.cantidadFotosAmobladas} fotos)</p>}
+                        <p className="font-medium text-[#E2ECF4] mb-1">Servicios:</p>
+                        <p className="text-[#E2ECF4]">{prod.servicios?.soloFotos ? "Solo Fotos" : "Fotos + Video"}</p>
+                        {prod.servicios?.videoAdicional && <p className="text-[#E2ECF4]">+ Video Adicional</p>}
+                        {prod.servicios?.plano2d && <p className="text-[#E2ECF4]">+ Plano 2D</p>}
+                        {prod.servicios?.tour360 && <p className="text-[#E2ECF4]">+ Tour 360°</p>}
+                        {prod.servicios?.drone && <p className="text-[#E2ECF4]">+ Drone</p>}
+                        {prod.servicios?.amoblamiento && <p className="text-[#E2ECF4]">+ Amoblamiento ({prod.servicios.cantidadFotosAmobladas} fotos)</p>}
                       </div>
                     </div>
 
                     {/* Schedule */}
                     {prod.horariosSugeridos?.length > 0 && (
                       <div>
-                        <p className="text-sm font-medium text-[#C5D3E0] mb-1 flex items-center gap-1">
+                        <p className="text-sm font-medium text-[#E2ECF4] mb-1 flex items-center gap-1">
                           <Calendar className="w-4 h-4" /> Horarios sugeridos:
                         </p>
-                        <ul className="text-sm text-[#4A6070] space-y-0.5">
+                        <ul className="text-sm text-[#7A96A8] space-y-0.5">
                           {prod.horariosSugeridos.map((h, i) => (
                             <li key={i}>• {h}</li>
                           ))}
@@ -381,7 +381,7 @@ export default function AdminProduccionesPage() {
                               type="date"
                               value={scheduleDate}
                               onChange={(e) => setScheduleDate(e.target.value)}
-                              className="h-8 text-sm bg-[#0D1117] border-amber-500/30 text-[#C5D3E0]"
+                              className="h-8 text-sm bg-[#0D1117] border-amber-500/30 text-[#E2ECF4]"
                             />
                           </div>
                           <div>
@@ -391,7 +391,7 @@ export default function AdminProduccionesPage() {
                               placeholder="09:00 - 11:00"
                               value={scheduleTime}
                               onChange={(e) => setScheduleTime(e.target.value)}
-                              className="h-8 text-sm bg-[#0D1117] border-amber-500/30 text-[#C5D3E0] placeholder:text-[#4A6070]"
+                              className="h-8 text-sm bg-[#0D1117] border-amber-500/30 text-[#E2ECF4] placeholder:text-[#7A96A8]"
                             />
                           </div>
                           <Button
@@ -408,21 +408,21 @@ export default function AdminProduccionesPage() {
 
                     {prod.observaciones && (
                       <div>
-                        <p className="text-sm font-medium text-[#C5D3E0] mb-1">Observaciones:</p>
-                        <p className="text-sm text-[#4A6070] whitespace-pre-line">{prod.observaciones}</p>
+                        <p className="text-sm font-medium text-[#E2ECF4] mb-1">Observaciones:</p>
+                        <p className="text-sm text-[#7A96A8] whitespace-pre-line">{prod.observaciones}</p>
                       </div>
                     )}
 
                     {/* Price */}
                     <div className="bg-[#0D1117] rounded-lg p-4 border border-[#263040]">
                       <div className="flex justify-between text-sm">
-                        <span className="text-[#4A6070]">Base</span>
-                        <span className="font-mono text-[#C5D3E0]">${prod.precioBase?.toFixed(2)}</span>
+                        <span className="text-[#7A96A8]">Base</span>
+                        <span className="font-mono text-[#E2ECF4]">${prod.precioBase?.toFixed(2)}</span>
                       </div>
                       {prod.precioExtras > 0 && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-[#4A6070]">Extras</span>
-                          <span className="font-mono text-[#C5D3E0]">${prod.precioExtras?.toFixed(2)}</span>
+                          <span className="text-[#7A96A8]">Extras</span>
+                          <span className="font-mono text-[#E2ECF4]">${prod.precioExtras?.toFixed(2)}</span>
                         </div>
                       )}
                       {prod.descuentoAplicado > 0 && (
@@ -433,14 +433,27 @@ export default function AdminProduccionesPage() {
                       )}
                       <hr className="my-2 border-[#263040]" />
                       <div className="flex justify-between font-bold">
-                        <span className="text-[#C5D3E0]">Total</span>
+                        <span className="text-[#E2ECF4]">Total</span>
                         <span className="text-[#F2B968] font-mono">${prod.precioFinal?.toFixed(2)} USD</span>
                       </div>
                     </div>
 
+                    {/* Valor estimado ratio */}
+                    {prod.valorEstimado && prod.valorEstimado > 0 && (
+                      <div className="bg-[#F2B968]/8 border border-[#F2B968]/25 rounded-lg p-4">
+                        <p className="text-xs text-[#F2B968] font-semibold mb-1">Ratio de inversión</p>
+                        <p className="text-lg font-bold text-[#E2ECF4]">
+                          {((prod.precioFinal / prod.valorEstimado) * 100).toFixed(3)}%
+                        </p>
+                        <p className="text-xs text-[#7A96A8]">
+                          ${prod.precioFinal.toFixed(0)} de ${prod.valorEstimado.toLocaleString("es-AR")} USD estimados
+                        </p>
+                      </div>
+                    )}
+
                     {/* Tags */}
                     <div>
-                      <p className="text-sm font-medium text-[#C5D3E0] mb-2 flex items-center gap-1">
+                      <p className="text-sm font-medium text-[#E2ECF4] mb-2 flex items-center gap-1">
                         <Tag className="w-4 h-4" /> Tags:
                       </p>
                       <div className="flex flex-wrap gap-2">
@@ -451,7 +464,7 @@ export default function AdminProduccionesPage() {
                             className={`text-xs px-3 py-1 rounded-full border transition ${
                               prod.tags.includes(tag)
                                 ? "bg-[#F2B968] text-[#0D1117] border-[#F2B968]"
-                                : "bg-[#0D1117] text-[#4A6070] border-[#263040] hover:border-[#3A4A60] hover:text-[#C5D3E0]"
+                                : "bg-[#0D1117] text-[#7A96A8] border-[#263040] hover:border-[#3A4A60] hover:text-[#E2ECF4]"
                             }`}
                           >
                             {tag}
@@ -463,7 +476,7 @@ export default function AdminProduccionesPage() {
                     {/* File upload */}
                     {prod.estado === "en_proceso" && (
                       <div>
-                        <Label className="text-[#C5D3E0] flex items-center gap-1 mb-1">
+                        <Label className="text-[#E2ECF4] flex items-center gap-1 mb-1">
                           <Upload className="w-4 h-4" /> Link de archivos (ZIP)
                         </Label>
                         <div className="flex gap-2">
@@ -471,7 +484,7 @@ export default function AdminProduccionesPage() {
                             value={fileUrl}
                             onChange={(e) => setFileUrl(e.target.value)}
                             placeholder="https://drive.google.com/..."
-                            className="bg-[#0D1117] border-[#263040] text-[#C5D3E0] placeholder:text-[#4A6070]"
+                            className="bg-[#0D1117] border-[#263040] text-[#E2ECF4] placeholder:text-[#7A96A8]"
                           />
                           <Button
                             onClick={() => saveFileUrl(prod)}
@@ -498,7 +511,7 @@ export default function AdminProduccionesPage() {
                         <Button
                           variant="outline"
                           onClick={() => changeStatus(prod, "en_proceso")}
-                          className="border-[#263040] text-[#C5D3E0] hover:bg-[#1E2A38]"
+                          className="border-[#263040] text-[#E2ECF4] hover:bg-[#1E2A38]"
                         >
                           Volver a En Proceso
                         </Button>
