@@ -7,7 +7,7 @@ import { createProduction, getInmobiliaria } from "@/lib/firebase/firestore";
 import { sendEmail, ADMIN_EMAIL } from "@/lib/email/send";
 import { calcularPrecioDepto } from "@/lib/pricing/departamentos";
 import { calcularPrecioCasa } from "@/lib/pricing/casas";
-import { precioBaseProgresivo } from "@/lib/pricing/utils";
+import { precioBaseProgresivo, precioPlano } from "@/lib/pricing/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +25,8 @@ import {
   Home,
   CheckCircle,
   Loader2,
+  X,
+  Plus,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 
@@ -491,9 +493,10 @@ export default function NuevaProduccionPage() {
 
       {/* Step 6: Resumen y precio */}
       {step === 6 && calcResult && (
-        <div className="space-y-6">
+        <div className="space-y-5">
           <h2 className="text-lg font-semibold text-[#E2ECF4] mb-6">Resumen y precio</h2>
 
+          {/* Property summary */}
           <div className="bg-[#161C26] rounded-xl border border-[#263040] p-5 space-y-3">
             <h3 className="font-semibold text-[#E2ECF4]">Propiedad</h3>
             <div className="grid grid-cols-2 gap-2 text-sm">
@@ -521,43 +524,65 @@ export default function NuevaProduccionPage() {
             </div>
           </div>
 
-          <div className="bg-[#161C26] rounded-xl border border-[#263040] p-5 space-y-3">
-            <h3 className="font-semibold text-[#E2ECF4]">Servicios</h3>
-            <div className="text-sm space-y-1">
-              <p className="text-[#E2ECF4]">
-                {servicios.soloFotos ? "Solo Fotos" : "Fotos + Video"}
-              </p>
-              {servicios.videoAdicional && <p className="text-[#E2ECF4]">+ Segundo Video</p>}
-              {servicios.plano2d && <p className="text-[#E2ECF4]">+ Plano 2D</p>}
-              {servicios.tour360 && <p className="text-[#E2ECF4]">+ Tour 360°</p>}
-              {servicios.drone && <p className="text-[#E2ECF4]">+ Drone</p>}
-              {servicios.amoblamiento && (
-                <p className="text-[#E2ECF4]">+ Amoblamiento Virtual ({servicios.cantidadFotosAmobladas} fotos)</p>
-              )}
-            </div>
-          </div>
-
-          <div className="bg-[#161C26] rounded-xl border border-[#263040] p-5 space-y-3">
-            <h3 className="font-semibold text-[#E2ECF4]">Desglose de precio</h3>
+          {/* Price breakdown with inline remove buttons */}
+          <div className="bg-[#161C26] rounded-xl border border-[#263040] p-5">
+            <h3 className="font-semibold text-[#E2ECF4] mb-4">Desglose</h3>
             <div className="text-sm space-y-2">
-              <div className="flex justify-between">
-                <span className="text-[#7A96A8]">
-                  Precio base {servicios.soloFotos ? "(solo fotos)" : "(fotos + video)"}
-                </span>
+
+              {/* Base package line */}
+              <div className="flex items-center justify-between py-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-[#7A96A8]">
+                    {servicios.soloFotos
+                      ? "Solo Fotos (−25%)"
+                      : servicios.videoAdicional
+                      ? "Fotos + 2do Video (+25%)"
+                      : "Fotos + Video"}
+                  </span>
+                  {(servicios.soloFotos || servicios.videoAdicional) && (
+                    <button
+                      onClick={() => setServicios((prev) => ({ ...prev, soloFotos: false, videoAdicional: false }))}
+                      className="w-4 h-4 rounded-full bg-[#263040] hover:bg-red-500/20 flex items-center justify-center transition"
+                      title="Revertir a Fotos + Video estándar"
+                    >
+                      <X className="w-2.5 h-2.5 text-[#7A96A8]" />
+                    </button>
+                  )}
+                </div>
                 <span className="text-[#E2ECF4] font-mono">${calcResult.precioBase.toFixed(2)}</span>
               </div>
 
-              {calcResult.desglose.map((item: PriceBreakdownItem, i: number) => (
-                <div key={i} className="flex justify-between">
-                  <span className="text-[#7A96A8]">
-                    {item.concepto}
-                    <span className="text-xs ml-1">({item.calculo})</span>
-                  </span>
-                  <span className="text-[#E2ECF4] font-mono">${item.monto.toFixed(2)}</span>
-                </div>
-              ))}
+              {/* Extras with remove buttons */}
+              {calcResult.desglose.map((item: PriceBreakdownItem, i: number) => {
+                const serviceKey =
+                  item.concepto.startsWith("Tour 360") ? "tour360"
+                  : item.concepto === "Plano 2D" ? "plano2d"
+                  : item.concepto === "Drone" ? "drone"
+                  : item.concepto === "Amoblamiento Virtual" ? "amoblamiento"
+                  : null;
+                return (
+                  <div key={i} className="flex items-center justify-between py-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[#7A96A8]">
+                        {item.concepto}
+                        <span className="text-xs ml-1 opacity-60">({item.calculo})</span>
+                      </span>
+                      {serviceKey && (
+                        <button
+                          onClick={() => toggleServicio(serviceKey as keyof ProductionServices)}
+                          className="w-4 h-4 rounded-full bg-[#263040] hover:bg-red-500/20 flex items-center justify-center transition"
+                          title="Quitar servicio"
+                        >
+                          <X className="w-2.5 h-2.5 text-[#7A96A8]" />
+                        </button>
+                      )}
+                    </div>
+                    <span className="text-[#E2ECF4] font-mono">${item.monto.toFixed(2)}</span>
+                  </div>
+                );
+              })}
 
-              <hr className="border-[#263040]" />
+              <hr className="border-[#263040] my-1" />
 
               <div className="flex justify-between">
                 <span className="text-[#7A96A8]">Subtotal</span>
@@ -567,7 +592,7 @@ export default function NuevaProduccionPage() {
               {calcResult.descuentoInmobiliaria > 0 && (
                 <div className="flex justify-between text-green-400">
                   <span>Descuento inmobiliaria ({calcResult.porcentajeDescuento}%)</span>
-                  <span className="font-mono">-${calcResult.descuentoInmobiliaria.toFixed(2)}</span>
+                  <span className="font-mono">−${calcResult.descuentoInmobiliaria.toFixed(2)}</span>
                 </div>
               )}
 
@@ -575,7 +600,7 @@ export default function NuevaProduccionPage() {
                 <p className="text-xs text-amber-400">* Se aplica mínimo de $50 USD</p>
               )}
 
-              <hr className="border-[#263040]" />
+              <hr className="border-[#263040] my-1" />
 
               <div className="flex justify-between items-center pt-1">
                 <span className="text-lg font-bold text-[#E2ECF4]">TOTAL</span>
@@ -584,21 +609,83 @@ export default function NuevaProduccionPage() {
                 </span>
               </div>
             </div>
+
+            {/* Quick-add suggestions */}
+            {(() => {
+              const m2Relevante = tipoPropiedad === "departamento" ? superficie : construida;
+              const m2T = tipoPropiedad === "departamento"
+                ? superficie + amenidades * 7
+                : construida + amenidades * 7;
+              const sugs: { key: keyof ProductionServices; label: string; price: string }[] = [];
+
+              if (!servicios.soloFotos && !servicios.videoAdicional) {
+                const incr = calcResult.precioBase * 0.25;
+                sugs.push({ key: "videoAdicional", label: "2do Video", price: `+$${incr.toFixed(2)}` });
+              }
+              if (!servicios.drone) {
+                sugs.push({ key: "drone", label: "Drone", price: "+$65.00" });
+              }
+              if (!servicios.plano2d) {
+                sugs.push({ key: "plano2d", label: "Plano 2D", price: `+$${precioPlano(m2Relevante).toFixed(2)}` });
+              }
+              if (!servicios.tour360) {
+                const pInt = Math.ceil(m2T / 10) * 2;
+                const pExt = tipoPropiedad === "casa" && descubierta > 0
+                  ? Math.ceil(Math.min(descubierta, 240) / 40 + 1 + amenidades) * 2
+                  : 0;
+                sugs.push({ key: "tour360", label: "Tour 360°", price: `+$${(pInt + pExt).toFixed(2)}` });
+              }
+              if (sugs.length === 0) return null;
+              return (
+                <div className="mt-4 pt-4 border-t border-[#263040]">
+                  <p className="text-xs text-[#7A96A8] uppercase tracking-wide mb-2">Agregar</p>
+                  <div className="flex flex-wrap gap-2">
+                    {sugs.map((s) => (
+                      <button
+                        key={s.key}
+                        onClick={() => toggleServicio(s.key)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#263040] bg-[#0D1117] text-sm text-[#7A96A8] hover:border-[#F2B968]/50 hover:text-[#F2B968] transition"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        {s.label}
+                        <span className="opacity-60 text-xs">{s.price}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
 
-          {/* Ratio card */}
+          {/* Ratio card — vs. comisión de venta */}
           {valorEstimado > 0 && (
             <div className="bg-[#F2B968]/8 border border-[#F2B968]/25 rounded-xl p-5">
-              <p className="text-sm font-semibold text-[#F2B968] mb-1">Ratio de inversión</p>
-              <p className="text-2xl font-bold text-[#E2ECF4]">
-                {((calcResult.total / valorEstimado) * 100).toFixed(3)}%
-              </p>
-              <p className="text-sm text-[#7A96A8] mt-1">
-                de ${valorEstimado.toLocaleString("es-AR")} USD estimados de la propiedad
-              </p>
-              <p className="text-xs text-[#7A96A8] mt-2">
-                Por cada $1.000 USD de valor de la propiedad, invertís ${((calcResult.total / valorEstimado) * 1000).toFixed(2)} USD en fotografía.
-              </p>
+              <p className="text-sm font-semibold text-[#F2B968] mb-4">Inversión vs. comisión de venta</p>
+              {(() => {
+                const comision = valorEstimado * 0.05;
+                const ratio = (calcResult.total / comision) * 100;
+                return (
+                  <>
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <div>
+                        <p className="text-xs text-[#7A96A8]">Comisión estimada (5%)</p>
+                        <p className="text-xl font-bold text-[#E2ECF4]">
+                          ${comision.toLocaleString("es-AR", { maximumFractionDigits: 0 })} USD
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-[#7A96A8]">Esta producción</p>
+                        <p className="text-xl font-bold text-[#E2ECF4]">${calcResult.total.toFixed(2)} USD</p>
+                      </div>
+                    </div>
+                    <div className="bg-[#F2B968]/10 rounded-lg px-4 py-3">
+                      <p className="text-xs text-[#7A96A8]">La producción representa</p>
+                      <p className="text-2xl font-bold text-[#F2B968]">{ratio.toFixed(2)}%</p>
+                      <p className="text-xs text-[#7A96A8]">de la comisión de venta estimada</p>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           )}
         </div>
@@ -610,7 +697,7 @@ export default function NuevaProduccionPage() {
           <Button
             variant="outline"
             onClick={() => setStep((step - 1) as Step)}
-            className="border-[#263040] text-[#E2ECF4] hover:bg-[#1E2A38]"
+            className="border-[#263040] bg-transparent text-[#E2ECF4] hover:bg-[#1E2A38]"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Anterior
@@ -619,7 +706,7 @@ export default function NuevaProduccionPage() {
           <Button
             variant="outline"
             onClick={() => router.push("/dashboard")}
-            className="border-[#263040] text-[#E2ECF4] hover:bg-[#1E2A38]"
+            className="border-[#263040] bg-transparent text-[#E2ECF4] hover:bg-[#1E2A38]"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Volver
