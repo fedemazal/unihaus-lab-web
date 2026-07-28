@@ -7,6 +7,7 @@ import { createProduction, getInmobiliaria } from "@/lib/firebase/firestore";
 import { sendEmail, ADMIN_EMAIL } from "@/lib/email/send";
 import { calcularPrecioDepto } from "@/lib/pricing/departamentos";
 import { calcularPrecioCasa } from "@/lib/pricing/casas";
+import { precioBaseProgresivo } from "@/lib/pricing/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -389,11 +390,11 @@ export default function NuevaProduccionPage() {
                 <p className="text-sm text-[#7A96A8]">
                   {tipoPropiedad === "departamento"
                     ? (() => {
-                        const supTotal = superficie + amenidades * 7;
-                        const tarifa = supTotal <= 60 ? 1.50 : supTotal <= 80 ? 1.35 : supTotal <= 100 ? 1.10 : 1.00;
-                        return `${superficie}m²${amenidades > 0 ? ` + ${amenidades} amenidades (${amenidades * 7}m²) = ${supTotal}m²` : ""} × $${tarifa.toFixed(2)}/m² = $${(supTotal * tarifa).toFixed(2)} USD`;
+                        const m2T = superficie + amenidades * 7;
+                        const precio = precioBaseProgresivo(m2T);
+                        return `${superficie}m²${amenidades > 0 ? ` + ${amenidades} amenidades (${amenidades * 7}m²) = ${m2T}m²` : ""} — tarifa progresiva = $${precio.toFixed(2)} USD`;
                       })()
-                    : "Calculado según superficie construida y descubierta"}
+                    : calcResult ? `Construida: $${calcResult.precioBase.toFixed(2)} USD base` : "Calculado según superficie construida y descubierta"}
                 </p>
               </div>
               <CheckCircle className="w-5 h-5 text-[#F2B968] shrink-0" />
@@ -403,12 +404,12 @@ export default function NuevaProduccionPage() {
           <p className="text-xs text-[#7A96A8] font-medium uppercase tracking-wide pt-2">Modificadores y extras</p>
 
           {[
-            { key: "soloFotos" as const, label: "Solo Fotos (sin video)", desc: "30% descuento sobre base" },
-            { key: "videoAdicional" as const, label: "Video Adicional", desc: "+20% sobre base" },
-            { key: "plano2d" as const, label: "Plano 2D", desc: "$0.35/m²" },
+            { key: "soloFotos" as const, label: "Solo Fotos (sin video)", desc: "−25% sobre base" },
+            { key: "videoAdicional" as const, label: "Segundo Video", desc: "+25% sobre base" },
+            { key: "plano2d" as const, label: "Plano 2D", desc: "$0.30/m² (≤35m²) o $0.25/m²" },
             { key: "tour360" as const, label: "Tour 360°", desc: "Calculado por superficie" },
             { key: "drone" as const, label: "Drone", desc: "$65 USD" },
-            { key: "amoblamiento" as const, label: "Amoblamiento Virtual", desc: "$6/foto" },
+            { key: "amoblamiento" as const, label: "Amoblamiento Virtual", desc: "$2/foto" },
           ].map((item) => (
             <div key={item.key}>
               <button
@@ -526,7 +527,7 @@ export default function NuevaProduccionPage() {
               <p className="text-[#E2ECF4]">
                 {servicios.soloFotos ? "Solo Fotos" : "Fotos + Video"}
               </p>
-              {servicios.videoAdicional && <p className="text-[#E2ECF4]">+ Video Adicional</p>}
+              {servicios.videoAdicional && <p className="text-[#E2ECF4]">+ Segundo Video</p>}
               {servicios.plano2d && <p className="text-[#E2ECF4]">+ Plano 2D</p>}
               {servicios.tour360 && <p className="text-[#E2ECF4]">+ Tour 360°</p>}
               {servicios.drone && <p className="text-[#E2ECF4]">+ Drone</p>}

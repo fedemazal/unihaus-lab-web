@@ -1,4 +1,5 @@
 import type { ProductionServices, PriceBreakdownItem } from "@/types";
+import { precioBaseProgresivo, precioPlano } from "./utils";
 
 interface DeptoPricingInput {
   superficie: number;
@@ -10,60 +11,38 @@ interface DeptoPricingInput {
 export function calcularPrecioDepto(datos: DeptoPricingInput) {
   const { superficie, amenidades, servicios, descuentoPorcentaje = 0 } = datos;
 
-  // 1. PRECIO BASE CON 3 RANGOS (superficie + amenidades × 7m²)
-  const m2Amenidades = amenidades * 7;
-  const superficieTotal = superficie + m2Amenidades;
-  let precioBase = 0;
-  let rangoAplicado = "";
-  let tarifaBase = 0;
+  // m² totales = propiedad + amenidades (1 amenidad = 7m²)
+  const m2Totales = superficie + amenidades * 7;
 
-  if (superficieTotal <= 60) {
-    precioBase = superficieTotal * 1.5;
-    rangoAplicado = "≤60m²";
-    tarifaBase = 1.5;
-  } else if (superficieTotal <= 80) {
-    precioBase = superficieTotal * 1.35;
-    rangoAplicado = "61-80m²";
-    tarifaBase = 1.35;
-  } else if (superficieTotal <= 100) {
-    precioBase = superficieTotal * 1.1;
-    rangoAplicado = "81-100m²";
-    tarifaBase = 1.1;
-  } else {
-    precioBase = superficieTotal * 1.0;
-    rangoAplicado = ">100m²";
-    tarifaBase = 1.0;
-  }
+  // Precio base progresivo — fotos HDR + 1 video ya incluidos
+  let precioBase = precioBaseProgresivo(m2Totales);
 
-  // 2. DESCUENTO SI SOLO FOTOS
+  // Ajuste de video (solo_fotos y segundo_video son mutuamente excluyentes)
   if (servicios.soloFotos) {
-    precioBase = precioBase * 0.7;
+    precioBase = precioBase * 0.75; // -25%, sin video
+  } else if (servicios.videoAdicional) {
+    precioBase = precioBase * 1.25; // +25%, 2do video
   }
 
-  // 3. EXTRAS
+  // Servicios adicionales
   let precioExtras = 0;
   const desglose: PriceBreakdownItem[] = [];
 
-  if (servicios.videoAdicional && !servicios.soloFotos) {
-    const monto = precioBase * 0.2;
-    precioExtras += monto;
-    desglose.push({ concepto: "Video Adicional", calculo: "Base × 20%", monto });
-  }
-
   if (servicios.plano2d) {
-    const monto = superficieTotal * 0.35;
+    const monto = precioPlano(superficie);
+    const tarifa = superficie <= 35 ? 0.30 : 0.25;
     precioExtras += monto;
-    desglose.push({ concepto: "Plano 2D", calculo: `${superficieTotal}m² × $0.35`, monto });
+    desglose.push({ concepto: "Plano 2D", calculo: `${superficie}m² × $${tarifa.toFixed(2)}`, monto });
   }
 
   if (servicios.tour360) {
-    const fotos = Math.ceil(superficieTotal / 10);
-    const monto = fotos * 2;
+    const puntos = Math.ceil(m2Totales / 10);
+    const monto = puntos * 2;
     precioExtras += monto;
     desglose.push({
       concepto: "Tour 360",
-      calculo: `${fotos} fotos × $2`,
-      detalle: `${superficieTotal}m² ÷ 10`,
+      calculo: `${puntos} pts × $2`,
+      detalle: `${m2Totales}m² ÷ 10`,
       monto,
     });
   }
@@ -74,28 +53,25 @@ export function calcularPrecioDepto(datos: DeptoPricingInput) {
   }
 
   if (servicios.amoblamiento && servicios.cantidadFotosAmobladas > 0) {
-    const monto = servicios.cantidadFotosAmobladas * 6;
+    const monto = servicios.cantidadFotosAmobladas * 2;
     precioExtras += monto;
     desglose.push({
       concepto: "Amoblamiento Virtual",
-      calculo: `${servicios.cantidadFotosAmobladas} fotos × $6`,
+      calculo: `${servicios.cantidadFotosAmobladas} fotos × $2`,
       monto,
     });
   }
 
-  // 4-7. SUBTOTAL, DESCUENTO, TOTAL, MÍNIMO
+  // Mínimo $50 se aplica antes del descuento
   const subtotal = precioBase + precioExtras;
-  const descuentoInmobiliaria = descuentoPorcentaje > 0 ? subtotal * (descuentoPorcentaje / 100) : 0;
-  let total = subtotal - descuentoInmobiliaria;
-  const minimoAplicado = total < 50;
-  total = Math.max(total, 50);
+  const withMinimo = Math.max(subtotal, 50);
+  const minimoAplicado = subtotal < 50;
+  const descuentoInmobiliaria = descuentoPorcentaje > 0 ? withMinimo * (descuentoPorcentaje / 100) : 0;
+  const total = withMinimo - descuentoInmobiliaria;
 
   return {
     precioBase,
-    rangoAplicado,
-    tarifaBase,
-    superficieTotal,
-    m2Amenidades,
+    m2Totales,
     precioExtras,
     desglose,
     subtotal,

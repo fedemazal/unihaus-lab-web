@@ -46,9 +46,9 @@ export default function BeneficiosPage() {
   }
 
   const examples = [
-    { label: "Depto 80m² (Fotos + Video)", base: 96, savings: (96 * inmobiliaria.descuento) / 100 },
-    { label: "Depto 100m² + Plano 2D", base: 145, savings: (145 * inmobiliaria.descuento) / 100 },
-    { label: "Casa 200m² + Tour 360", base: 280, savings: (280 * inmobiliaria.descuento) / 100 },
+    { label: "Depto 80m² (Fotos + Video)", base: 75, savings: (75 * inmobiliaria.descuento) / 100 },
+    { label: "Depto 100m² + Plano 2D", base: 108, savings: (108 * inmobiliaria.descuento) / 100 },
+    { label: "Casa 200m² + Tour 360", base: 145, savings: (145 * inmobiliaria.descuento) / 100 },
   ];
 
   return (
