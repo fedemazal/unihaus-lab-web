@@ -90,6 +90,7 @@ export function calcularPrecioDepto(datos: DeptoPricingInput) {
     precioExtras,
     desglose,
     subtotal,
+    withMinimo,
     descuentoInmobiliaria,
     porcentajeDescuento: descuentoPorcentaje,
     total,

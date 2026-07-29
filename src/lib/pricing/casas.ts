@@ -102,6 +102,7 @@ export function calcularPrecioCasa(datos: CasaPricingInput) {
     precioExtras,
     desglose,
     subtotal,
+    withMinimo,
     descuentoInmobiliaria,
     porcentajeDescuento: descuentoPorcentaje,
     total,

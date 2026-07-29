@@ -122,6 +122,7 @@ export default function NuevaProduccionPage() {
       case 1: return tipoPropiedad !== null;
       case 2:
         if (!direccion) return false;
+        if (!valorEstimado) return false;
         if (tipoPropiedad === "departamento") return superficie > 0;
         return construida > 0;
       case 3: return true;
@@ -288,7 +289,7 @@ export default function NuevaProduccionPage() {
                   placeholder="0"
                   className="mt-1 bg-[#0D1117] border-[#263040] text-[#E2ECF4] placeholder:text-[#7A96A8]"
                 />
-                <p className="text-xs text-[#7A96A8] mt-1">Balcón, terraza, patio. Si superan 30m² se cotiza aparte.</p>
+                <p className="text-xs text-[#7A96A8] mt-1">Balcón, terraza, patio, jardín.</p>
               </div>
             </>
           ) : (
@@ -332,7 +333,7 @@ export default function NuevaProduccionPage() {
           </div>
 
           <div>
-            <Label className="text-[#E2ECF4]">Valor estimado de la propiedad (USD) <span className="text-[#7A96A8] font-normal">— opcional</span></Label>
+            <Label className="text-[#E2ECF4]">Valor estimado de la propiedad (USD)</Label>
             <Input
               type="number"
               min={0}
@@ -403,6 +404,7 @@ export default function NuevaProduccionPage() {
                 <div className="flex items-center gap-2">
                   <p className="font-medium text-[#E2ECF4]">Fotos + Video</p>
                   <span className="text-xs bg-[#F2B968] text-[#0D1117] px-2 py-0.5 rounded-full font-semibold">Base</span>
+                  <span className="text-xs text-[#7A96A8]">(tarifa progresiva x m²)</span>
                 </div>
                 <p className="text-sm text-[#7A96A8]">
                   {tipoPropiedad === "departamento"
@@ -511,37 +513,30 @@ export default function NuevaProduccionPage() {
         <div className="space-y-5">
           <h2 className="text-lg font-semibold text-[#E2ECF4] mb-6">Resumen y precio</h2>
 
-          {/* Property summary */}
-          <div className="bg-[#161C26] rounded-xl border border-[#263040] p-5 space-y-3">
-            <h3 className="font-semibold text-[#E2ECF4]">Propiedad</h3>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <span className="text-[#7A96A8]">Tipo:</span>
-              <span className="text-[#E2ECF4] capitalize">{tipoPropiedad}</span>
-              <span className="text-[#7A96A8]">Dirección:</span>
-              <span className="text-[#E2ECF4]">{direccion}</span>
+          {/* Property summary — compact */}
+          <div className="bg-[#161C26] rounded-xl border border-[#263040] px-4 py-3">
+            <p className="text-xs text-[#7A96A8] truncate mb-1">{direccion}</p>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+              <span className="text-[#E2ECF4] capitalize font-medium">{tipoPropiedad}</span>
+              <span className="text-[#263040]">·</span>
               {tipoPropiedad === "departamento" ? (
-                <>
-                  <span className="text-[#7A96A8]">Superficie:</span>
-                  <span className="text-[#E2ECF4]">{superficie} m²</span>
-                  {descubierta > 0 && (
-                    <>
-                      <span className="text-[#7A96A8]">Semi + desc.:</span>
-                      <span className="text-[#E2ECF4]">{descubierta} m²</span>
-                    </>
-                  )}
-                </>
+                <span className="text-[#7A96A8]">
+                  {superficie}m² construidos
+                  {descubierta > 0 && ` · ${descubierta}m² semi+desc`}
+                </span>
               ) : (
+                <span className="text-[#7A96A8]">
+                  {construida}m² construidos · {descubierta}m² semi+desc
+                </span>
+              )}
+              {amenidades > 0 && (
                 <>
-                  <span className="text-[#7A96A8]">Construida:</span>
-                  <span className="text-[#E2ECF4]">{construida} m²</span>
-                  <span className="text-[#7A96A8]">Semi + desc.:</span>
-                  <span className="text-[#E2ECF4]">{descubierta} m²</span>
+                  <span className="text-[#263040]">·</span>
+                  <span className="text-[#7A96A8]">{amenidades} amenities</span>
                 </>
               )}
-              <span className="text-[#7A96A8]">Amenities:</span>
-              <span className="text-[#E2ECF4]">{amenidades}</span>
-              <span className="text-[#7A96A8]">Estado:</span>
-              <span className="text-[#E2ECF4] capitalize">{ocupacion}</span>
+              <span className="text-[#263040]">·</span>
+              <span className="text-[#7A96A8] capitalize">{ocupacion}</span>
             </div>
           </div>
 
@@ -559,6 +554,11 @@ export default function NuevaProduccionPage() {
                       : servicios.videoAdicional
                       ? "Fotos + Video + 2do Video (+25%)"
                       : "Fotos + Video"}
+                    <span className="text-xs ml-1 opacity-60">
+                      {tipoPropiedad === "departamento"
+                        ? `(para ${superficie + amenidades * 7}m²)`
+                        : `(para ${construida}m² construidos)`}
+                    </span>
                   </span>
                   {(servicios.soloFotos || servicios.videoAdicional) && (
                     <button
@@ -610,6 +610,10 @@ export default function NuevaProduccionPage() {
                 <span className="text-[#E2ECF4] font-mono">${calcResult.subtotal.toFixed(2)}</span>
               </div>
 
+              {calcResult.minimoAplicado && (
+                <p className="text-xs text-amber-400">* Se aplica mínimo de $50 USD</p>
+              )}
+
               {calcResult.descuentoInmobiliaria > 0 && (
                 <div className="flex justify-between text-green-400">
                   <span>Descuento inmobiliaria ({calcResult.porcentajeDescuento}%)</span>
@@ -617,17 +621,46 @@ export default function NuevaProduccionPage() {
                 </div>
               )}
 
-              {calcResult.minimoAplicado && (
-                <p className="text-xs text-amber-400">* Se aplica mínimo de $50 USD</p>
-              )}
+              {(() => {
+                const elegibles = [
+                  true,
+                  !servicios.soloFotos,
+                  servicios.videoAdicional,
+                  servicios.plano2d,
+                  servicios.tour360,
+                  servicios.drone,
+                ].filter(Boolean).length;
+                if (elegibles < 4) return null;
+                const descPaquete = calcResult.withMinimo * 0.05;
+                return (
+                  <div className="flex justify-between text-green-400">
+                    <span>Descuento paquete 4+ servicios (5%)</span>
+                    <span className="font-mono">−${descPaquete.toFixed(2)}</span>
+                  </div>
+                );
+              })()}
 
               <hr className="border-[#263040] my-1" />
 
               <div className="flex justify-between items-center pt-1">
                 <span className="text-lg font-bold text-[#E2ECF4]">TOTAL</span>
-                <span className="text-2xl font-bold text-[#F2B968] font-mono">
-                  ${calcResult.total.toFixed(2)} USD
-                </span>
+                {(() => {
+                  const elegibles = [
+                    true,
+                    !servicios.soloFotos,
+                    servicios.videoAdicional,
+                    servicios.plano2d,
+                    servicios.tour360,
+                    servicios.drone,
+                  ].filter(Boolean).length;
+                  const descPaquete = elegibles >= 4 ? calcResult.withMinimo * 0.05 : 0;
+                  const totalFinal = calcResult.total - descPaquete;
+                  return (
+                    <span className="text-2xl font-bold text-[#F2B968] font-mono">
+                      ${totalFinal.toFixed(2)} USD
+                    </span>
+                  );
+                })()}
               </div>
             </div>
 
@@ -659,7 +692,7 @@ export default function NuevaProduccionPage() {
               if (sugs.length === 0) return null;
               return (
                 <div className="mt-4 pt-4 border-t border-[#263040]">
-                  <p className="text-xs text-[#7A96A8] uppercase tracking-wide mb-2">Agregar</p>
+                  <p className="text-xs text-[#7A96A8] uppercase tracking-wide mb-2">Agregar <span className="normal-case opacity-70">(por si creés que puede sumar)</span></p>
                   <div className="flex flex-wrap gap-2">
                     {sugs.map((s) => (
                       <button
@@ -678,37 +711,48 @@ export default function NuevaProduccionPage() {
             })()}
           </div>
 
-          {/* Ratio card — vs. comisión de venta */}
-          {valorEstimado > 0 && (
-            <div className="bg-[#F2B968]/8 border border-[#F2B968]/25 rounded-xl p-5">
-              <p className="text-sm font-semibold text-[#F2B968] mb-4">Inversión vs. comisión de venta</p>
-              {(() => {
-                const comision = valorEstimado * 0.05;
-                const ratio = (calcResult.total / comision) * 100;
-                return (
-                  <>
-                    <div className="grid grid-cols-2 gap-3 mb-3">
-                      <div>
-                        <p className="text-xs text-[#7A96A8]">Comisión estimada (5%)</p>
-                        <p className="text-xl font-bold text-[#E2ECF4]">
-                          ${comision.toLocaleString("es-AR", { maximumFractionDigits: 0 })} USD
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-[#7A96A8]">Esta producción</p>
-                        <p className="text-xl font-bold text-[#E2ECF4]">${calcResult.total.toFixed(2)} USD</p>
-                      </div>
-                    </div>
-                    <div className="bg-[#F2B968]/10 rounded-lg px-4 py-3">
-                      <p className="text-xs text-[#7A96A8]">La producción representa</p>
-                      <p className="text-2xl font-bold text-[#F2B968]">{ratio.toFixed(2)}%</p>
-                      <p className="text-xs text-[#7A96A8]">de la comisión de venta estimada</p>
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
-          )}
+          {/* Ratio card — 4 cuadrantes */}
+          {(() => {
+            const elegibles = [
+              true,
+              !servicios.soloFotos,
+              servicios.videoAdicional,
+              servicios.plano2d,
+              servicios.tour360,
+              servicios.drone,
+            ].filter(Boolean).length;
+            const descPaquete = elegibles >= 4 ? calcResult.withMinimo * 0.05 : 0;
+            const totalFinal = calcResult.total - descPaquete;
+            const comision = valorEstimado * 0.05;
+            const ratio = (totalFinal / comision) * 100;
+            return (
+              <div className="bg-[#F2B968]/8 border border-[#F2B968]/25 rounded-xl p-5">
+                <p className="text-sm font-semibold text-[#F2B968] mb-4">Inversión vs. comisión de venta</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-[#0D1117]/40 rounded-lg px-3 py-3">
+                    <p className="text-xs text-[#7A96A8] mb-1">Valor inmueble</p>
+                    <p className="text-lg font-bold text-[#E2ECF4]">
+                      ${valorEstimado.toLocaleString("es-AR", { maximumFractionDigits: 0 })} USD
+                    </p>
+                  </div>
+                  <div className="bg-[#0D1117]/40 rounded-lg px-3 py-3">
+                    <p className="text-xs text-[#7A96A8] mb-1">Comisión estimada (5%)</p>
+                    <p className="text-lg font-bold text-[#E2ECF4]">
+                      ${comision.toLocaleString("es-AR", { maximumFractionDigits: 0 })} USD
+                    </p>
+                  </div>
+                  <div className="bg-[#0D1117]/40 rounded-lg px-3 py-3">
+                    <p className="text-xs text-[#7A96A8] mb-1">Esta producción</p>
+                    <p className="text-lg font-bold text-[#E2ECF4]">${totalFinal.toFixed(2)} USD</p>
+                  </div>
+                  <div className="bg-[#F2B968]/10 rounded-lg px-3 py-3">
+                    <p className="text-xs text-[#7A96A8] mb-1">% de la comisión</p>
+                    <p className="text-lg font-bold text-[#F2B968]">{ratio.toFixed(2)}%</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
 
