@@ -1,17 +1,18 @@
 import type { ProductionServices, PriceBreakdownItem } from "@/types";
-import { precioBaseProgresivo, precioPlano } from "./utils";
+import { precioBaseProgresivo, precioDescubiertoProgresivo, precioPlano } from "./utils";
 
 interface DeptoPricingInput {
   superficie: number;
+  descubierta?: number;
   amenidades: number;
   servicios: ProductionServices;
   descuentoPorcentaje?: number;
 }
 
 export function calcularPrecioDepto(datos: DeptoPricingInput) {
-  const { superficie, amenidades, servicios, descuentoPorcentaje = 0 } = datos;
+  const { superficie, descubierta = 0, amenidades, servicios, descuentoPorcentaje = 0 } = datos;
 
-  // m² totales = propiedad + amenidades (1 amenidad = 7m²)
+  // m² totales = propiedad + amenities (1 amenity = 7m²)
   const m2Totales = superficie + amenidades * 7;
 
   // Precio base progresivo — fotos HDR + 1 video ya incluidos
@@ -24,9 +25,23 @@ export function calcularPrecioDepto(datos: DeptoPricingInput) {
     precioBase = precioBase * 1.25; // +25%, 2do video
   }
 
+  // Semi + descubiertos: si > 30m², se pricean con la tarifa descubiertos de casas
+  let precioSemiDesc = 0;
+  if (descubierta > 30) {
+    precioSemiDesc = precioDescubiertoProgresivo(descubierta);
+  }
+
   // Servicios adicionales
-  let precioExtras = 0;
+  let precioExtras = precioSemiDesc;
   const desglose: PriceBreakdownItem[] = [];
+
+  if (descubierta > 30) {
+    desglose.push({
+      concepto: "Semi + Descubiertos",
+      calculo: `${descubierta}m² — tarifa descubiertos`,
+      monto: precioSemiDesc,
+    });
+  }
 
   if (servicios.plano2d) {
     const monto = precioPlano(superficie);
@@ -42,7 +57,7 @@ export function calcularPrecioDepto(datos: DeptoPricingInput) {
     desglose.push({
       concepto: "Tour 360",
       calculo: `${puntos} pts × $2`,
-      detalle: `${m2Totales}m² ÷ 10`,
+      detalle: `${superficie}m²${amenidades > 0 ? ` + ${amenidades} amenities × 7m²` : ""} ÷ 10`,
       monto,
     });
   }

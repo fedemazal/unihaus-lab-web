@@ -55,7 +55,7 @@ export function calcularPrecioCasa(datos: CasaPricingInput) {
     desglose.push({
       concepto: "Tour 360 Interior",
       calculo: `${puntosInterior} pts × $2`,
-      detalle: `(${construida}m² + ${amenidades} amenidades × 7m²) ÷ 10`,
+      detalle: `(${construida}m² + ${amenidades} amenities × 7m²) ÷ 10`,
       monto: montoInterior,
     });
 
@@ -65,8 +65,8 @@ export function calcularPrecioCasa(datos: CasaPricingInput) {
         concepto: "Tour 360 Exterior",
         calculo: `${puntosExterior} pts × $2`,
         detalle: descubierta > 240
-          ? `Tope 240m² ÷ 40 + calle + ${amenidades} amenidades`
-          : `${descubierta}m² ÷ 40 + calle + ${amenidades} amenidades`,
+          ? `Tope 240m² ÷ 40 + calle + ${amenidades} amenities`
+          : `${descubierta}m² ÷ 40 + calle + ${amenidades} amenities`,
         monto: montoExterior,
       });
       void m2Tope;

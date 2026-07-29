@@ -102,6 +102,7 @@ export default function NuevaProduccionPage() {
   const calcResult = tipoPropiedad === "departamento"
     ? calcularPrecioDepto({
         superficie,
+        descubierta,
         amenidades,
         servicios,
         descuentoPorcentaje: descuento,
@@ -265,17 +266,31 @@ export default function NuevaProduccionPage() {
           </div>
 
           {tipoPropiedad === "departamento" ? (
-            <div>
-              <Label className="text-[#E2ECF4]">Superficie (m²)</Label>
-              <Input
-                type="number"
-                min={1}
-                value={superficie || ""}
-                onChange={(e) => setSuperficie(Number(e.target.value))}
-                placeholder="85"
-                className="mt-1 bg-[#0D1117] border-[#263040] text-[#E2ECF4] placeholder:text-[#7A96A8]"
-              />
-            </div>
+            <>
+              <div>
+                <Label className="text-[#E2ECF4]">Superficie (m²)</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={superficie || ""}
+                  onChange={(e) => setSuperficie(Number(e.target.value))}
+                  placeholder="85"
+                  className="mt-1 bg-[#0D1117] border-[#263040] text-[#E2ECF4] placeholder:text-[#7A96A8]"
+                />
+              </div>
+              <div>
+                <Label className="text-[#E2ECF4]">Semi + descubiertos (m²) <span className="text-[#7A96A8] font-normal">— opcional</span></Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={descubierta || ""}
+                  onChange={(e) => setDescubierta(Number(e.target.value))}
+                  placeholder="0"
+                  className="mt-1 bg-[#0D1117] border-[#263040] text-[#E2ECF4] placeholder:text-[#7A96A8]"
+                />
+                <p className="text-xs text-[#7A96A8] mt-1">Balcón, terraza, patio. Si superan 30m² se cotiza aparte.</p>
+              </div>
+            </>
           ) : (
             <>
               <div>
@@ -290,7 +305,7 @@ export default function NuevaProduccionPage() {
                 />
               </div>
               <div>
-                <Label className="text-[#E2ECF4]">Superficie descubierta (m²)</Label>
+                <Label className="text-[#E2ECF4]">Semi + descubiertos (m²)</Label>
                 <Input
                   type="number"
                   min={0}
@@ -304,7 +319,7 @@ export default function NuevaProduccionPage() {
           )}
 
           <div>
-            <Label className="text-[#E2ECF4]">Amenidades (cantidad)</Label>
+            <Label className="text-[#E2ECF4]">Amenities (cantidad)</Label>
             <Input
               type="number"
               min={0}
@@ -394,7 +409,7 @@ export default function NuevaProduccionPage() {
                     ? (() => {
                         const m2T = superficie + amenidades * 7;
                         const precio = precioBaseProgresivo(m2T);
-                        return `${superficie}m²${amenidades > 0 ? ` + ${amenidades} amenidades (${amenidades * 7}m²) = ${m2T}m²` : ""} — tarifa progresiva = $${precio.toFixed(2)} USD`;
+                        return `${superficie}m²${amenidades > 0 ? ` + ${amenidades} amenities (${amenidades * 7}m²) = ${m2T}m²` : ""} — tarifa progresiva = $${precio.toFixed(2)} USD`;
                       })()
                     : calcResult ? `Construida: $${calcResult.precioBase.toFixed(2)} USD base` : "Calculado según superficie construida y descubierta"}
                 </p>
@@ -508,16 +523,22 @@ export default function NuevaProduccionPage() {
                 <>
                   <span className="text-[#7A96A8]">Superficie:</span>
                   <span className="text-[#E2ECF4]">{superficie} m²</span>
+                  {descubierta > 0 && (
+                    <>
+                      <span className="text-[#7A96A8]">Semi + desc.:</span>
+                      <span className="text-[#E2ECF4]">{descubierta} m²</span>
+                    </>
+                  )}
                 </>
               ) : (
                 <>
                   <span className="text-[#7A96A8]">Construida:</span>
                   <span className="text-[#E2ECF4]">{construida} m²</span>
-                  <span className="text-[#7A96A8]">Descubierta:</span>
+                  <span className="text-[#7A96A8]">Semi + desc.:</span>
                   <span className="text-[#E2ECF4]">{descubierta} m²</span>
                 </>
               )}
-              <span className="text-[#7A96A8]">Amenidades:</span>
+              <span className="text-[#7A96A8]">Amenities:</span>
               <span className="text-[#E2ECF4]">{amenidades}</span>
               <span className="text-[#7A96A8]">Estado:</span>
               <span className="text-[#E2ECF4] capitalize">{ocupacion}</span>
