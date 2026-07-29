@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { getMateriales } from "@/lib/firebase/firestore";
 import type { MaterialPreparacion } from "@/types";
-import { CheckCircle, Circle, Share2, FileText, Image, ExternalLink, Download, Check } from "lucide-react";
+import { CheckCircle, Circle, FileText, Image, ExternalLink, Download, Check, User, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface CheckItem {
@@ -91,7 +91,7 @@ const sections: Section[] = [
 export default function PreparacionPage() {
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [materiales, setMateriales] = useState<MaterialPreparacion[]>([]);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<"" | "propietario" | "inquilino">("");
 
   useEffect(() => {
     getMateriales()
@@ -108,11 +108,11 @@ export default function PreparacionPage() {
     });
   };
 
-  const handleShare = () => {
-    const url = `${window.location.origin}/preparacion-cliente`;
+  const handleShare = (tipo: "propietario" | "inquilino") => {
+    const url = `${window.location.origin}/preparacion-cliente?tipo=${tipo}`;
     navigator.clipboard.writeText(url).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setCopied(tipo);
+      setTimeout(() => setCopied(""), 2000);
     });
   };
 
@@ -122,30 +122,36 @@ export default function PreparacionPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="flex items-start justify-between gap-4 mb-2">
-        <h1 className="text-2xl font-bold text-[#E2ECF4]">Preparación de Propiedad</h1>
+      <h1 className="text-2xl font-bold text-[#E2ECF4] mb-1">Preparación de Propiedad</h1>
+      <p className="text-[#7A96A8] mb-5">
+        Compartí el link de la guía con tu cliente según su caso.
+      </p>
+      <div className="flex flex-wrap gap-2 mb-8">
         <Button
-          onClick={handleShare}
+          onClick={() => handleShare("propietario")}
           variant="outline"
           size="sm"
-          className="border-[#263040] text-[#E2ECF4] hover:bg-[#1E2A38] shrink-0"
+          className="border-[#263040] bg-transparent text-[#E2ECF4] hover:bg-[#1E2A38] shrink-0"
         >
-          {copied ? (
-            <>
-              <Check className="w-4 h-4 mr-1 text-green-400" />
-              <span className="text-green-400">Copiado</span>
-            </>
+          {copied === "propietario" ? (
+            <><Check className="w-4 h-4 mr-1.5 text-green-400" /><span className="text-green-400">Copiado</span></>
           ) : (
-            <>
-              <Share2 className="w-4 h-4 mr-1" />
-              Compartir con cliente
-            </>
+            <><Home className="w-4 h-4 mr-1.5" />Propietario</>
+          )}
+        </Button>
+        <Button
+          onClick={() => handleShare("inquilino")}
+          variant="outline"
+          size="sm"
+          className="border-[#263040] bg-transparent text-[#E2ECF4] hover:bg-[#1E2A38] shrink-0"
+        >
+          {copied === "inquilino" ? (
+            <><Check className="w-4 h-4 mr-1.5 text-green-400" /><span className="text-green-400">Copiado</span></>
+          ) : (
+            <><User className="w-4 h-4 mr-1.5" />Inquilino</>
           )}
         </Button>
       </div>
-      <p className="text-[#7A96A8] mb-6">
-        Seguí esta guía para que tu propiedad luzca increíble en las fotos y videos. Podés compartir este checklist con tu cliente.
-      </p>
 
       {/* Progress */}
       <div className="bg-[#161C26] border border-[#263040] rounded-xl p-4 mb-8">
