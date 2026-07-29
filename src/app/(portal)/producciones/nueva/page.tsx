@@ -536,7 +536,7 @@ export default function NuevaProduccionPage() {
                     {servicios.soloFotos
                       ? "Solo Fotos (−25%)"
                       : servicios.videoAdicional
-                      ? "Fotos + 2do Video (+25%)"
+                      ? "Fotos + Video + 2do Video (+25%)"
                       : "Fotos + Video"}
                   </span>
                   {(servicios.soloFotos || servicios.videoAdicional) && (
