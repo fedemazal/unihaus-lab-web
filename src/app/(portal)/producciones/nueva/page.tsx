@@ -736,7 +736,7 @@ export default function NuevaProduccionPage() {
                     </p>
                   </div>
                   <div className="bg-[#0D1117]/40 rounded-lg px-3 py-3">
-                    <p className="text-xs text-[#7A96A8] mb-1">Comisión estimada (5%)</p>
+                    <p className="text-xs text-[#7A96A8] mb-1">Comisión estimada (5% según promedios generales)</p>
                     <p className="text-lg font-bold text-[#E2ECF4]">
                       ${comision.toLocaleString("es-AR", { maximumFractionDigits: 0 })} USD
                     </p>
