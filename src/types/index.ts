@@ -85,6 +85,7 @@ export interface Production {
   precioExtras: number;
   subtotal: number;
   descuentoAplicado: number;
+  descuentoPaquete?: number;
   precioFinal: number;
   desglose: PriceBreakdownItem[];
   valorEstimado?: number;

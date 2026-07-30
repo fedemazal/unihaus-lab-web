@@ -325,23 +325,42 @@ export default function AdminProduccionesPage() {
                 {isExpanded && (
                   <div className="border-t border-[#263040] p-5 space-y-5">
                     {/* Property details */}
-                    <div className="grid sm:grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-[#7A96A8]">Tipo: <span className="text-[#E2ECF4] capitalize">{prod.tipoPropiedad}</span></p>
-                        {prod.superficie && <p className="text-[#7A96A8]">Superficie: <span className="text-[#E2ECF4]">{prod.superficie} m²</span></p>}
-                        {prod.construida && <p className="text-[#7A96A8]">Construida: <span className="text-[#E2ECF4]">{prod.construida} m²</span></p>}
-                        {prod.descubierta !== undefined && prod.descubierta > 0 && <p className="text-[#7A96A8]">Descubierta: <span className="text-[#E2ECF4]">{prod.descubierta} m²</span></p>}
-                        <p className="text-[#7A96A8]">Amenidades: <span className="text-[#E2ECF4]">{prod.amenidades}</span></p>
-                        <p className="text-[#7A96A8]">Estado: <span className="text-[#E2ECF4] capitalize">{prod.estadoPropiedad?.ocupacion}</span></p>
+                    <div className="bg-[#0D1117] rounded-lg px-4 py-3 border border-[#263040]">
+                      <p className="text-xs text-[#7A96A8] capitalize font-medium mb-2">{prod.tipoPropiedad}</p>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#7A96A8]">
+                        {prod.superficie && <span><span className="text-[#E2ECF4] font-medium">{prod.superficie}m²</span> construidos</span>}
+                        {prod.construida && <span><span className="text-[#E2ECF4] font-medium">{prod.construida}m²</span> construidos</span>}
+                        {prod.descubierta !== undefined && prod.descubierta > 0 && <span><span className="text-[#E2ECF4] font-medium">{prod.descubierta}m²</span> semi+desc</span>}
+                        {prod.amenidades > 0 && <span><span className="text-[#E2ECF4] font-medium">{prod.amenidades}</span> amenities</span>}
+                        <span className="capitalize"><span className="text-[#E2ECF4] font-medium">{prod.estadoPropiedad?.ocupacion}</span></span>
                       </div>
-                      <div>
-                        <p className="font-medium text-[#E2ECF4] mb-1">Servicios:</p>
-                        <p className="text-[#E2ECF4]">{prod.servicios?.soloFotos ? "Solo Fotos" : "Fotos + Video"}</p>
-                        {prod.servicios?.videoAdicional && <p className="text-[#E2ECF4]">+ Video Adicional</p>}
-                        {prod.servicios?.plano2d && <p className="text-[#E2ECF4]">+ Plano 2D</p>}
-                        {prod.servicios?.tour360 && <p className="text-[#E2ECF4]">+ Tour 360°</p>}
-                        {prod.servicios?.drone && <p className="text-[#E2ECF4]">+ Drone</p>}
-                        {prod.servicios?.amoblamiento && <p className="text-[#E2ECF4]">+ Amoblamiento ({prod.servicios.cantidadFotosAmobladas} fotos)</p>}
+                    </div>
+
+                    {/* Services */}
+                    <div>
+                      <p className="text-xs text-[#7A96A8] uppercase tracking-wide mb-2">Servicios solicitados</p>
+                      <div className="flex flex-wrap gap-2">
+                        {(() => {
+                          const chips = [
+                            { label: prod.servicios?.soloFotos ? "Solo Fotos −25%" : prod.servicios?.videoAdicional ? "Fotos + Video + 2do Video" : "Fotos + Video", base: true },
+                            prod.servicios?.plano2d ? { label: "Plano 2D" } : null,
+                            prod.servicios?.tour360 ? { label: "Tour 360°" } : null,
+                            prod.servicios?.drone ? { label: "Drone" } : null,
+                            prod.servicios?.amoblamiento ? { label: `Amoblamiento (${prod.servicios.cantidadFotosAmobladas} fotos)` } : null,
+                          ].filter(Boolean) as { label: string; base?: boolean }[];
+                          return chips.map((c, i) => (
+                            <span
+                              key={i}
+                              className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border font-medium ${
+                                c.base
+                                  ? "bg-[#F2B968]/12 border-[#F2B968]/40 text-[#F2B968]"
+                                  : "bg-[#161C26] border-[#263040] text-[#E2ECF4]"
+                              }`}
+                            >
+                              {c.label}
+                            </span>
+                          ));
+                        })()}
                       </div>
                     </div>
 
@@ -413,41 +432,86 @@ export default function AdminProduccionesPage() {
                       </div>
                     )}
 
-                    {/* Price */}
-                    <div className="bg-[#0D1117] rounded-lg p-4 border border-[#263040]">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-[#7A96A8]">Base</span>
+                    {/* Price breakdown */}
+                    <div className="bg-[#0D1117] rounded-lg p-4 border border-[#263040] text-sm space-y-1.5">
+                      <p className="text-xs text-[#7A96A8] uppercase tracking-wide mb-3">Desglose</p>
+
+                      {/* Base line */}
+                      <div className="flex justify-between">
+                        <span className="text-[#7A96A8]">
+                          {prod.servicios?.soloFotos ? "Solo Fotos (−25%)" : prod.servicios?.videoAdicional ? "Fotos + Video + 2do Video (+25%)" : "Fotos + Video"}
+                        </span>
                         <span className="font-mono text-[#E2ECF4]">${prod.precioBase?.toFixed(2)}</span>
                       </div>
-                      {prod.precioExtras > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-[#7A96A8]">Extras</span>
-                          <span className="font-mono text-[#E2ECF4]">${prod.precioExtras?.toFixed(2)}</span>
+
+                      {/* Extra items from desglose */}
+                      {prod.desglose?.map((item, i) => (
+                        <div key={i} className="flex justify-between">
+                          <span className="text-[#7A96A8]">
+                            {item.concepto}
+                            <span className="text-xs opacity-50 ml-1">({item.calculo})</span>
+                          </span>
+                          <span className="font-mono text-[#E2ECF4]">${item.monto?.toFixed(2)}</span>
                         </div>
-                      )}
+                      ))}
+
+                      <hr className="border-[#263040] my-1" />
+
+                      <div className="flex justify-between text-[#7A96A8]">
+                        <span>Subtotal</span>
+                        <span className="font-mono text-[#E2ECF4]">${prod.subtotal?.toFixed(2)}</span>
+                      </div>
+
                       {prod.descuentoAplicado > 0 && (
-                        <div className="flex justify-between text-sm text-green-400">
-                          <span>Descuento</span>
-                          <span className="font-mono">-${prod.descuentoAplicado?.toFixed(2)}</span>
+                        <div className="flex justify-between text-green-400">
+                          <span>Descuento inmobiliaria</span>
+                          <span className="font-mono">−${prod.descuentoAplicado?.toFixed(2)}</span>
                         </div>
                       )}
-                      <hr className="my-2 border-[#263040]" />
-                      <div className="flex justify-between font-bold">
-                        <span className="text-[#E2ECF4]">Total</span>
+
+                      {(prod.descuentoPaquete ?? 0) > 0 && (
+                        <div className="flex justify-between text-green-400">
+                          <span>Descuento paquete 4+ servicios (5%)</span>
+                          <span className="font-mono">−${prod.descuentoPaquete?.toFixed(2)}</span>
+                        </div>
+                      )}
+
+                      <hr className="border-[#263040] my-1" />
+
+                      <div className="flex justify-between font-bold text-base">
+                        <span className="text-[#E2ECF4]">TOTAL</span>
                         <span className="text-[#F2B968] font-mono">${prod.precioFinal?.toFixed(2)} USD</span>
                       </div>
                     </div>
 
-                    {/* Valor estimado ratio */}
+                    {/* Ratio de inversión — 4 cuadrantes */}
                     {prod.valorEstimado && prod.valorEstimado > 0 && (
                       <div className="bg-[#F2B968]/8 border border-[#F2B968]/25 rounded-lg p-4">
-                        <p className="text-xs text-[#F2B968] font-semibold mb-1">Ratio de inversión</p>
-                        <p className="text-lg font-bold text-[#E2ECF4]">
-                          {((prod.precioFinal / prod.valorEstimado) * 100).toFixed(3)}%
-                        </p>
-                        <p className="text-xs text-[#7A96A8]">
-                          ${prod.precioFinal.toFixed(0)} de ${prod.valorEstimado.toLocaleString("es-AR")} USD estimados
-                        </p>
+                        <p className="text-xs text-[#F2B968] font-semibold uppercase tracking-wide mb-3">Inversión vs. comisión de venta</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="bg-[#0D1117]/40 rounded-lg px-3 py-2.5">
+                            <p className="text-xs text-[#7A96A8] mb-1">Valor inmueble</p>
+                            <p className="text-base font-bold text-[#E2ECF4]">
+                              ${prod.valorEstimado.toLocaleString("es-AR")} USD
+                            </p>
+                          </div>
+                          <div className="bg-[#0D1117]/40 rounded-lg px-3 py-2.5">
+                            <p className="text-xs text-[#7A96A8] mb-1">Comisión est. (5%)</p>
+                            <p className="text-base font-bold text-[#E2ECF4]">
+                              ${(prod.valorEstimado * 0.05).toLocaleString("es-AR", { maximumFractionDigits: 0 })} USD
+                            </p>
+                          </div>
+                          <div className="bg-[#0D1117]/40 rounded-lg px-3 py-2.5">
+                            <p className="text-xs text-[#7A96A8] mb-1">Esta producción</p>
+                            <p className="text-base font-bold text-[#E2ECF4]">${prod.precioFinal?.toFixed(2)} USD</p>
+                          </div>
+                          <div className="bg-[#F2B968]/10 rounded-lg px-3 py-2.5">
+                            <p className="text-xs text-[#7A96A8] mb-1">% de la comisión</p>
+                            <p className="text-base font-bold text-[#F2B968]">
+                              {((prod.precioFinal / (prod.valorEstimado * 0.05)) * 100).toFixed(2)}%
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     )}
 

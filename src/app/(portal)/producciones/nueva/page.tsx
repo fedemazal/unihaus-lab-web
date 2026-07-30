@@ -142,6 +142,17 @@ export default function NuevaProduccionPage() {
         .map((h) => h.trim())
         .filter(Boolean);
 
+      const elegibles = [
+        true,
+        !servicios.soloFotos,
+        servicios.videoAdicional,
+        servicios.plano2d,
+        servicios.tour360,
+        servicios.drone,
+      ].filter(Boolean).length;
+      const descuentoPaquete = elegibles >= 4 ? calcResult.withMinimo * 0.05 : 0;
+      const precioFinalReal = calcResult.total - descuentoPaquete;
+
       await createProduction({
         agenteId: profile.uid,
         agenteNombre: profile.nombre,
@@ -149,7 +160,7 @@ export default function NuevaProduccionPage() {
         inmobiliariaNombre: "",
         tipoPropiedad: tipoPropiedad!,
         direccion,
-        ...(tipoPropiedad === "departamento" ? { superficie } : { construida, descubierta }),
+        ...(tipoPropiedad === "departamento" ? { superficie, descubierta } : { construida, descubierta }),
         amenidades,
         estadoPropiedad: {
           ocupacion,
@@ -163,9 +174,10 @@ export default function NuevaProduccionPage() {
         precioExtras: calcResult.precioExtras,
         subtotal: calcResult.subtotal,
         descuentoAplicado: calcResult.descuentoInmobiliaria,
-        precioFinal: calcResult.total,
+        descuentoPaquete,
+        precioFinal: precioFinalReal,
         desglose: calcResult.desglose,
-        ...(valorEstimado > 0 ? { valorEstimado } : {}),
+        valorEstimado,
         estado: "pendiente",
         tags: [],
         archivos: { fotosVideosZip: null, planoImagen: null },
@@ -178,7 +190,7 @@ export default function NuevaProduccionPage() {
         agenteNombre: profile.nombre,
         direccion,
         tipoPropiedad: tipoPropiedad!,
-        precioFinal: calcResult.total,
+        precioFinal: precioFinalReal,
       });
     } catch (err) {
       console.error("Error creating production:", err);
