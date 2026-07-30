@@ -332,7 +332,14 @@ export default function AdminProduccionesPage() {
                         {prod.construida && <span><span className="text-[#E2ECF4] font-medium">{prod.construida}m²</span> construidos</span>}
                         {prod.descubierta !== undefined && prod.descubierta > 0 && <span><span className="text-[#E2ECF4] font-medium">{prod.descubierta}m²</span> semi+desc</span>}
                         {prod.amenidades > 0 && <span><span className="text-[#E2ECF4] font-medium">{prod.amenidades}</span> amenities</span>}
-                        <span className="capitalize"><span className="text-[#E2ECF4] font-medium">{prod.estadoPropiedad?.ocupacion}</span></span>
+                        <span className="capitalize">
+                          <span className="text-[#E2ECF4] font-medium">{prod.estadoPropiedad?.ocupacion}</span>
+                          {prod.estadoPropiedad?.ocupacion === "ocupada" && prod.estadoPropiedad?.tipo && (
+                            <span className="ml-1 text-amber-400">
+                              ({prod.estadoPropiedad.tipo === "inquilino" ? "inquilino" : "dueño"})
+                            </span>
+                          )}
+                        </span>
                       </div>
                     </div>
 
