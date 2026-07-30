@@ -433,56 +433,84 @@ export default function AdminProduccionesPage() {
                     )}
 
                     {/* Price breakdown */}
-                    <div className="bg-[#0D1117] rounded-lg p-4 border border-[#263040] text-sm space-y-1.5">
-                      <p className="text-xs text-[#7A96A8] uppercase tracking-wide mb-3">Desglose</p>
+                    {(() => {
+                      // Recompute package discount from services (backward compat for old productions)
+                      const elegibles = [
+                        true,
+                        !prod.servicios?.soloFotos,
+                        prod.servicios?.videoAdicional,
+                        prod.servicios?.plano2d,
+                        prod.servicios?.tour360,
+                        prod.servicios?.drone,
+                      ].filter(Boolean).length;
+                      const withMinimo = Math.max(prod.subtotal ?? 0, 50);
+                      const descuentoPaquete = prod.descuentoPaquete != null
+                        ? prod.descuentoPaquete
+                        : elegibles >= 4 ? withMinimo * 0.05 : 0;
+                      const descuentoInmob = prod.descuentoAplicado ?? 0;
+                      const totalMostrado = prod.precioFinal ?? 0;
 
-                      {/* Base line */}
-                      <div className="flex justify-between">
-                        <span className="text-[#7A96A8]">
-                          {prod.servicios?.soloFotos ? "Solo Fotos (−25%)" : prod.servicios?.videoAdicional ? "Fotos + Video + 2do Video (+25%)" : "Fotos + Video"}
-                        </span>
-                        <span className="font-mono text-[#E2ECF4]">${prod.precioBase?.toFixed(2)}</span>
-                      </div>
+                      return (
+                        <div className="bg-[#0D1117] rounded-lg p-4 border border-[#263040] text-sm space-y-1.5">
+                          <p className="text-xs text-[#7A96A8] uppercase tracking-wide mb-3">Desglose</p>
 
-                      {/* Extra items from desglose */}
-                      {prod.desglose?.map((item, i) => (
-                        <div key={i} className="flex justify-between">
-                          <span className="text-[#7A96A8]">
-                            {item.concepto}
-                            <span className="text-xs opacity-50 ml-1">({item.calculo})</span>
-                          </span>
-                          <span className="font-mono text-[#E2ECF4]">${item.monto?.toFixed(2)}</span>
+                          <div className="flex justify-between">
+                            <span className="text-[#7A96A8]">
+                              {prod.servicios?.soloFotos ? "Solo Fotos (−25%)" : prod.servicios?.videoAdicional ? "Fotos + Video + 2do Video (+25%)" : "Fotos + Video"}
+                            </span>
+                            <span className="font-mono text-[#E2ECF4]">${prod.precioBase?.toFixed(2)}</span>
+                          </div>
+
+                          {prod.desglose?.map((item, i) => (
+                            <div key={i} className="flex justify-between">
+                              <span className="text-[#7A96A8]">
+                                {item.concepto}
+                                <span className="text-xs opacity-50 ml-1">({item.calculo})</span>
+                              </span>
+                              <span className="font-mono text-[#E2ECF4]">${item.monto?.toFixed(2)}</span>
+                            </div>
+                          ))}
+
+                          <hr className="border-[#263040] my-1" />
+
+                          <div className="flex justify-between text-[#7A96A8]">
+                            <span>Subtotal</span>
+                            <span className="font-mono text-[#E2ECF4]">${(prod.subtotal ?? 0).toFixed(2)}</span>
+                          </div>
+
+                          {descuentoInmob > 0 ? (
+                            <div className="flex justify-between text-green-400">
+                              <span>Descuento inmobiliaria</span>
+                              <span className="font-mono">−${descuentoInmob.toFixed(2)}</span>
+                            </div>
+                          ) : (
+                            <div className="flex justify-between text-[#263040]">
+                              <span>Descuento inmobiliaria</span>
+                              <span className="font-mono">—</span>
+                            </div>
+                          )}
+
+                          {descuentoPaquete > 0 ? (
+                            <div className="flex justify-between text-green-400">
+                              <span>Descuento paquete 4+ servicios (5%)</span>
+                              <span className="font-mono">−${descuentoPaquete.toFixed(2)}</span>
+                            </div>
+                          ) : (
+                            <div className="flex justify-between text-[#263040]">
+                              <span>Descuento paquete 4+ servicios</span>
+                              <span className="font-mono">—</span>
+                            </div>
+                          )}
+
+                          <hr className="border-[#263040] my-1" />
+
+                          <div className="flex justify-between font-bold text-base">
+                            <span className="text-[#E2ECF4]">TOTAL</span>
+                            <span className="text-[#F2B968] font-mono">${totalMostrado.toFixed(2)} USD</span>
+                          </div>
                         </div>
-                      ))}
-
-                      <hr className="border-[#263040] my-1" />
-
-                      <div className="flex justify-between text-[#7A96A8]">
-                        <span>Subtotal</span>
-                        <span className="font-mono text-[#E2ECF4]">${prod.subtotal?.toFixed(2)}</span>
-                      </div>
-
-                      {prod.descuentoAplicado > 0 && (
-                        <div className="flex justify-between text-green-400">
-                          <span>Descuento inmobiliaria</span>
-                          <span className="font-mono">−${prod.descuentoAplicado?.toFixed(2)}</span>
-                        </div>
-                      )}
-
-                      {(prod.descuentoPaquete ?? 0) > 0 && (
-                        <div className="flex justify-between text-green-400">
-                          <span>Descuento paquete 4+ servicios (5%)</span>
-                          <span className="font-mono">−${prod.descuentoPaquete?.toFixed(2)}</span>
-                        </div>
-                      )}
-
-                      <hr className="border-[#263040] my-1" />
-
-                      <div className="flex justify-between font-bold text-base">
-                        <span className="text-[#E2ECF4]">TOTAL</span>
-                        <span className="text-[#F2B968] font-mono">${prod.precioFinal?.toFixed(2)} USD</span>
-                      </div>
-                    </div>
+                      );
+                    })()}
 
                     {/* Ratio de inversión — 4 cuadrantes */}
                     {prod.valorEstimado && prod.valorEstimado > 0 && (
