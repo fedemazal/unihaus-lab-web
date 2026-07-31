@@ -62,7 +62,7 @@ export default function BeneficiosPage() {
       setLoading(false);
     }
     load();
-  }, [profile?.uid, profile?.inmobiliariaId]);
+  }, [profile]);
 
   if (loading) {
     return (
