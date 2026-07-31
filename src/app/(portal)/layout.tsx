@@ -35,6 +35,7 @@ const adminNav = [
   { href: "/admin/cuentas", label: "Cuentas", icon: Settings },
   { href: "/admin/inmobiliarias", label: "Inmobiliarias", icon: Settings },
   { href: "/admin/producciones", label: "Producciones", icon: FolderOpen },
+  { href: "/admin/beneficios", label: "Beneficios", icon: Gift },
   { href: "/admin/materiales", label: "Materiales", icon: FileStack },
   { href: "/admin/estadisticas", label: "Estadísticas", icon: BarChart3 },
 ];

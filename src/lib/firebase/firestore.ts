@@ -4,6 +4,7 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
+  setDoc,
   getDoc,
   getDocs,
   query,
@@ -14,6 +15,7 @@ import {
 } from "firebase/firestore";
 import { getFirebaseDb } from "./config";
 import type {
+  BeneficiosConfig,
   Inmobiliaria,
   MaterialPreparacion,
   Production,
@@ -183,4 +185,72 @@ export function toDate(timestamp: Timestamp | Date | null): Date | null {
   if (!timestamp) return null;
   if (timestamp instanceof Timestamp) return timestamp.toDate();
   return timestamp;
+}
+
+// ============================================
+// BENEFICIOS CONFIG
+// ============================================
+
+export const DEFAULT_BENEFICIOS_CONFIG: BeneficiosConfig = {
+  capa1: [
+    { min: 5, max: 10, porcentaje: 5 },
+    { min: 11, max: 20, porcentaje: 7.5 },
+    { min: 21, max: null, porcentaje: 10 },
+  ],
+  capa2: [
+    { producciones: 15, beneficio: "drone_gratis", descripcion: "1 sesión de drone gratis, a elección del agente en cualquier producción futura" },
+    { producciones: 20, beneficio: "produccion_gratis", descripcion: "1 producción completa gratis: Fotos + 2 Videos + Plano (deptos hasta 100m²)" },
+  ],
+  capa3: { porcentaje: 5, minServicios: 4 },
+  bonoBienvenida: 40,
+  prepago: { cantidad: 10, descuento: 10 },
+  beneficiosChicos: [
+    "Remover muebles de las imágenes (hasta 3 fotos por producción)",
+    "Remover personas o imperfecciones (hasta 3 fotos por producción)",
+    "Cambio de cielo gris por soleado en espacios exteriores",
+    "1 amoblamiento virtual gratis por producción",
+  ],
+};
+
+export async function getBeneficiosConfig(): Promise<BeneficiosConfig> {
+  const ref = doc(getFirebaseDb(), "config", "beneficios");
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return DEFAULT_BENEFICIOS_CONFIG;
+  return snap.data() as BeneficiosConfig;
+}
+
+export async function saveBeneficiosConfig(config: BeneficiosConfig) {
+  const ref = doc(getFirebaseDb(), "config", "beneficios");
+  await setDoc(ref, config);
+}
+
+export function computeCapa1(count: number, tiers: BeneficiosConfig["capa1"]): number {
+  for (const tier of [...tiers].sort((a, b) => b.min - a.min)) {
+    if (count >= tier.min && (tier.max === null || count <= tier.max)) {
+      return tier.porcentaje;
+    }
+  }
+  return 0;
+}
+
+export async function getProduccionesCountMes(inmobiliariaId: string, year: number, month: number): Promise<number> {
+  const ref = collection(getFirebaseDb(), "producciones");
+  const q = query(ref, where("inmobiliariaId", "==", inmobiliariaId));
+  const snap = await getDocs(q);
+  return snap.docs.filter((d) => {
+    const data = d.data();
+    const fecha = data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(data.createdAt ?? 0);
+    return fecha.getFullYear() === year && fecha.getMonth() === month;
+  }).length;
+}
+
+export async function getProduccionesCountAnio(agenteId: string, year: number): Promise<number> {
+  const ref = collection(getFirebaseDb(), "producciones");
+  const q = query(ref, where("agenteId", "==", agenteId));
+  const snap = await getDocs(q);
+  return snap.docs.filter((d) => {
+    const data = d.data();
+    const fecha = data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(data.createdAt ?? 0);
+    return fecha.getFullYear() === year;
+  }).length;
 }

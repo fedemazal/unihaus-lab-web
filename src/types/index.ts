@@ -27,8 +27,30 @@ export interface Inmobiliaria {
   descuento: number;
   beneficios: string;
   activa: boolean;
+  bonoBienvenidaUsado?: boolean;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface Capa1Tier {
+  min: number;
+  max: number | null;
+  porcentaje: number;
+}
+
+export interface Capa2Benefit {
+  producciones: number;
+  beneficio: string;
+  descripcion: string;
+}
+
+export interface BeneficiosConfig {
+  capa1: Capa1Tier[];
+  capa2: Capa2Benefit[];
+  capa3: { porcentaje: number; minServicios: number };
+  bonoBienvenida: number;
+  prepago: { cantidad: number; descuento: number };
+  beneficiosChicos: string[];
 }
 
 export interface ProductionServices {
