@@ -3,7 +3,13 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useRouter } from "next/navigation";
-import { createProduction, getInmobiliaria } from "@/lib/firebase/firestore";
+import {
+  createProduction,
+  getInmobiliaria,
+  getBeneficiosConfig,
+  getProductions,
+  computeCapa1,
+} from "@/lib/firebase/firestore";
 import { sendEmail, ADMIN_EMAIL } from "@/lib/email/send";
 import { calcularPrecioDepto } from "@/lib/pricing/departamentos";
 import { calcularPrecioCasa } from "@/lib/pricing/casas";
@@ -44,6 +50,8 @@ export default function NuevaProduccionPage() {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [descuento, setDescuento] = useState(0);
+  const [descuentoManual, setDescuentoManual] = useState(0);
+  const [descuentoCapa1, setDescuentoCapa1] = useState(0);
 
   const [tipoPropiedad, setTipoPropiedad] = useState<PropertyType | null>(null);
 
@@ -72,10 +80,25 @@ export default function NuevaProduccionPage() {
 
   useEffect(() => {
     async function loadDiscount() {
-      if (profile?.inmobiliariaId) {
-        const inmob = await getInmobiliaria(profile.inmobiliariaId);
-        if (inmob) setDescuento(inmob.descuento);
-      }
+      if (!profile?.inmobiliariaId) return;
+      const now = new Date();
+      const [inmob, cfg, prods] = await Promise.all([
+        getInmobiliaria(profile.inmobiliariaId),
+        getBeneficiosConfig(),
+        getProductions({ inmobiliariaId: profile.inmobiliariaId }),
+      ]);
+      const manual = inmob?.descuento ?? 0;
+      const countMes = prods.filter((p) => {
+        const d = p.createdAt instanceof Date ? p.createdAt
+          : (p.createdAt as unknown as { toDate?: () => Date })?.toDate?.() ?? new Date(p.createdAt as unknown as string ?? 0);
+        return d.getFullYear() === now.getFullYear()
+          && d.getMonth() === now.getMonth()
+          && p.estado !== "cancelado";
+      }).length;
+      const capa1 = computeCapa1(countMes, cfg.capa1);
+      setDescuentoManual(manual);
+      setDescuentoCapa1(capa1);
+      setDescuento(manual + capa1);
     }
     loadDiscount();
   }, [profile?.inmobiliariaId]);
@@ -628,7 +651,16 @@ export default function NuevaProduccionPage() {
 
               {calcResult.descuentoInmobiliaria > 0 && (
                 <div className="flex justify-between text-green-400">
-                  <span>Descuento inmobiliaria ({calcResult.porcentajeDescuento}%)</span>
+                  <span>
+                    Descuento inmobiliaria ({calcResult.porcentajeDescuento}%
+                    {descuentoManual > 0 && descuentoCapa1 > 0 && (
+                      <span className="text-xs opacity-70"> = {descuentoManual}% base + {descuentoCapa1}% Capa 1</span>
+                    )}
+                    {descuentoCapa1 > 0 && descuentoManual === 0 && (
+                      <span className="text-xs opacity-70"> Capa 1 por volumen</span>
+                    )}
+                    )
+                  </span>
                   <span className="font-mono">−${calcResult.descuentoInmobiliaria.toFixed(2)}</span>
                 </div>
               )}
