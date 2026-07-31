@@ -213,10 +213,14 @@ export const DEFAULT_BENEFICIOS_CONFIG: BeneficiosConfig = {
 };
 
 export async function getBeneficiosConfig(): Promise<BeneficiosConfig> {
-  const ref = doc(getFirebaseDb(), "config", "beneficios");
-  const snap = await getDoc(ref);
-  if (!snap.exists()) return DEFAULT_BENEFICIOS_CONFIG;
-  return snap.data() as BeneficiosConfig;
+  try {
+    const ref = doc(getFirebaseDb(), "config", "beneficios");
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return DEFAULT_BENEFICIOS_CONFIG;
+    return snap.data() as BeneficiosConfig;
+  } catch {
+    return DEFAULT_BENEFICIOS_CONFIG;
+  }
 }
 
 export async function saveBeneficiosConfig(config: BeneficiosConfig) {
