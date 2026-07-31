@@ -27,13 +27,14 @@ export default function BeneficiosPage() {
   const [prodsInmob, setProdsInmob] = useState<Production[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth();
+  const currentYear = new Date().getFullYear();
 
   useEffect(() => {
     async function load() {
       if (!profile) return;
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
       const [cfg, allProds] = await Promise.all([
         getBeneficiosConfig(),
         getProductions({ agenteId: profile.uid }),
@@ -42,7 +43,7 @@ export default function BeneficiosPage() {
 
       const anio = allProds.filter((p) => {
         const d = toDate(p.createdAt);
-        return d.getFullYear() === currentYear && p.estado !== "cancelado";
+        return d.getFullYear() === year && p.estado !== "cancelado";
       });
       setProdsAgente(anio);
 
@@ -54,7 +55,7 @@ export default function BeneficiosPage() {
         setInmobiliaria(inmob);
         const mes = inmobProds.filter((p) => {
           const d = toDate(p.createdAt);
-          return d.getFullYear() === currentYear && d.getMonth() === currentMonth && p.estado !== "cancelado";
+          return d.getFullYear() === year && d.getMonth() === month && p.estado !== "cancelado";
         });
         setProdsInmob(mes);
       }
@@ -81,8 +82,6 @@ export default function BeneficiosPage() {
 
   const countAnio = prodsAgente.length;
   const nextCapa2 = config.capa2.find((b) => b.producciones > countAnio);
-  const earnedCapa2 = config.capa2.filter((b) => countAnio >= b.producciones);
-  const maxCapa2 = config.capa2[config.capa2.length - 1];
 
   return (
     <div className="max-w-2xl mx-auto space-y-5">
