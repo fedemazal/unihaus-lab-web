@@ -11,6 +11,7 @@ import {
 import type { BeneficiosConfig, Inmobiliaria, Production } from "@/types";
 import { Building2, Percent, Gift, Loader2, Star, Zap, CheckCircle, Lock } from "lucide-react";
 import { Timestamp } from "firebase/firestore";
+import { DEFAULT_BENEFICIOS_CONFIG } from "@/lib/firebase/firestore";
 
 function toDate(v: unknown): Date {
   if (!v) return new Date(0);
@@ -26,40 +27,48 @@ export default function BeneficiosPage() {
   const [prodsAgente, setProdsAgente] = useState<Production[]>([]);
   const [prodsInmob, setProdsInmob] = useState<Production[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const currentYear = new Date().getFullYear();
 
   useEffect(() => {
+    if (!profile) return;
     async function load() {
-      if (!profile) return;
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = now.getMonth();
-      const [cfg, allProds] = await Promise.all([
-        getBeneficiosConfig(),
-        getProductions({ agenteId: profile.uid }),
-      ]);
-      setConfig(cfg);
-
-      const anio = allProds.filter((p) => {
-        const d = toDate(p.createdAt);
-        return d.getFullYear() === year && p.estado !== "cancelado";
-      });
-      setProdsAgente(anio);
-
-      if (profile.inmobiliariaId) {
-        const [inmob, inmobProds] = await Promise.all([
-          getInmobiliaria(profile.inmobiliariaId),
-          getProductions({ inmobiliariaId: profile.inmobiliariaId }),
+      try {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const [cfg, allProds] = await Promise.all([
+          getBeneficiosConfig(),
+          getProductions({ agenteId: profile!.uid }),
         ]);
-        setInmobiliaria(inmob);
-        const mes = inmobProds.filter((p) => {
+        setConfig(cfg);
+
+        const anio = allProds.filter((p) => {
           const d = toDate(p.createdAt);
-          return d.getFullYear() === year && d.getMonth() === month && p.estado !== "cancelado";
+          return d.getFullYear() === year && p.estado !== "cancelado";
         });
-        setProdsInmob(mes);
+        setProdsAgente(anio);
+
+        if (profile!.inmobiliariaId) {
+          const [inmob, inmobProds] = await Promise.all([
+            getInmobiliaria(profile!.inmobiliariaId!),
+            getProductions({ inmobiliariaId: profile!.inmobiliariaId! }),
+          ]);
+          setInmobiliaria(inmob);
+          const mes = inmobProds.filter((p) => {
+            const d = toDate(p.createdAt);
+            return d.getFullYear() === year && d.getMonth() === month && p.estado !== "cancelado";
+          });
+          setProdsInmob(mes);
+        }
+      } catch (e) {
+        console.error("Error cargando beneficios:", e);
+        setConfig(DEFAULT_BENEFICIOS_CONFIG);
+        setError("No se pudieron cargar los datos. Mostrando configuración base.");
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     load();
   }, [profile]);
@@ -86,6 +95,11 @@ export default function BeneficiosPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-5">
       <h1 className="text-2xl font-bold text-[#E2ECF4] mb-6">Mis Beneficios</h1>
+      {error && (
+        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3 text-sm text-yellow-300">
+          {error}
+        </div>
+      )}
 
       {/* CAPA 1 — Descuento inmobiliaria */}
       {inmobiliaria && (

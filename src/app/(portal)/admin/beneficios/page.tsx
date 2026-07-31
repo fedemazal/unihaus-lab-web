@@ -53,18 +53,25 @@ export default function AdminBeneficiosPage() {
 
   useEffect(() => {
     async function load() {
-      const [cfg, inmobs, users, prods] = await Promise.all([
-        getBeneficiosConfig(),
-        getInmobiliarias(),
-        getUsers(),
-        getProductions(),
-      ]);
-      setConfig(cfg);
-      setDraft(JSON.parse(JSON.stringify(cfg)));
-      setInmobiliarias(inmobs);
-      setAgents(users.filter((u) => u.rol === "agente" && u.estado === "aprobado"));
-      setProductions(prods.filter((p) => p.estado !== "cancelado"));
-      setLoading(false);
+      try {
+        const [cfg, inmobs, users, prods] = await Promise.all([
+          getBeneficiosConfig(),
+          getInmobiliarias(),
+          getUsers(),
+          getProductions(),
+        ]);
+        setConfig(cfg);
+        setDraft(JSON.parse(JSON.stringify(cfg)));
+        setInmobiliarias(inmobs);
+        setAgents(users.filter((u) => u.rol === "agente" && u.estado === "aprobado"));
+        setProductions(prods.filter((p) => p.estado !== "cancelado"));
+      } catch (e) {
+        console.error("Error cargando beneficios admin:", e);
+        setConfig(DEFAULT_BENEFICIOS_CONFIG);
+        setDraft(JSON.parse(JSON.stringify(DEFAULT_BENEFICIOS_CONFIG)));
+      } finally {
+        setLoading(false);
+      }
     }
     load();
   }, []);
