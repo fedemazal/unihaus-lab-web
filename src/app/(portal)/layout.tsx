@@ -63,7 +63,7 @@ export default function PortalLayout({
     <ProtectedRoute>
       <div className="min-h-screen bg-[#0D1117]">
         {/* Top bar */}
-        <header className="fixed top-0 w-full z-40 bg-[#161C26] border-b border-[#263040] h-16">
+        <header className="fixed top-0 w-full z-40 bg-black border-b border-[#263040] h-16">
           <div className="h-full px-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
