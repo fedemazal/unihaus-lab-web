@@ -1,0 +1,80 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: verifica si el usuario autenticado es admin
+    function isAdmin() {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.rol == 'admin';
+    }
+
+    // Helper: verifica si hay sesión activa
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // ── USERS ──────────────────────────────────────────────────────────
+    // El propio usuario puede leer y editar su perfil.
+    // Admins pueden listar y editar cualquier usuario.
+    match /users/{userId} {
+      allow get:    if isAuth() && (request.auth.uid == userId || isAdmin());
+      allow list:   if isAdmin();
+      allow create: if isAuth() && request.auth.uid == userId;
+      allow update: if isAuth() && (request.auth.uid == userId || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // ── INMOBILIARIAS ──────────────────────────────────────────────────
+    // Todos los usuarios autenticados pueden leer (agentes necesitan ver
+    // su inmobiliaria). Solo admins pueden crear/editar/borrar.
+    match /inmobiliarias/{inmobId} {
+      allow read:  if isAuth();
+      allow write: if isAdmin();
+    }
+
+    // ── PRODUCCIONES ───────────────────────────────────────────────────
+    // Lectura: admin, o el agente dueño, o un agente de la misma inmobiliaria.
+    // Escritura: cualquier agente puede crear; solo admin o el propio agente
+    // pueden actualizar; solo admin puede borrar.
+    match /producciones/{prodId} {
+      allow get: if isAuth() && (
+        isAdmin() ||
+        resource.data.agenteId == request.auth.uid ||
+        resource.data.inmobiliariaId ==
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.inmobiliariaId
+      );
+      allow list: if isAuth() && (
+        isAdmin() ||
+        resource.data.agenteId == request.auth.uid ||
+        resource.data.inmobiliariaId ==
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.inmobiliariaId
+      );
+      allow create: if isAuth();
+      allow update: if isAuth() && (isAdmin() || resource.data.agenteId == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    // ── CONFIG (beneficios, etc.) ──────────────────────────────────────
+    // Todos los usuarios autenticados pueden leer la configuración.
+    // Solo admins pueden modificarla.
+    match /config/{doc} {
+      allow read:  if isAuth();
+      allow write: if isAdmin();
+    }
+
+    // ── CÓDIGOS DE DESCUENTO ───────────────────────────────────────────
+    // Agentes autenticados pueden leer (para validar). Solo admins escriben.
+    match /codigos_descuento/{codigoId} {
+      allow read:  if isAuth();
+      allow write: if isAdmin();
+    }
+
+    // ── MATERIALES DE PREPARACIÓN ──────────────────────────────────────
+    // Todos los usuarios autenticados pueden leer.
+    // Solo admins pueden crear/editar/borrar.
+    match /materiales_preparacion/{matId} {
+      allow read:  if isAuth();
+      allow write: if isAdmin();
+    }
+  }
+}

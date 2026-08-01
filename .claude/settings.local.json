@@ -29,7 +29,20 @@
       "Bash(curl -s http://localhost:3000/admin/producciones)",
       "Bash(pkill -f \"next dev\")",
       "Bash(python3 -c \"import reportlab; print\\('ok'\\)\")",
-      "Bash(python3 /private/tmp/claude-501/-Users-fedemazal-Desktop-unihaus-site--claude-worktrees-thirsty-robinson-60bf4e/4c379c52-6998-4772-bd6a-811dfc16a3fe/scratchpad/gen_pdf.py)"
+      "Bash(python3 /private/tmp/claude-501/-Users-fedemazal-Desktop-unihaus-site--claude-worktrees-thirsty-robinson-60bf4e/4c379c52-6998-4772-bd6a-811dfc16a3fe/scratchpad/gen_pdf.py)",
+      "Bash(npx tsc *)",
+      "Bash(python3 -c ' *)",
+      "Bash(cp \"/Users/fedemazal/Downloads/Guia Propietarios - Unihaus Lab.html\" /Users/fedemazal/Desktop/unihaus-site/public/guia-propietarios.html && echo \"ok\")",
+      "Bash(npx --prefix /Users/fedemazal/Desktop/unihaus-site tsc --noEmit --project /Users/fedemazal/Desktop/unihaus-site/tsconfig.json)",
+      "Bash(git -C /Users/fedemazal/Desktop/unihaus-site add src/lib/pricing/departamentos.ts src/lib/pricing/casas.ts src/app/\\\\\\(portal\\\\\\)/producciones/nueva/page.tsx)",
+      "Bash(git -C /Users/fedemazal/Desktop/unihaus-site commit -m ' *)",
+      "Bash(git -C /Users/fedemazal/Desktop/unihaus-site push origin main)",
+      "Bash(git -C /Users/fedemazal/Desktop/unihaus-site add src/app/\\\\\\(portal\\\\\\)/producciones/nueva/page.tsx)",
+      "Bash(git -C /Users/fedemazal/Desktop/unihaus-site commit -m \"fix: aclara que comisión estimada es según promedios generales\")",
+      "Bash(git -C /Users/fedemazal/Desktop/unihaus-site add src/types/index.ts src/app/\\\\\\(portal\\\\\\)/admin/producciones/page.tsx src/app/\\\\\\(portal\\\\\\)/producciones/nueva/page.tsx)",
+      "Bash(npx vercel *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }

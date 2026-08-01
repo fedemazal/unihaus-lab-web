@@ -12,10 +12,12 @@ import {
   orderBy,
   serverTimestamp,
   Timestamp,
+  runTransaction,
 } from "firebase/firestore";
 import { getFirebaseDb } from "./config";
 import type {
   BeneficiosConfig,
+  CodigoDescuento,
   Inmobiliaria,
   MaterialPreparacion,
   Production,
@@ -246,6 +248,68 @@ export async function getProduccionesCountMes(inmobiliariaId: string, year: numb
     const fecha = data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(data.createdAt ?? 0);
     return fecha.getFullYear() === year && fecha.getMonth() === month;
   }).length;
+}
+
+// ============================================
+// CÓDIGOS DE DESCUENTO
+// ============================================
+
+export async function getCodigos(): Promise<CodigoDescuento[]> {
+  const ref = collection(getFirebaseDb(), "codigos_descuento");
+  const snap = await getDocs(query(ref));
+  const items = snap.docs.map((d) => ({ ...d.data(), id: d.id } as CodigoDescuento));
+  return items.sort((a, b) => (a.codigo || "").localeCompare(b.codigo || ""));
+}
+
+export async function createCodigo(data: Omit<CodigoDescuento, "id" | "createdAt" | "updatedAt" | "cantidadUsada">) {
+  const ref = collection(getFirebaseDb(), "codigos_descuento");
+  const docRef = await addDoc(ref, {
+    ...data,
+    cantidadUsada: 0,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+export async function updateCodigo(id: string, data: Partial<CodigoDescuento>) {
+  const ref = doc(getFirebaseDb(), "codigos_descuento", id);
+  await updateDoc(ref, { ...data, updatedAt: serverTimestamp() });
+}
+
+export async function deleteCodigo(id: string) {
+  const ref = doc(getFirebaseDb(), "codigos_descuento", id);
+  await deleteDoc(ref);
+}
+
+export async function validateCodigo(codigo: string): Promise<CodigoDescuento | null> {
+  const ref = collection(getFirebaseDb(), "codigos_descuento");
+  const q = query(ref, where("codigo", "==", codigo.toUpperCase().trim()));
+  const snap = await getDocs(q);
+  if (snap.empty) return null;
+  const data = { ...snap.docs[0].data(), id: snap.docs[0].id } as CodigoDescuento;
+  if (!data.activo) return null;
+  if (data.cantidadUsada >= data.cantidadTotal) return null;
+  return data;
+}
+
+export async function usarCodigo(codigoId: string): Promise<boolean> {
+  const db = getFirebaseDb();
+  const ref = doc(db, "codigos_descuento", codigoId);
+  try {
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists()) throw new Error("Código no existe");
+      const data = snap.data() as CodigoDescuento;
+      if (!data.activo || data.cantidadUsada >= data.cantidadTotal) {
+        throw new Error("Código agotado");
+      }
+      tx.update(ref, { cantidadUsada: data.cantidadUsada + 1, updatedAt: serverTimestamp() });
+    });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function getProduccionesCountAnio(agenteId: string, year: number): Promise<number> {

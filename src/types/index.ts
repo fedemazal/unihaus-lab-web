@@ -108,6 +108,8 @@ export interface Production {
   subtotal: number;
   descuentoAplicado: number;
   descuentoPaquete?: number;
+  codigoDescuento?: string;
+  descuentoCodigo?: number;
   precioFinal: number;
   desglose: PriceBreakdownItem[];
   valorEstimado?: number;
@@ -117,6 +119,18 @@ export interface Production {
   fechaSolicitud: Date;
   fechaEnProceso: Date | null;
   fechaListo: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CodigoDescuento {
+  id: string;
+  codigo: string;
+  porcentaje: number;
+  cantidadTotal: number;
+  cantidadUsada: number;
+  descripcion: string;
+  activo: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

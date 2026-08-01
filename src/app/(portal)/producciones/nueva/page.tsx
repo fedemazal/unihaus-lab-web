@@ -9,7 +9,10 @@ import {
   getBeneficiosConfig,
   getProductions,
   computeCapa1,
+  validateCodigo,
+  usarCodigo,
 } from "@/lib/firebase/firestore";
+import type { CodigoDescuento } from "@/types";
 import { sendEmail, ADMIN_EMAIL } from "@/lib/email/send";
 import { calcularPrecioDepto } from "@/lib/pricing/departamentos";
 import { calcularPrecioCasa } from "@/lib/pricing/casas";
@@ -52,6 +55,10 @@ export default function NuevaProduccionPage() {
   const [descuento, setDescuento] = useState(0);
   const [descuentoManual, setDescuentoManual] = useState(0);
   const [descuentoCapa1, setDescuentoCapa1] = useState(0);
+  const [codigoInput, setCodigoInput] = useState("");
+  const [codigoAplicado, setCodigoAplicado] = useState<CodigoDescuento | null>(null);
+  const [codigoError, setCodigoError] = useState("");
+  const [codigoLoading, setCodigoLoading] = useState(false);
 
   const [tipoPropiedad, setTipoPropiedad] = useState<PropertyType | null>(null);
 
@@ -156,6 +163,27 @@ export default function NuevaProduccionPage() {
     }
   };
 
+  async function handleValidarCodigo() {
+    if (!codigoInput.trim()) return;
+    setCodigoLoading(true);
+    setCodigoError("");
+    const result = await validateCodigo(codigoInput);
+    if (!result) {
+      setCodigoError("Código inválido, inactivo o agotado");
+      setCodigoAplicado(null);
+    } else {
+      setCodigoAplicado(result);
+      setCodigoError("");
+    }
+    setCodigoLoading(false);
+  }
+
+  function handleQuitarCodigo() {
+    setCodigoAplicado(null);
+    setCodigoInput("");
+    setCodigoError("");
+  }
+
   const handleSubmit = async () => {
     if (!profile || !calcResult) return;
     setLoading(true);
@@ -174,7 +202,20 @@ export default function NuevaProduccionPage() {
         servicios.drone,
       ].filter(Boolean).length;
       const descuentoPaquete = elegibles >= 4 ? calcResult.withMinimo * 0.05 : 0;
-      const precioFinalReal = calcResult.total - descuentoPaquete;
+
+      let descuentoCodigoMonto = 0;
+      if (codigoAplicado) {
+        const ok = await usarCodigo(codigoAplicado.id);
+        if (!ok) {
+          setCodigoError("El código ya fue agotado. Revisá con el admin.");
+          setCodigoAplicado(null);
+          setLoading(false);
+          return;
+        }
+        descuentoCodigoMonto = (calcResult.total - descuentoPaquete) * (codigoAplicado.porcentaje / 100);
+      }
+
+      const precioFinalReal = calcResult.total - descuentoPaquete - descuentoCodigoMonto;
 
       await createProduction({
         agenteId: profile.uid,
@@ -198,6 +239,10 @@ export default function NuevaProduccionPage() {
         subtotal: calcResult.subtotal,
         descuentoAplicado: calcResult.descuentoInmobiliaria,
         descuentoPaquete,
+        ...(codigoAplicado ? {
+          codigoDescuento: codigoAplicado.codigo,
+          descuentoCodigo: descuentoCodigoMonto,
+        } : {}),
         precioFinal: precioFinalReal,
         desglose: calcResult.desglose,
         valorEstimado,
@@ -684,6 +729,25 @@ export default function NuevaProduccionPage() {
                 );
               })()}
 
+              {/* Código de descuento aplicado */}
+              {codigoAplicado && (() => {
+                const elegibles = [true, !servicios.soloFotos, servicios.videoAdicional, servicios.plano2d, servicios.tour360, servicios.drone].filter(Boolean).length;
+                const descPaquete = elegibles >= 4 ? calcResult.withMinimo * 0.05 : 0;
+                const baseParaCodigo = calcResult.total - descPaquete;
+                const descCodigo = baseParaCodigo * (codigoAplicado.porcentaje / 100);
+                return (
+                  <div className="flex justify-between text-green-400">
+                    <span className="flex items-center gap-1.5">
+                      Código {codigoAplicado.codigo} ({codigoAplicado.porcentaje}%)
+                      <button onClick={handleQuitarCodigo} className="w-3.5 h-3.5 rounded-full bg-green-500/20 hover:bg-red-500/30 flex items-center justify-center transition" title="Quitar código">
+                        <X className="w-2 h-2" />
+                      </button>
+                    </span>
+                    <span className="font-mono">−${descCodigo.toFixed(2)}</span>
+                  </div>
+                );
+              })()}
+
               <hr className="border-[#263040] my-1" />
 
               <div className="flex justify-between items-center pt-1">
@@ -698,7 +762,9 @@ export default function NuevaProduccionPage() {
                     servicios.drone,
                   ].filter(Boolean).length;
                   const descPaquete = elegibles >= 4 ? calcResult.withMinimo * 0.05 : 0;
-                  const totalFinal = calcResult.total - descPaquete;
+                  const baseParaCodigo = calcResult.total - descPaquete;
+                  const descCodigo = codigoAplicado ? baseParaCodigo * (codigoAplicado.porcentaje / 100) : 0;
+                  const totalFinal = baseParaCodigo - descCodigo;
                   return (
                     <span className="text-2xl font-bold text-[#F2B968] font-mono">
                       ${totalFinal.toFixed(2)} USD
@@ -755,6 +821,39 @@ export default function NuevaProduccionPage() {
             })()}
           </div>
 
+          {/* Código de descuento — input */}
+          <div className="bg-[#161C26] rounded-xl border border-[#263040] p-4">
+            <p className="text-xs text-[#7A96A8] uppercase tracking-wide mb-3">Código de descuento</p>
+            {codigoAplicado ? (
+              <div className="flex items-center justify-between bg-green-500/10 border border-green-500/20 rounded-lg px-4 py-2.5">
+                <div>
+                  <span className="font-mono font-bold text-green-400 tracking-wider">{codigoAplicado.codigo}</span>
+                  <span className="text-sm text-green-400 ml-2">— {codigoAplicado.porcentaje}% de descuento aplicado</span>
+                </div>
+                <button onClick={handleQuitarCodigo} className="text-green-400/60 hover:text-red-400 transition text-xs underline">Quitar</button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Ingresá tu código"
+                  value={codigoInput}
+                  onChange={(e) => { setCodigoInput(e.target.value.toUpperCase()); setCodigoError(""); }}
+                  onKeyDown={(e) => e.key === "Enter" && handleValidarCodigo()}
+                  className="flex-1 bg-[#0D1117] border border-[#263040] rounded-lg px-3 py-2 text-sm text-[#E2ECF4] placeholder:text-[#7A96A8] focus:outline-none focus:border-[#F2B968]/50 font-mono uppercase tracking-wider"
+                />
+                <button
+                  onClick={handleValidarCodigo}
+                  disabled={codigoLoading || !codigoInput.trim()}
+                  className="px-4 py-2 rounded-lg bg-[#F2B968]/10 border border-[#F2B968]/30 text-[#F2B968] text-sm font-medium hover:bg-[#F2B968]/20 transition disabled:opacity-40"
+                >
+                  {codigoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Aplicar"}
+                </button>
+              </div>
+            )}
+            {codigoError && <p className="text-xs text-red-400 mt-2">{codigoError}</p>}
+          </div>
+
           {/* Ratio card — 4 cuadrantes */}
           {(() => {
             const elegibles = [
@@ -766,7 +865,8 @@ export default function NuevaProduccionPage() {
               servicios.drone,
             ].filter(Boolean).length;
             const descPaquete = elegibles >= 4 ? calcResult.withMinimo * 0.05 : 0;
-            const totalFinal = calcResult.total - descPaquete;
+            const descCodigo = codigoAplicado ? (calcResult.total - descPaquete) * (codigoAplicado.porcentaje / 100) : 0;
+            const totalFinal = calcResult.total - descPaquete - descCodigo;
             const comision = valorEstimado * 0.05;
             const ratio = (totalFinal / comision) * 100;
             return (

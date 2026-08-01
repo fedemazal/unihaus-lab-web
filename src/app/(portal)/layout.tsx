@@ -19,6 +19,7 @@ import {
   Menu,
   X,
   FileStack,
+  Tag,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -37,6 +38,7 @@ const adminNav = [
   { href: "/admin/producciones", label: "Producciones", icon: FolderOpen },
   { href: "/admin/beneficios", label: "Beneficios", icon: Gift },
   { href: "/admin/materiales", label: "Materiales", icon: FileStack },
+  { href: "/admin/codigos", label: "Códigos", icon: Tag },
   { href: "/admin/estadisticas", label: "Estadísticas", icon: BarChart3 },
 ];
 
