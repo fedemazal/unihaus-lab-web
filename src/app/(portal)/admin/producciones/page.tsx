@@ -650,9 +650,9 @@ export default function AdminProduccionesPage() {
                       </div>
 
                       {/* Archivos actuales */}
-                      {prod.entregaStatus === "activa" && prod.entregaArchivos?.length > 0 && (
+                      {prod.entregaStatus === "activa" && (prod.entregaArchivos?.length ?? 0) > 0 && (
                         <div className="space-y-1">
-                          {prod.entregaArchivos.map((a, i) => (
+                          {(prod.entregaArchivos ?? []).map((a, i) => (
                             <div key={i} className="flex items-center gap-2 text-xs text-[#7A96A8]">
                               <CheckCircle className="w-3.5 h-3.5 text-green-400 shrink-0" />
                               <span className="truncate">{a.nombre}</span>

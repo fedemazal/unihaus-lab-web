@@ -122,11 +122,11 @@ export interface Production {
   precioFinal: number;
   desglose: PriceBreakdownItem[];
   valorEstimado?: number;
-  // Entrega R2
-  entregaStatus: EntregaStatus;
-  entregaArchivos: ArchivoR2[];
-  entregaUploadedAt: Date | null;
-  entregaExpiresAt: Date | null;
+  // Entrega R2 (se populan cuando admin sube los archivos)
+  entregaStatus?: EntregaStatus;
+  entregaArchivos?: ArchivoR2[];
+  entregaUploadedAt?: Date | null;
+  entregaExpiresAt?: Date | null;
 
   estado: ProductionStatus;
   tags: string[];
