@@ -184,33 +184,12 @@ export default function ProduccionesPage() {
                 </button>
 
                 {isExpanded && (
-                  <div className="border-t border-[#263040] p-5 space-y-4">
-                    {/* Horario confirmado */}
-                    {prod.horarioConfirmado && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="w-4 h-4 text-[#F2B968]" />
-                        <span className="text-[#E2ECF4] font-medium">
-                          {prod.horarioConfirmado.fecha} — {prod.horarioConfirmado.horario}
-                        </span>
-                      </div>
-                    )}
+                  <div className="border-t border-[#263040] p-5 space-y-5">
 
-                    {/* Servicios */}
-                    <div className="flex flex-wrap gap-2">
-                      {prod.servicios?.soloFotos
-                        ? <span className="text-xs px-3 py-1 rounded-full bg-[#F2B968]/12 border border-[#F2B968]/40 text-[#F2B968]">Solo Fotos</span>
-                        : <span className="text-xs px-3 py-1 rounded-full bg-[#F2B968]/12 border border-[#F2B968]/40 text-[#F2B968]">Fotos + Video</span>
-                      }
-                      {prod.servicios?.plano2d && <span className="text-xs px-3 py-1 rounded-full bg-[#161C26] border border-[#263040] text-[#E2ECF4]">Plano 2D</span>}
-                      {prod.servicios?.tour360 && <span className="text-xs px-3 py-1 rounded-full bg-[#161C26] border border-[#263040] text-[#E2ECF4]">Tour 360°</span>}
-                      {prod.servicios?.drone && <span className="text-xs px-3 py-1 rounded-full bg-[#161C26] border border-[#263040] text-[#E2ECF4]">Drone</span>}
-                      {prod.servicios?.amoblamiento && <span className="text-xs px-3 py-1 rounded-full bg-[#161C26] border border-[#263040] text-[#E2ECF4]">Amoblamiento</span>}
-                    </div>
-
-                    {/* Entrega R2 */}
+                    {/* ── Entrega R2 (siempre arriba) ── */}
                     {tieneEntregaActiva && (
                       <div className="bg-green-500/8 border border-green-500/25 rounded-xl p-4 space-y-3">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
                           <p className="text-sm font-semibold text-green-400 flex items-center gap-1.5">
                             <CheckCircle className="w-4 h-4" /> Archivos listos para descargar
                           </p>
@@ -269,6 +248,127 @@ export default function ProduccionesPage() {
                         Descargar archivos
                       </a>
                     )}
+
+                    {/* ── Datos de la propiedad ── */}
+                    <div className="bg-[#0D1117] rounded-lg px-4 py-3 border border-[#263040]">
+                      <p className="text-xs text-[#7A96A8] font-medium uppercase tracking-wide mb-2 capitalize">{prod.tipoPropiedad}</p>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#7A96A8]">
+                        {prod.superficie && <span><span className="text-[#E2ECF4] font-medium">{prod.superficie}m²</span> construidos</span>}
+                        {prod.construida && <span><span className="text-[#E2ECF4] font-medium">{prod.construida}m²</span> construidos</span>}
+                        {prod.descubierta !== undefined && prod.descubierta > 0 && <span><span className="text-[#E2ECF4] font-medium">{prod.descubierta}m²</span> semi+desc</span>}
+                        {prod.amenidades > 0 && <span><span className="text-[#E2ECF4] font-medium">{prod.amenidades}</span> amenities</span>}
+                        <span className="capitalize">
+                          <span className="text-[#E2ECF4] font-medium">{prod.estadoPropiedad?.ocupacion}</span>
+                          {prod.estadoPropiedad?.ocupacion === "ocupada" && prod.estadoPropiedad?.tipo && (
+                            <span className="ml-1 text-amber-400">
+                              ({prod.estadoPropiedad.tipo === "inquilino" ? "inquilino" : "dueño"})
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* ── Servicios ── */}
+                    <div>
+                      <p className="text-xs text-[#7A96A8] uppercase tracking-wide mb-2">Servicios</p>
+                      <div className="flex flex-wrap gap-2">
+                        <span className="text-xs px-3 py-1.5 rounded-full bg-[#F2B968]/12 border border-[#F2B968]/40 text-[#F2B968] font-medium">
+                          {prod.servicios?.soloFotos ? "Solo Fotos −25%" : prod.servicios?.videoAdicional ? "Fotos + Video + 2do Video" : "Fotos + Video"}
+                        </span>
+                        {prod.servicios?.plano2d && <span className="text-xs px-3 py-1.5 rounded-full bg-[#161C26] border border-[#263040] text-[#E2ECF4]">Plano 2D</span>}
+                        {prod.servicios?.tour360 && <span className="text-xs px-3 py-1.5 rounded-full bg-[#161C26] border border-[#263040] text-[#E2ECF4]">Tour 360°</span>}
+                        {prod.servicios?.drone && <span className="text-xs px-3 py-1.5 rounded-full bg-[#161C26] border border-[#263040] text-[#E2ECF4]">Drone</span>}
+                        {prod.servicios?.amoblamiento && <span className="text-xs px-3 py-1.5 rounded-full bg-[#161C26] border border-[#263040] text-[#E2ECF4]">Amoblamiento ({prod.servicios.cantidadFotosAmobladas} fotos)</span>}
+                      </div>
+                    </div>
+
+                    {/* ── Horario confirmado ── */}
+                    {prod.horarioConfirmado && (
+                      <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+                        <p className="text-sm font-medium text-green-400 flex items-center gap-1">
+                          <Calendar className="w-4 h-4" /> Horario confirmado
+                        </p>
+                        <p className="text-sm text-green-300 mt-1">
+                          {prod.horarioConfirmado.fecha} — {prod.horarioConfirmado.horario}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* ── Horarios sugeridos ── */}
+                    {!prod.horarioConfirmado && prod.horariosSugeridos?.length > 0 && (
+                      <div>
+                        <p className="text-xs text-[#7A96A8] uppercase tracking-wide mb-2">Horarios sugeridos</p>
+                        <ul className="text-sm text-[#7A96A8] space-y-0.5">
+                          {prod.horariosSugeridos.map((h, i) => <li key={i}>• {h}</li>)}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* ── Observaciones ── */}
+                    {prod.observaciones && (
+                      <div>
+                        <p className="text-xs text-[#7A96A8] uppercase tracking-wide mb-1">Observaciones</p>
+                        <p className="text-sm text-[#7A96A8] whitespace-pre-line">{prod.observaciones}</p>
+                      </div>
+                    )}
+
+                    {/* ── Desglose de precios ── */}
+                    <div className="bg-[#0D1117] rounded-lg p-4 border border-[#263040] text-sm space-y-1.5">
+                      <p className="text-xs text-[#7A96A8] uppercase tracking-wide mb-3">Desglose</p>
+
+                      <div className="flex justify-between">
+                        <span className="text-[#7A96A8]">
+                          {prod.servicios?.soloFotos ? "Solo Fotos (−25%)" : prod.servicios?.videoAdicional ? "Fotos + Video + 2do Video (+25%)" : "Fotos + Video"}
+                        </span>
+                        <span className="font-mono text-[#E2ECF4]">${prod.precioBase?.toFixed(2)}</span>
+                      </div>
+
+                      {prod.desglose?.map((item, i) => (
+                        <div key={i} className="flex justify-between">
+                          <span className="text-[#7A96A8]">
+                            {item.concepto}
+                            <span className="text-xs opacity-50 ml-1">({item.calculo})</span>
+                          </span>
+                          <span className="font-mono text-[#E2ECF4]">${item.monto?.toFixed(2)}</span>
+                        </div>
+                      ))}
+
+                      <hr className="border-[#263040] my-1" />
+
+                      <div className="flex justify-between text-[#7A96A8]">
+                        <span>Subtotal</span>
+                        <span className="font-mono text-[#E2ECF4]">${(prod.subtotal ?? 0).toFixed(2)}</span>
+                      </div>
+
+                      {(prod.descuentoAplicado ?? 0) > 0 && (
+                        <div className="flex justify-between text-green-400">
+                          <span>Descuento inmobiliaria</span>
+                          <span className="font-mono">−${prod.descuentoAplicado.toFixed(2)}</span>
+                        </div>
+                      )}
+
+                      {(prod.descuentoPaquete ?? 0) > 0 && (
+                        <div className="flex justify-between text-green-400">
+                          <span>Descuento paquete 4+ servicios (5%)</span>
+                          <span className="font-mono">−${prod.descuentoPaquete!.toFixed(2)}</span>
+                        </div>
+                      )}
+
+                      {(prod.descuentoCodigo ?? 0) > 0 && (
+                        <div className="flex justify-between text-green-400">
+                          <span>Código de descuento {prod.codigoDescuento && <span className="opacity-60">({prod.codigoDescuento})</span>}</span>
+                          <span className="font-mono">−${prod.descuentoCodigo!.toFixed(2)}</span>
+                        </div>
+                      )}
+
+                      <hr className="border-[#263040] my-1" />
+
+                      <div className="flex justify-between font-bold text-base">
+                        <span className="text-[#E2ECF4]">TOTAL</span>
+                        <span className="text-[#F2B968] font-mono">${prod.precioFinal?.toFixed(2)} USD</span>
+                      </div>
+                    </div>
+
                   </div>
                 )}
               </div>
