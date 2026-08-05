@@ -16,6 +16,7 @@ import {
 } from "firebase/firestore";
 import { getFirebaseDb } from "./config";
 import type {
+  ArchivoR2,
   BeneficiosConfig,
   CodigoDescuento,
   Inmobiliaria,
@@ -187,6 +188,51 @@ export function toDate(timestamp: Timestamp | Date | null): Date | null {
   if (!timestamp) return null;
   if (timestamp instanceof Timestamp) return timestamp.toDate();
   return timestamp;
+}
+
+// ============================================
+// ENTREGAS R2
+// ============================================
+
+// Marca una producción como entregada con los archivos subidos a R2
+export async function setEntregaActiva(produccionId: string, archivos: ArchivoR2[], diasExpiracion = 15) {
+  const ref = doc(getFirebaseDb(), "producciones", produccionId);
+  const uploadedAt = new Date();
+  const expiresAt = new Date(uploadedAt.getTime() + diasExpiracion * 24 * 60 * 60 * 1000);
+  await updateDoc(ref, {
+    entregaStatus: "activa",
+    entregaArchivos: archivos,
+    entregaUploadedAt: Timestamp.fromDate(uploadedAt),
+    entregaExpiresAt: Timestamp.fromDate(expiresAt),
+    updatedAt: serverTimestamp(),
+  });
+}
+
+// Marca una producción como archivada (archivos ya borrados de R2)
+export async function setEntregaArchivada(produccionId: string) {
+  const ref = doc(getFirebaseDb(), "producciones", produccionId);
+  await updateDoc(ref, {
+    entregaStatus: "archivada",
+    entregaArchivos: [],
+    updatedAt: serverTimestamp(),
+  });
+}
+
+// Devuelve producciones con entrega activa cuyo expiresAt ya venció
+export async function getEntregasVencidas(): Promise<Production[]> {
+  const ref = collection(getFirebaseDb(), "producciones");
+  const q = query(ref, where("entregaStatus", "==", "activa"));
+  const snap = await getDocs(q);
+  const ahora = new Date();
+  return snap.docs
+    .map((d) => ({ ...d.data(), id: d.id } as Production))
+    .filter((p) => {
+      if (!p.entregaExpiresAt) return false;
+      const exp = p.entregaExpiresAt instanceof Timestamp
+        ? p.entregaExpiresAt.toDate()
+        : new Date(p.entregaExpiresAt as unknown as string);
+      return exp < ahora;
+    });
 }
 
 // ============================================

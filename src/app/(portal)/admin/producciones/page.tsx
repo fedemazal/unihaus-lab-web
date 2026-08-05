@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getProductions, updateProduction, deleteProduction, getUser } from "@/lib/firebase/firestore";
 import { sendEmail } from "@/lib/email/send";
-import type { Production, ProductionStatus } from "@/types";
+import type { ArchivoR2, Production, ProductionStatus } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,9 @@ import {
   Tag,
   Trash2,
   XCircle,
+  CheckCircle,
+  FileArchive,
+  X,
 } from "lucide-react";
 
 const statusConfig: Record<ProductionStatus, { label: string; color: string; next?: ProductionStatus; nextLabel?: string }> = {
@@ -37,9 +40,15 @@ export default function AdminProduccionesPage() {
   const [filtroEstado, setFiltroEstado] = useState<string>("todos");
   const [busqueda, setBusqueda] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [fileUrl, setFileUrl] = useState("");
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
+
+  // Entrega R2
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [uploadFiles, setUploadFiles] = useState<File[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadData();
@@ -214,18 +223,64 @@ export default function AdminProduccionesPage() {
     }
   }
 
-  async function saveFileUrl(prod: Production) {
-    if (!fileUrl) return;
+  async function handleEntregaUpload(prod: Production) {
+    if (!uploadFiles.length) return;
+    setUploadingId(prod.id);
+    setUploadError(null);
+    const archivosSubidos: ArchivoR2[] = [];
     try {
-      await updateProduction(prod.id, {
-        archivos: { ...prod.archivos, fotosVideosZip: fileUrl },
+      for (const file of uploadFiles) {
+        // 1. Pedir URL firmada al servidor
+        const presignRes = await fetch("/api/r2/presign", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ produccionId: prod.id, nombre: file.name, contentType: file.type || "application/octet-stream" }),
+        });
+        if (!presignRes.ok) throw new Error("Error generando URL de subida");
+        const { url, key } = await presignRes.json();
+
+        // 2. Subir directo a R2 con XMLHttpRequest para tener progreso
+        await new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+              setUploadProgress((prev) => ({ ...prev, [file.name]: Math.round((e.loaded / e.total) * 100) }));
+            }
+          };
+          xhr.onload = () => (xhr.status < 300 ? resolve() : reject(new Error(`Error subiendo ${file.name}: ${xhr.status}`)));
+          xhr.onerror = () => reject(new Error(`Error de red subiendo ${file.name}`));
+          xhr.open("PUT", url);
+          xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+          xhr.send(file);
+        });
+
+        archivosSubidos.push({ nombre: file.name, key, contentType: file.type || "application/octet-stream", size: file.size });
+      }
+
+      // 3. Confirmar en Firestore
+      const confirmRes = await fetch("/api/r2/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ produccionId: prod.id, archivos: archivosSubidos }),
       });
-      setFileUrl("");
+      if (!confirmRes.ok) throw new Error("Error confirmando entrega en Firestore");
+
+      // Notificar al agente
+      const agent = await getUser(prod.agenteId);
+      if (agent) {
+        sendEmail("archivos_listos", agent.email, { nombre: agent.nombre, direccion: prod.direccion });
+      }
+
+      setUploadFiles([]);
+      setUploadProgress({});
+      setUploadingId(null);
       await loadData();
     } catch (err) {
-      console.error("Error saving file:", err);
+      setUploadError(err instanceof Error ? err.message : "Error desconocido");
+      setUploadingId(null);
     }
   }
+
 
   if (loading) {
     return (
@@ -572,29 +627,101 @@ export default function AdminProduccionesPage() {
                       </div>
                     </div>
 
-                    {/* File upload */}
-                    {prod.estado === "en_proceso" && (
-                      <div>
-                        <Label className="text-[#E2ECF4] flex items-center gap-1 mb-1">
-                          <Upload className="w-4 h-4" /> Link de archivos (ZIP)
+                    {/* Entrega R2 */}
+                    <div className="border border-[#263040] rounded-xl p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[#E2ECF4] flex items-center gap-1.5">
+                          <FileArchive className="w-4 h-4 text-[#F2B968]" /> Entrega de archivos
                         </Label>
-                        <div className="flex gap-2">
-                          <Input
-                            value={fileUrl}
-                            onChange={(e) => setFileUrl(e.target.value)}
-                            placeholder="https://drive.google.com/..."
-                            className="bg-[#0D1117] border-[#263040] text-[#E2ECF4] placeholder:text-[#7A96A8]"
-                          />
-                          <Button
-                            onClick={() => saveFileUrl(prod)}
-                            size="sm"
-                            className="bg-[#F2B968] hover:bg-[#d9a050] text-[#0D1117] font-semibold shrink-0"
-                          >
-                            Guardar
-                          </Button>
-                        </div>
+                        {/* Badge de estado */}
+                        {!prod.entregaStatus || prod.entregaStatus === "sin_entrega" ? (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-[#263040] text-[#7A96A8]">Sin entrega</span>
+                        ) : prod.entregaStatus === "activa" ? (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/30">
+                            Activa · vence {prod.entregaExpiresAt ? new Date(
+                              (prod.entregaExpiresAt as unknown as { toDate?: () => Date }).toDate
+                                ? (prod.entregaExpiresAt as unknown as { toDate: () => Date }).toDate()
+                                : prod.entregaExpiresAt
+                            ).toLocaleDateString("es-AR") : "—"}
+                          </span>
+                        ) : (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-[#263040] text-[#7A96A8]">Archivada</span>
+                        )}
                       </div>
-                    )}
+
+                      {/* Archivos actuales */}
+                      {prod.entregaStatus === "activa" && prod.entregaArchivos?.length > 0 && (
+                        <div className="space-y-1">
+                          {prod.entregaArchivos.map((a, i) => (
+                            <div key={i} className="flex items-center gap-2 text-xs text-[#7A96A8]">
+                              <CheckCircle className="w-3.5 h-3.5 text-green-400 shrink-0" />
+                              <span className="truncate">{a.nombre}</span>
+                              <span className="shrink-0 opacity-60">{(a.size / 1024 / 1024).toFixed(1)} MB</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Selector de archivos */}
+                      <div>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          multiple
+                          className="hidden"
+                          onChange={(e) => setUploadFiles(Array.from(e.target.files ?? []))}
+                        />
+                        {uploadFiles.length === 0 ? (
+                          <button
+                            onClick={() => { setUploadError(null); fileInputRef.current?.click(); }}
+                            className="w-full border border-dashed border-[#263040] hover:border-[#F2B968]/50 rounded-lg py-3 text-sm text-[#7A96A8] hover:text-[#F2B968] transition flex items-center justify-center gap-2"
+                          >
+                            <Upload className="w-4 h-4" />
+                            {prod.entregaStatus === "activa" ? "Reemplazar archivos" : "Seleccionar archivos"}
+                          </button>
+                        ) : (
+                          <div className="space-y-2">
+                            {uploadFiles.map((f) => (
+                              <div key={f.name} className="flex items-center gap-2 text-xs">
+                                <span className="flex-1 truncate text-[#E2ECF4]">{f.name}</span>
+                                <span className="text-[#7A96A8] shrink-0">{(f.size / 1024 / 1024).toFixed(1)} MB</span>
+                                {uploadProgress[f.name] !== undefined && (
+                                  <span className="text-[#F2B968] shrink-0 tabular-nums">{uploadProgress[f.name]}%</span>
+                                )}
+                                {uploadingId !== prod.id && (
+                                  <button onClick={() => setUploadFiles((prev) => prev.filter((x) => x.name !== f.name))}>
+                                    <X className="w-3.5 h-3.5 text-[#7A96A8] hover:text-red-400" />
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                            <div className="flex gap-2 pt-1">
+                              <Button
+                                onClick={() => handleEntregaUpload(prod)}
+                                disabled={uploadingId === prod.id}
+                                size="sm"
+                                className="bg-[#F2B968] hover:bg-[#d9a050] text-[#0D1117] font-semibold"
+                              >
+                                {uploadingId === prod.id
+                                  ? <><Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> Subiendo...</>
+                                  : <><Upload className="w-3.5 h-3.5 mr-1" /> Subir y entregar</>
+                                }
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                disabled={uploadingId === prod.id}
+                                onClick={() => { setUploadFiles([]); setUploadProgress({}); setUploadError(null); }}
+                                className="text-[#7A96A8]"
+                              >
+                                Cancelar
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                        {uploadError && <p className="text-xs text-red-400 mt-2">{uploadError}</p>}
+                      </div>
+                    </div>
 
                     {/* Actions */}
                     <div className="flex flex-wrap gap-2 pt-2">
