@@ -5,7 +5,11 @@ import { useAuth } from "@/lib/hooks/useAuth";
 import { getProductions } from "@/lib/firebase/firestore";
 import type { Production, ProductionStatus } from "@/types";
 import Link from "next/link";
-import { Plus, Search, MapPin, Calendar, DollarSign, Download, Loader2 } from "lucide-react";
+import {
+  Plus, Search, MapPin, Calendar, DollarSign,
+  Download, Loader2, ChevronDown, ChevronUp,
+  CheckCircle, Package, Clock,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +27,8 @@ export default function ProduccionesPage() {
   const [loading, setLoading] = useState(true);
   const [filtroEstado, setFiltroEstado] = useState<string>("todos");
   const [busqueda, setBusqueda] = useState("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [downloadingKey, setDownloadingKey] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -44,6 +50,23 @@ export default function ProduccionesPage() {
     if (busqueda && !p.direccion.toLowerCase().includes(busqueda.toLowerCase())) return false;
     return true;
   });
+
+  async function handleDescargar(key: string, nombre: string) {
+    setDownloadingKey(key);
+    try {
+      const res = await fetch(`/api/r2/download?key=${encodeURIComponent(key)}`);
+      if (!res.ok) throw new Error("Error generando link de descarga");
+      const { url } = await res.json();
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = nombre;
+      a.click();
+    } catch (err) {
+      console.error("Error descargando:", err);
+    } finally {
+      setDownloadingKey(null);
+    }
+  }
 
   if (loading) {
     return (
@@ -114,18 +137,25 @@ export default function ProduccionesPage() {
         <div className="space-y-3">
           {filtered.map((prod) => {
             const status = statusConfig[prod.estado];
+            const isExpanded = expandedId === prod.id;
+            const tieneEntregaActiva = prod.entregaStatus === "activa" && (prod.entregaArchivos?.length ?? 0) > 0;
+            const tieneEntregaArchivada = prod.entregaStatus === "archivada";
+
             return (
-              <div
-                key={prod.id}
-                className="bg-[#161C26] rounded-xl border border-[#263040] p-5 hover:border-[#3A4A60] transition"
-              >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div key={prod.id} className="bg-[#161C26] rounded-xl border border-[#263040] overflow-hidden">
+                <button
+                  onClick={() => setExpandedId(isExpanded ? null : prod.id)}
+                  className="w-full p-5 text-left flex items-center justify-between hover:bg-[#1E2A38] transition"
+                >
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Badge className={`${status.color} border text-xs`}>
-                        {status.label}
-                      </Badge>
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <Badge className={`${status.color} border text-xs`}>{status.label}</Badge>
                       <span className="text-xs text-[#7A96A8] capitalize">{prod.tipoPropiedad}</span>
+                      {tieneEntregaActiva && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/30 flex items-center gap-1">
+                          <Package className="w-3 h-3" /> Archivos listos
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-1.5 text-[#E2ECF4] font-medium">
                       <MapPin className="w-4 h-4 text-[#7A96A8] shrink-0" />
@@ -148,8 +178,87 @@ export default function ProduccionesPage() {
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {prod.estado === "listo" && prod.archivos?.fotosVideosZip && (
+                  {isExpanded
+                    ? <ChevronUp className="w-5 h-5 text-[#7A96A8] shrink-0 ml-3" />
+                    : <ChevronDown className="w-5 h-5 text-[#7A96A8] shrink-0 ml-3" />}
+                </button>
+
+                {isExpanded && (
+                  <div className="border-t border-[#263040] p-5 space-y-4">
+                    {/* Horario confirmado */}
+                    {prod.horarioConfirmado && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Calendar className="w-4 h-4 text-[#F2B968]" />
+                        <span className="text-[#E2ECF4] font-medium">
+                          {prod.horarioConfirmado.fecha} — {prod.horarioConfirmado.horario}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Servicios */}
+                    <div className="flex flex-wrap gap-2">
+                      {prod.servicios?.soloFotos
+                        ? <span className="text-xs px-3 py-1 rounded-full bg-[#F2B968]/12 border border-[#F2B968]/40 text-[#F2B968]">Solo Fotos</span>
+                        : <span className="text-xs px-3 py-1 rounded-full bg-[#F2B968]/12 border border-[#F2B968]/40 text-[#F2B968]">Fotos + Video</span>
+                      }
+                      {prod.servicios?.plano2d && <span className="text-xs px-3 py-1 rounded-full bg-[#161C26] border border-[#263040] text-[#E2ECF4]">Plano 2D</span>}
+                      {prod.servicios?.tour360 && <span className="text-xs px-3 py-1 rounded-full bg-[#161C26] border border-[#263040] text-[#E2ECF4]">Tour 360°</span>}
+                      {prod.servicios?.drone && <span className="text-xs px-3 py-1 rounded-full bg-[#161C26] border border-[#263040] text-[#E2ECF4]">Drone</span>}
+                      {prod.servicios?.amoblamiento && <span className="text-xs px-3 py-1 rounded-full bg-[#161C26] border border-[#263040] text-[#E2ECF4]">Amoblamiento</span>}
+                    </div>
+
+                    {/* Entrega R2 */}
+                    {tieneEntregaActiva && (
+                      <div className="bg-green-500/8 border border-green-500/25 rounded-xl p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-semibold text-green-400 flex items-center gap-1.5">
+                            <CheckCircle className="w-4 h-4" /> Archivos listos para descargar
+                          </p>
+                          {prod.entregaExpiresAt && (
+                            <span className="text-xs text-[#7A96A8] flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              Vence {new Date(
+                                (prod.entregaExpiresAt as unknown as { toDate?: () => Date }).toDate
+                                  ? (prod.entregaExpiresAt as unknown as { toDate: () => Date }).toDate()
+                                  : prod.entregaExpiresAt
+                              ).toLocaleDateString("es-AR")}
+                            </span>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          {(prod.entregaArchivos ?? []).map((archivo, i) => (
+                            <div key={i} className="flex items-center justify-between gap-3 bg-[#0D1117]/40 rounded-lg px-3 py-2">
+                              <div className="min-w-0">
+                                <p className="text-sm text-[#E2ECF4] truncate">{archivo.nombre}</p>
+                                <p className="text-xs text-[#7A96A8]">{(archivo.size / 1024 / 1024).toFixed(1)} MB</p>
+                              </div>
+                              <button
+                                onClick={() => handleDescargar(archivo.key, archivo.nombre)}
+                                disabled={downloadingKey === archivo.key}
+                                className="shrink-0 flex items-center gap-1.5 text-xs font-semibold text-[#F2B968] hover:text-[#d9a050] disabled:opacity-50 transition"
+                              >
+                                {downloadingKey === archivo.key
+                                  ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  : <Download className="w-3.5 h-3.5" />}
+                                Descargar
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {tieneEntregaArchivada && (
+                      <div className="bg-[#263040]/40 border border-[#263040] rounded-xl p-4">
+                        <p className="text-sm text-[#7A96A8]">
+                          Los archivos de esta entrega ya no están disponibles (vencieron los 15 días).
+                          Contactá a Unihaus Lab si necesitás reposición.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Link viejo (WeTransfer) si existe */}
+                    {!tieneEntregaActiva && !tieneEntregaArchivada && prod.archivos?.fotosVideosZip && (
                       <a
                         href={prod.archivos.fotosVideosZip}
                         target="_blank"
@@ -157,11 +266,11 @@ export default function ProduccionesPage() {
                         className="flex items-center gap-1.5 text-sm text-[#F2B968] hover:underline"
                       >
                         <Download className="w-4 h-4" />
-                        Descargar
+                        Descargar archivos
                       </a>
                     )}
                   </div>
-                </div>
+                )}
               </div>
             );
           })}
