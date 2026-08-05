@@ -153,8 +153,6 @@ export default function ProduccionesPage() {
             const isRatioOpen = expandedRatio === prod.id;
             const tieneEntregaActiva = prod.entregaStatus === "activa" && (prod.entregaArchivos?.length ?? 0) > 0;
             const tieneEntregaArchivada = prod.entregaStatus === "archivada";
-            const tieneArchivos = tieneEntregaActiva || (!tieneEntregaActiva && !tieneEntregaArchivada && !!prod.archivos?.fotosVideosZip);
-
             const fechaRealizacion = toDate(prod.horarioConfirmado?.fecha
               ? null
               : prod.fechaListo) ?? toDate(prod.fechaEnProceso);
