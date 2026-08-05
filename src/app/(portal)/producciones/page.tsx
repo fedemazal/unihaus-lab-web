@@ -21,6 +21,15 @@ const statusConfig: Record<ProductionStatus, { label: string; color: string }> =
   cancelado: { label: "Cancelado", color: "bg-red-500/15 text-red-300 border-red-500/30" },
 };
 
+function toDate(val: unknown): Date | null {
+  if (!val) return null;
+  if (typeof val === "object" && val !== null && "toDate" in val) {
+    return (val as { toDate: () => Date }).toDate();
+  }
+  if (val instanceof Date) return val;
+  return null;
+}
+
 export default function ProduccionesPage() {
   const { profile } = useAuth();
   const [producciones, setProducciones] = useState<Production[]>([]);
@@ -28,6 +37,8 @@ export default function ProduccionesPage() {
   const [filtroEstado, setFiltroEstado] = useState<string>("todos");
   const [busqueda, setBusqueda] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedDesglose, setExpandedDesglose] = useState<string | null>(null);
+  const [expandedRatio, setExpandedRatio] = useState<string | null>(null);
   const [downloadingKey, setDownloadingKey] = useState<string | null>(null);
 
   useEffect(() => {
@@ -138,8 +149,18 @@ export default function ProduccionesPage() {
           {filtered.map((prod) => {
             const status = statusConfig[prod.estado];
             const isExpanded = expandedId === prod.id;
+            const isDesgloseOpen = expandedDesglose === prod.id;
+            const isRatioOpen = expandedRatio === prod.id;
             const tieneEntregaActiva = prod.entregaStatus === "activa" && (prod.entregaArchivos?.length ?? 0) > 0;
             const tieneEntregaArchivada = prod.entregaStatus === "archivada";
+            const tieneArchivos = tieneEntregaActiva || (!tieneEntregaActiva && !tieneEntregaArchivada && !!prod.archivos?.fotosVideosZip);
+
+            const fechaRealizacion = toDate(prod.horarioConfirmado?.fecha
+              ? null
+              : prod.fechaListo) ?? toDate(prod.fechaEnProceso);
+            const fechaConfirmada = prod.horarioConfirmado
+              ? `${prod.horarioConfirmado.fecha}${prod.horarioConfirmado.horario ? ` — ${prod.horarioConfirmado.horario}` : ""}`
+              : null;
 
             return (
               <div key={prod.id} className="bg-[#161C26] rounded-xl border border-[#263040] overflow-hidden">
@@ -153,7 +174,7 @@ export default function ProduccionesPage() {
                       <span className="text-xs text-[#7A96A8] capitalize">{prod.tipoPropiedad}</span>
                       {tieneEntregaActiva && (
                         <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/30 flex items-center gap-1">
-                          <Package className="w-3 h-3" /> Archivos listos
+                          <Package className="w-3 h-3" /> Material listo
                         </span>
                       )}
                     </div>
@@ -186,35 +207,31 @@ export default function ProduccionesPage() {
                 {isExpanded && (
                   <div className="border-t border-[#263040] p-5 space-y-5">
 
-                    {/* ── Entrega R2 (siempre arriba) ── */}
+                    {/* ── Descarga de material (siempre arriba) ── */}
                     {tieneEntregaActiva && (
                       <div className="bg-green-500/8 border border-green-500/25 rounded-xl p-4 space-y-3">
                         <div className="flex items-center justify-between flex-wrap gap-2">
                           <p className="text-sm font-semibold text-green-400 flex items-center gap-1.5">
-                            <CheckCircle className="w-4 h-4" /> Archivos listos para descargar
+                            <CheckCircle className="w-4 h-4" /> Material listo para descargar
                           </p>
                           {prod.entregaExpiresAt && (
                             <span className="text-xs text-[#7A96A8] flex items-center gap-1">
                               <Clock className="w-3 h-3" />
-                              Vence {new Date(
-                                (prod.entregaExpiresAt as unknown as { toDate?: () => Date }).toDate
-                                  ? (prod.entregaExpiresAt as unknown as { toDate: () => Date }).toDate()
-                                  : prod.entregaExpiresAt
-                              ).toLocaleDateString("es-AR")}
+                              Disponible hasta {toDate(prod.entregaExpiresAt)?.toLocaleDateString("es-AR") ?? "—"}
                             </span>
                           )}
                         </div>
                         <div className="space-y-2">
                           {(prod.entregaArchivos ?? []).map((archivo, i) => (
-                            <div key={i} className="flex items-center justify-between gap-3 bg-[#0D1117]/40 rounded-lg px-3 py-2">
+                            <div key={i} className="flex items-center justify-between gap-3 bg-[#0D1117]/40 rounded-lg px-3 py-2.5">
                               <div className="min-w-0">
-                                <p className="text-sm text-[#E2ECF4] truncate">{archivo.nombre}</p>
+                                <p className="text-sm text-[#E2ECF4] truncate font-medium">{archivo.nombre}</p>
                                 <p className="text-xs text-[#7A96A8]">{(archivo.size / 1024 / 1024).toFixed(1)} MB</p>
                               </div>
                               <button
                                 onClick={() => handleDescargar(archivo.key, archivo.nombre)}
                                 disabled={downloadingKey === archivo.key}
-                                className="shrink-0 flex items-center gap-1.5 text-xs font-semibold text-[#F2B968] hover:text-[#d9a050] disabled:opacity-50 transition"
+                                className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F2B968] hover:bg-[#d9a050] text-[#0D1117] text-xs font-bold disabled:opacity-50 transition"
                               >
                                 {downloadingKey === archivo.key
                                   ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -236,17 +253,38 @@ export default function ProduccionesPage() {
                       </div>
                     )}
 
-                    {/* Link viejo (WeTransfer) si existe */}
+                    {/* Link viejo (WeTransfer) */}
                     {!tieneEntregaActiva && !tieneEntregaArchivada && prod.archivos?.fotosVideosZip && (
-                      <a
-                        href={prod.archivos.fotosVideosZip}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 text-sm text-[#F2B968] hover:underline"
-                      >
-                        <Download className="w-4 h-4" />
-                        Descargar archivos
-                      </a>
+                      <div className="bg-green-500/8 border border-green-500/25 rounded-xl p-4">
+                        <p className="text-sm font-semibold text-green-400 mb-3 flex items-center gap-1.5">
+                          <CheckCircle className="w-4 h-4" /> Material listo para descargar
+                        </p>
+                        <a
+                          href={prod.archivos.fotosVideosZip}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#F2B968] hover:bg-[#d9a050] text-[#0D1117] text-sm font-bold transition"
+                        >
+                          <Download className="w-4 h-4" />
+                          Descargar material
+                        </a>
+                      </div>
+                    )}
+
+                    {/* ── Fecha de realización ── */}
+                    {fechaConfirmada && (
+                      <div className="flex items-center gap-2 text-sm bg-[#0D1117] rounded-lg px-4 py-3 border border-[#263040]">
+                        <Calendar className="w-4 h-4 text-[#F2B968] shrink-0" />
+                        <span className="text-[#7A96A8]">Fecha de realización:</span>
+                        <span className="text-[#E2ECF4] font-medium">{fechaConfirmada}</span>
+                      </div>
+                    )}
+                    {!fechaConfirmada && fechaRealizacion && (
+                      <div className="flex items-center gap-2 text-sm bg-[#0D1117] rounded-lg px-4 py-3 border border-[#263040]">
+                        <Calendar className="w-4 h-4 text-[#F2B968] shrink-0" />
+                        <span className="text-[#7A96A8]">Fecha de realización:</span>
+                        <span className="text-[#E2ECF4] font-medium">{fechaRealizacion.toLocaleDateString("es-AR")}</span>
+                      </div>
                     )}
 
                     {/* ── Datos de la propiedad ── */}
@@ -282,28 +320,6 @@ export default function ProduccionesPage() {
                       </div>
                     </div>
 
-                    {/* ── Horario confirmado ── */}
-                    {prod.horarioConfirmado && (
-                      <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
-                        <p className="text-sm font-medium text-green-400 flex items-center gap-1">
-                          <Calendar className="w-4 h-4" /> Horario confirmado
-                        </p>
-                        <p className="text-sm text-green-300 mt-1">
-                          {prod.horarioConfirmado.fecha} — {prod.horarioConfirmado.horario}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* ── Horarios sugeridos ── */}
-                    {!prod.horarioConfirmado && prod.horariosSugeridos?.length > 0 && (
-                      <div>
-                        <p className="text-xs text-[#7A96A8] uppercase tracking-wide mb-2">Horarios sugeridos</p>
-                        <ul className="text-sm text-[#7A96A8] space-y-0.5">
-                          {prod.horariosSugeridos.map((h, i) => <li key={i}>• {h}</li>)}
-                        </ul>
-                      </div>
-                    )}
-
                     {/* ── Observaciones ── */}
                     {prod.observaciones && (
                       <div>
@@ -312,62 +328,114 @@ export default function ProduccionesPage() {
                       </div>
                     )}
 
-                    {/* ── Desglose de precios ── */}
-                    <div className="bg-[#0D1117] rounded-lg p-4 border border-[#263040] text-sm space-y-1.5">
-                      <p className="text-xs text-[#7A96A8] uppercase tracking-wide mb-3">Desglose</p>
-
-                      <div className="flex justify-between">
-                        <span className="text-[#7A96A8]">
-                          {prod.servicios?.soloFotos ? "Solo Fotos (−25%)" : prod.servicios?.videoAdicional ? "Fotos + Video + 2do Video (+25%)" : "Fotos + Video"}
+                    {/* ── Desglose de presupuesto (expandible) ── */}
+                    <div className="border border-[#263040] rounded-xl overflow-hidden">
+                      <button
+                        onClick={() => setExpandedDesglose(isDesgloseOpen ? null : prod.id)}
+                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-[#1E2A38] transition"
+                      >
+                        <span className="text-sm font-medium text-[#E2ECF4] flex items-center gap-2">
+                          <DollarSign className="w-4 h-4 text-[#F2B968]" />
+                          Desglose de presupuesto
                         </span>
-                        <span className="font-mono text-[#E2ECF4]">${prod.precioBase?.toFixed(2)}</span>
-                      </div>
-
-                      {prod.desglose?.map((item, i) => (
-                        <div key={i} className="flex justify-between">
-                          <span className="text-[#7A96A8]">
-                            {item.concepto}
-                            <span className="text-xs opacity-50 ml-1">({item.calculo})</span>
-                          </span>
-                          <span className="font-mono text-[#E2ECF4]">${item.monto?.toFixed(2)}</span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-bold text-[#F2B968] font-mono">${prod.precioFinal?.toFixed(2)} USD</span>
+                          {isDesgloseOpen ? <ChevronUp className="w-4 h-4 text-[#7A96A8]" /> : <ChevronDown className="w-4 h-4 text-[#7A96A8]" />}
                         </div>
-                      ))}
+                      </button>
+                      {isDesgloseOpen && (
+                        <div className="px-4 pb-4 pt-1 bg-[#0D1117] text-sm space-y-1.5 border-t border-[#263040]">
+                          <div className="flex justify-between pt-2">
+                            <span className="text-[#7A96A8]">
+                              {prod.servicios?.soloFotos ? "Solo Fotos (−25%)" : prod.servicios?.videoAdicional ? "Fotos + Video + 2do Video (+25%)" : "Fotos + Video"}
+                            </span>
+                            <span className="font-mono text-[#E2ECF4]">${prod.precioBase?.toFixed(2)}</span>
+                          </div>
 
-                      <hr className="border-[#263040] my-1" />
+                          {prod.desglose?.map((item, i) => (
+                            <div key={i} className="flex justify-between">
+                              <span className="text-[#7A96A8]">
+                                {item.concepto}
+                                <span className="text-xs opacity-50 ml-1">({item.calculo})</span>
+                              </span>
+                              <span className="font-mono text-[#E2ECF4]">${item.monto?.toFixed(2)}</span>
+                            </div>
+                          ))}
 
-                      <div className="flex justify-between text-[#7A96A8]">
-                        <span>Subtotal</span>
-                        <span className="font-mono text-[#E2ECF4]">${(prod.subtotal ?? 0).toFixed(2)}</span>
-                      </div>
+                          <hr className="border-[#263040] my-1" />
+                          <div className="flex justify-between text-[#7A96A8]">
+                            <span>Subtotal</span>
+                            <span className="font-mono text-[#E2ECF4]">${(prod.subtotal ?? 0).toFixed(2)}</span>
+                          </div>
 
-                      {(prod.descuentoAplicado ?? 0) > 0 && (
-                        <div className="flex justify-between text-green-400">
-                          <span>Descuento inmobiliaria</span>
-                          <span className="font-mono">−${prod.descuentoAplicado.toFixed(2)}</span>
+                          {(prod.descuentoAplicado ?? 0) > 0 && (
+                            <div className="flex justify-between text-green-400">
+                              <span>Descuento inmobiliaria</span>
+                              <span className="font-mono">−${prod.descuentoAplicado.toFixed(2)}</span>
+                            </div>
+                          )}
+                          {(prod.descuentoPaquete ?? 0) > 0 && (
+                            <div className="flex justify-between text-green-400">
+                              <span>Descuento paquete 4+ servicios (5%)</span>
+                              <span className="font-mono">−${prod.descuentoPaquete!.toFixed(2)}</span>
+                            </div>
+                          )}
+                          {(prod.descuentoCodigo ?? 0) > 0 && (
+                            <div className="flex justify-between text-green-400">
+                              <span>Código {prod.codigoDescuento && <span className="opacity-60">({prod.codigoDescuento})</span>}</span>
+                              <span className="font-mono">−${prod.descuentoCodigo!.toFixed(2)}</span>
+                            </div>
+                          )}
+
+                          <hr className="border-[#263040] my-1" />
+                          <div className="flex justify-between font-bold text-base pb-1">
+                            <span className="text-[#E2ECF4]">TOTAL</span>
+                            <span className="text-[#F2B968] font-mono">${prod.precioFinal?.toFixed(2)} USD</span>
+                          </div>
                         </div>
                       )}
-
-                      {(prod.descuentoPaquete ?? 0) > 0 && (
-                        <div className="flex justify-between text-green-400">
-                          <span>Descuento paquete 4+ servicios (5%)</span>
-                          <span className="font-mono">−${prod.descuentoPaquete!.toFixed(2)}</span>
-                        </div>
-                      )}
-
-                      {(prod.descuentoCodigo ?? 0) > 0 && (
-                        <div className="flex justify-between text-green-400">
-                          <span>Código de descuento {prod.codigoDescuento && <span className="opacity-60">({prod.codigoDescuento})</span>}</span>
-                          <span className="font-mono">−${prod.descuentoCodigo!.toFixed(2)}</span>
-                        </div>
-                      )}
-
-                      <hr className="border-[#263040] my-1" />
-
-                      <div className="flex justify-between font-bold text-base">
-                        <span className="text-[#E2ECF4]">TOTAL</span>
-                        <span className="text-[#F2B968] font-mono">${prod.precioFinal?.toFixed(2)} USD</span>
-                      </div>
                     </div>
+
+                    {/* ── Ratio de inversión (expandible, solo si hay valorEstimado) ── */}
+                    {prod.valorEstimado && prod.valorEstimado > 0 && (
+                      <div className="border border-[#F2B968]/25 rounded-xl overflow-hidden">
+                        <button
+                          onClick={() => setExpandedRatio(isRatioOpen ? null : prod.id)}
+                          className="w-full flex items-center justify-between px-4 py-3 hover:bg-[#F2B968]/5 transition"
+                        >
+                          <span className="text-sm font-medium text-[#F2B968]">Inversión vs. comisión de venta</span>
+                          {isRatioOpen ? <ChevronUp className="w-4 h-4 text-[#F2B968]" /> : <ChevronDown className="w-4 h-4 text-[#F2B968]" />}
+                        </button>
+                        {isRatioOpen && (
+                          <div className="px-4 pb-4 pt-1 bg-[#F2B968]/5 border-t border-[#F2B968]/20">
+                            <div className="grid grid-cols-2 gap-2 mt-2">
+                              <div className="bg-[#0D1117]/60 rounded-lg px-3 py-2.5">
+                                <p className="text-xs text-[#7A96A8] mb-1">Valor inmueble</p>
+                                <p className="text-base font-bold text-[#E2ECF4]">
+                                  ${prod.valorEstimado.toLocaleString("es-AR")} USD
+                                </p>
+                              </div>
+                              <div className="bg-[#0D1117]/60 rounded-lg px-3 py-2.5">
+                                <p className="text-xs text-[#7A96A8] mb-1">Comisión est. (5%)</p>
+                                <p className="text-base font-bold text-[#E2ECF4]">
+                                  ${(prod.valorEstimado * 0.05).toLocaleString("es-AR", { maximumFractionDigits: 0 })} USD
+                                </p>
+                              </div>
+                              <div className="bg-[#0D1117]/60 rounded-lg px-3 py-2.5">
+                                <p className="text-xs text-[#7A96A8] mb-1">Esta producción</p>
+                                <p className="text-base font-bold text-[#E2ECF4]">${prod.precioFinal?.toFixed(2)} USD</p>
+                              </div>
+                              <div className="bg-[#F2B968]/10 rounded-lg px-3 py-2.5">
+                                <p className="text-xs text-[#7A96A8] mb-1">% de la comisión</p>
+                                <p className="text-base font-bold text-[#F2B968]">
+                                  {((prod.precioFinal / (prod.valorEstimado * 0.05)) * 100).toFixed(2)}%
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                   </div>
                 )}
