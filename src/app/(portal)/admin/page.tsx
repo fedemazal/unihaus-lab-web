@@ -14,6 +14,7 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
+import { AnimatedNumber } from "@/components/ui/animated-number";
 
 export default function AdminDashboardPage() {
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -91,28 +92,28 @@ export default function AdminDashboardPage() {
             <Clock className="w-4 h-4" />
             <span className="text-sm font-medium text-[#E2ECF4]">Pendientes</span>
           </div>
-          <p className="text-2xl font-bold text-[#E2ECF4]">{pendingProds}</p>
+          <p className="text-2xl font-bold text-[#E2ECF4]"><AnimatedNumber value={pendingProds} /></p>
         </div>
         <div className="bg-[#161C26] border border-[#263040] rounded-xl p-4">
           <div className="flex items-center gap-2 text-blue-400 mb-2">
             <Loader2 className="w-4 h-4" />
             <span className="text-sm font-medium text-[#E2ECF4]">En proceso</span>
           </div>
-          <p className="text-2xl font-bold text-[#E2ECF4]">{inProcessProds}</p>
+          <p className="text-2xl font-bold text-[#E2ECF4]"><AnimatedNumber value={inProcessProds} /></p>
         </div>
         <div className="bg-[#161C26] border border-[#263040] rounded-xl p-4">
           <div className="flex items-center gap-2 text-[#7A96A8] mb-2">
             <FolderOpen className="w-4 h-4" />
             <span className="text-sm font-medium text-[#E2ECF4]">Total este mes</span>
           </div>
-          <p className="text-2xl font-bold text-[#E2ECF4]">{thisMonth.length}</p>
+          <p className="text-2xl font-bold text-[#E2ECF4]"><AnimatedNumber value={thisMonth.length} /></p>
         </div>
         <div className="bg-[#161C26] border border-[#263040] rounded-xl p-4">
           <div className="flex items-center gap-2 text-[#F2B968] mb-2">
             <DollarSign className="w-4 h-4" />
             <span className="text-sm font-medium text-[#E2ECF4]">Ingresos mes</span>
           </div>
-          <p className="text-2xl font-bold text-[#E2ECF4]">${ingresosMes.toFixed(0)}</p>
+          <p className="text-2xl font-bold text-[#E2ECF4]">$<AnimatedNumber value={ingresosMes} precision={0} /></p>
         </div>
       </div>
 

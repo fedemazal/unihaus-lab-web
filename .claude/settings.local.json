@@ -42,7 +42,22 @@
       "Bash(git -C /Users/fedemazal/Desktop/unihaus-site add src/types/index.ts src/app/\\\\\\(portal\\\\\\)/admin/producciones/page.tsx src/app/\\\\\\(portal\\\\\\)/producciones/nueva/page.tsx)",
       "Bash(npx vercel *)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(npx shadcn *)",
+      "Bash(curl -s \"https://www.cult-ui.com/registry/text-animate.json\")",
+      "Bash(curl -s -A \"Mozilla/5.0 \\(Macintosh; Intel Mac OS X 10_15_7\\) AppleWebKit/537.36\" \"https://www.cult-ui.com/r/text-animate.json\")",
+      "Bash(curl -s \"https://github.com/nolly-studio/cult-rich-text/blob/main/README.md\")",
+      "Bash(curl -s \"https://raw.githubusercontent.com/nolly-studio/cult-ui/main/apps/www/public/r/bg-animated-gradient.json\")",
+      "Bash(curl -s \"https://api.github.com/repos/nolly-studio/cult-ui/contents/apps/www/public/r\")",
+      "Bash(python3 -c \"import sys,json; files=[f['name'].replace\\('.json',''\\) for f in json.load\\(sys.stdin\\) if f['name'].endswith\\('.json'\\)]; print\\('\\\\n'.join\\(sorted\\(files\\)\\)\\)\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); deps=d.get\\('dependencies',{}\\); print\\([k for k in deps if 'motion' in k or 'framer' in k or 'radix' in k]\\)\")",
+      "Bash(node -e \"require\\('class-variance-authority'\\); console.log\\('cva ok'\\)\")",
+      "Bash(node -e \"require\\('motion'\\); console.log\\('motion ok'\\)\")",
+      "Bash(cp /tmp/animated-number.tsx /Users/fedemazal/Desktop/unihaus-site/src/components/ui/animated-number.tsx)",
+      "Bash(cp /tmp/gradient-heading.tsx /Users/fedemazal/Desktop/unihaus-site/src/components/ui/gradient-heading.tsx)",
+      "Bash(cp /tmp/direction-aware-tabs.tsx /Users/fedemazal/Desktop/unihaus-site/src/components/ui/direction-aware-tabs.tsx)",
+      "Bash(cp /tmp/text-animate.tsx /Users/fedemazal/Desktop/unihaus-site/src/components/ui/text-animate.tsx)",
+      "Bash(grep -n \"stat\\\\|metric\\\\|count\\\\|total\\\\|prod\\\\|number\\\\|\\\\$\" /Users/fedemazal/Desktop/unihaus-site/src/app/\\\\\\(portal\\\\\\)/dashboard/page.tsx)"
     ]
   }
 }

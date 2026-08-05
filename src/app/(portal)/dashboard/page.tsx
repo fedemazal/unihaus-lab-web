@@ -15,6 +15,7 @@ import {
   Loader2,
   DollarSign,
 } from "lucide-react";
+import { AnimatedNumber } from "@/components/ui/animated-number";
 
 export default function DashboardPage() {
   const { profile } = useAuth();
@@ -56,28 +57,28 @@ export default function DashboardPage() {
               <Clock className="w-4 h-4" />
               <span className="text-sm font-medium">Pendientes</span>
             </div>
-            <p className="text-2xl font-bold text-[#E2ECF4]">{pendientes}</p>
+            <p className="text-2xl font-bold text-[#E2ECF4]"><AnimatedNumber value={pendientes} /></p>
           </div>
           <div className="bg-[#161C26] border border-[#263040] rounded-xl p-4">
             <div className="flex items-center gap-2 text-blue-400 mb-2">
               <Loader2 className="w-4 h-4" />
               <span className="text-sm font-medium">En proceso</span>
             </div>
-            <p className="text-2xl font-bold text-[#E2ECF4]">{enProceso}</p>
+            <p className="text-2xl font-bold text-[#E2ECF4]"><AnimatedNumber value={enProceso} /></p>
           </div>
           <div className="bg-[#161C26] border border-[#263040] rounded-xl p-4">
             <div className="flex items-center gap-2 text-green-400 mb-2">
               <CheckCircle className="w-4 h-4" />
               <span className="text-sm font-medium">Listas</span>
             </div>
-            <p className="text-2xl font-bold text-[#E2ECF4]">{listas}</p>
+            <p className="text-2xl font-bold text-[#E2ECF4]"><AnimatedNumber value={listas} /></p>
           </div>
           <div className="bg-[#161C26] border border-[#263040] rounded-xl p-4">
             <div className="flex items-center gap-2 text-[#F2B968] mb-2">
               <DollarSign className="w-4 h-4" />
               <span className="text-sm font-medium">Invertido</span>
             </div>
-            <p className="text-2xl font-bold text-[#E2ECF4]">${totalInvertido.toFixed(0)}</p>
+            <p className="text-2xl font-bold text-[#E2ECF4]">$<AnimatedNumber value={totalInvertido} precision={0} /></p>
           </div>
         </div>
       )}
