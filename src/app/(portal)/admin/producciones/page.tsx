@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { getProductions, updateProduction, deleteProduction, getUser } from "@/lib/firebase/firestore";
+import { getProductions, updateProduction, deleteProduction, getUser, setEntregaActiva } from "@/lib/firebase/firestore";
 import { sendEmail } from "@/lib/email/send";
 import type { ArchivoR2, Production, ProductionStatus } from "@/types";
 import { Badge } from "@/components/ui/badge";
@@ -257,13 +257,20 @@ export default function AdminProduccionesPage() {
         archivosSubidos.push({ nombre: file.name, key, contentType: file.type || "application/octet-stream", size: file.size });
       }
 
-      // 3. Confirmar en Firestore
+      // 3. Verificar en R2 (server-side con HeadObject)
       const confirmRes = await fetch("/api/r2/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ produccionId: prod.id, archivos: archivosSubidos }),
+        body: JSON.stringify({ archivos: archivosSubidos }),
       });
-      if (!confirmRes.ok) throw new Error("Error confirmando entrega en Firestore");
+      if (!confirmRes.ok) {
+        const body = await confirmRes.json().catch(() => ({}));
+        throw new Error(body.error || "Error verificando archivos en R2");
+      }
+      const { archivos: archivosVerificados } = await confirmRes.json();
+
+      // 4. Guardar en Firestore desde el cliente (usuario autenticado)
+      await setEntregaActiva(prod.id, archivosVerificados);
 
       // Notificar al agente
       const agent = await getUser(prod.agenteId);
