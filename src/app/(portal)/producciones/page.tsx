@@ -8,7 +8,7 @@ import Link from "next/link";
 import {
   Plus, Search, MapPin, Calendar, DollarSign,
   Download, Loader2, ChevronDown, ChevronUp,
-  CheckCircle, Package, Clock,
+  CheckCircle, Package, Clock, TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,10 @@ function toDate(val: unknown): Date | null {
   }
   if (val instanceof Date) return val;
   return null;
+}
+
+function usd(value: number, decimals = 2) {
+  return `USD ${value.toLocaleString("es-AR", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
 }
 
 export default function ProduccionesPage() {
@@ -160,6 +164,11 @@ export default function ProduccionesPage() {
               ? `${prod.horarioConfirmado.fecha}${prod.horarioConfirmado.horario ? ` — ${prod.horarioConfirmado.horario}` : ""}`
               : null;
 
+            const comisionEstimada = prod.valorEstimado ? prod.valorEstimado * 0.05 : 0;
+            const pctInvertido = comisionEstimada > 0
+              ? ((prod.precioFinal / comisionEstimada) * 100).toFixed(2)
+              : null;
+
             return (
               <div key={prod.id} className="bg-[#161C26] rounded-xl border border-[#263040] overflow-hidden">
                 <button
@@ -193,7 +202,7 @@ export default function ProduccionesPage() {
                       </span>
                       <span className="flex items-center gap-1">
                         <DollarSign className="w-3.5 h-3.5" />
-                        ${prod.precioFinal?.toFixed(2)} USD
+                        {usd(prod.precioFinal ?? 0)}
                       </span>
                     </div>
                   </div>
@@ -251,7 +260,6 @@ export default function ProduccionesPage() {
                       </div>
                     )}
 
-                    {/* Link viejo (WeTransfer) */}
                     {!tieneEntregaActiva && !tieneEntregaArchivada && prod.archivos?.fotosVideosZip && (
                       <div className="bg-green-500/8 border border-green-500/25 rounded-xl p-4">
                         <p className="text-sm font-semibold text-green-400 mb-3 flex items-center gap-1.5">
@@ -289,7 +297,7 @@ export default function ProduccionesPage() {
                     <div className="bg-[#0D1117] rounded-lg px-4 py-3 border border-[#263040]">
                       <p className="text-xs text-[#7A96A8] font-medium uppercase tracking-wide mb-2 capitalize">{prod.tipoPropiedad}</p>
                       <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#7A96A8]">
-                        {prod.superficie && <span><span className="text-[#E2ECF4] font-medium">{prod.superficie}m²</span> construidos</span>}
+                        {prod.superficie && <span><span className="text-[#E2ECF4] font-medium">{prod.superficie}m²</span> totales</span>}
                         {prod.construida && <span><span className="text-[#E2ECF4] font-medium">{prod.construida}m²</span> construidos</span>}
                         {prod.descubierta !== undefined && prod.descubierta > 0 && <span><span className="text-[#E2ECF4] font-medium">{prod.descubierta}m²</span> semi+desc</span>}
                         {prod.amenidades > 0 && <span><span className="text-[#E2ECF4] font-medium">{prod.amenidades}</span> amenities</span>}
@@ -337,7 +345,7 @@ export default function ProduccionesPage() {
                           Desglose de presupuesto
                         </span>
                         <div className="flex items-center gap-3">
-                          <span className="text-sm font-bold text-[#F2B968] font-mono">${prod.precioFinal?.toFixed(2)} USD</span>
+                          <span className="text-sm font-bold text-[#F2B968] font-mono">{usd(prod.precioFinal ?? 0)}</span>
                           {isDesgloseOpen ? <ChevronUp className="w-4 h-4 text-[#7A96A8]" /> : <ChevronDown className="w-4 h-4 text-[#7A96A8]" />}
                         </div>
                       </button>
@@ -347,7 +355,7 @@ export default function ProduccionesPage() {
                             <span className="text-[#7A96A8]">
                               {prod.servicios?.soloFotos ? "Solo Fotos (−25%)" : prod.servicios?.videoAdicional ? "Fotos + Video + 2do Video (+25%)" : "Fotos + Video"}
                             </span>
-                            <span className="font-mono text-[#E2ECF4]">${prod.precioBase?.toFixed(2)}</span>
+                            <span className="font-mono text-[#E2ECF4]">{usd(prod.precioBase ?? 0)}</span>
                           </div>
 
                           {prod.desglose?.map((item, i) => (
@@ -356,80 +364,86 @@ export default function ProduccionesPage() {
                                 {item.concepto}
                                 <span className="text-xs opacity-50 ml-1">({item.calculo})</span>
                               </span>
-                              <span className="font-mono text-[#E2ECF4]">${item.monto?.toFixed(2)}</span>
+                              <span className="font-mono text-[#E2ECF4]">{usd(item.monto ?? 0)}</span>
                             </div>
                           ))}
 
                           <hr className="border-[#263040] my-1" />
                           <div className="flex justify-between text-[#7A96A8]">
                             <span>Subtotal</span>
-                            <span className="font-mono text-[#E2ECF4]">${(prod.subtotal ?? 0).toFixed(2)}</span>
+                            <span className="font-mono text-[#E2ECF4]">{usd(prod.subtotal ?? 0)}</span>
                           </div>
 
                           {(prod.descuentoAplicado ?? 0) > 0 && (
                             <div className="flex justify-between text-green-400">
                               <span>Descuento inmobiliaria</span>
-                              <span className="font-mono">−${prod.descuentoAplicado.toFixed(2)}</span>
+                              <span className="font-mono">−{usd(prod.descuentoAplicado)}</span>
                             </div>
                           )}
                           {(prod.descuentoPaquete ?? 0) > 0 && (
                             <div className="flex justify-between text-green-400">
                               <span>Descuento paquete 4+ servicios (5%)</span>
-                              <span className="font-mono">−${prod.descuentoPaquete!.toFixed(2)}</span>
+                              <span className="font-mono">−{usd(prod.descuentoPaquete!)}</span>
                             </div>
                           )}
                           {(prod.descuentoCodigo ?? 0) > 0 && (
                             <div className="flex justify-between text-green-400">
                               <span>Código {prod.codigoDescuento && <span className="opacity-60">({prod.codigoDescuento})</span>}</span>
-                              <span className="font-mono">−${prod.descuentoCodigo!.toFixed(2)}</span>
+                              <span className="font-mono">−{usd(prod.descuentoCodigo!)}</span>
                             </div>
                           )}
 
                           <hr className="border-[#263040] my-1" />
                           <div className="flex justify-between font-bold text-base pb-1">
                             <span className="text-[#E2ECF4]">TOTAL</span>
-                            <span className="text-[#F2B968] font-mono">${prod.precioFinal?.toFixed(2)} USD</span>
+                            <span className="text-[#F2B968] font-mono">{usd(prod.precioFinal ?? 0)}</span>
                           </div>
                         </div>
                       )}
                     </div>
 
-                    {/* ── Ratio de inversión (expandible, solo si hay valorEstimado) ── */}
+                    {/* ── Estadísticas de inversión (expandible, solo si hay valorEstimado) ── */}
                     {prod.valorEstimado && prod.valorEstimado > 0 && (
                       <div className="border border-[#F2B968]/25 rounded-xl overflow-hidden">
                         <button
                           onClick={() => setExpandedRatio(isRatioOpen ? null : prod.id)}
                           className="w-full flex items-center justify-between px-4 py-3 hover:bg-[#F2B968]/5 transition"
                         >
-                          <span className="text-sm font-medium text-[#F2B968]">Inversión vs. comisión de venta</span>
+                          <span className="text-sm font-medium text-[#F2B968] flex items-center gap-2">
+                            <TrendingUp className="w-4 h-4" />
+                            Estadísticas de inversión
+                          </span>
                           {isRatioOpen ? <ChevronUp className="w-4 h-4 text-[#F2B968]" /> : <ChevronDown className="w-4 h-4 text-[#F2B968]" />}
                         </button>
                         {isRatioOpen && (
                           <div className="px-4 pb-4 pt-1 bg-[#F2B968]/5 border-t border-[#F2B968]/20">
                             <div className="grid grid-cols-2 gap-2 mt-2">
                               <div className="bg-[#0D1117]/60 rounded-lg px-3 py-2.5">
-                                <p className="text-xs text-[#7A96A8] mb-1">Valor inmueble</p>
+                                <p className="text-xs text-[#7A96A8] mb-1">Valor del inmueble</p>
                                 <p className="text-base font-bold text-[#E2ECF4]">
-                                  ${prod.valorEstimado.toLocaleString("es-AR")} USD
+                                  {usd(prod.valorEstimado, 0)}
                                 </p>
                               </div>
                               <div className="bg-[#0D1117]/60 rounded-lg px-3 py-2.5">
-                                <p className="text-xs text-[#7A96A8] mb-1">Comisión est. (5%)</p>
+                                <p className="text-xs text-[#7A96A8] mb-1">Comisión estimada (5%, prom. gral.)</p>
                                 <p className="text-base font-bold text-[#E2ECF4]">
-                                  ${(prod.valorEstimado * 0.05).toLocaleString("es-AR", { maximumFractionDigits: 0 })} USD
+                                  {usd(comisionEstimada, 0)}
                                 </p>
                               </div>
                               <div className="bg-[#0D1117]/60 rounded-lg px-3 py-2.5">
                                 <p className="text-xs text-[#7A96A8] mb-1">Esta producción</p>
-                                <p className="text-base font-bold text-[#E2ECF4]">${prod.precioFinal?.toFixed(2)} USD</p>
+                                <p className="text-base font-bold text-[#E2ECF4]">{usd(prod.precioFinal ?? 0)}</p>
                               </div>
                               <div className="bg-[#F2B968]/10 rounded-lg px-3 py-2.5">
-                                <p className="text-xs text-[#7A96A8] mb-1">% de la comisión</p>
+                                <p className="text-xs text-[#7A96A8] mb-1">% invertido en nuestros servicios</p>
                                 <p className="text-base font-bold text-[#F2B968]">
-                                  {((prod.precioFinal / (prod.valorEstimado * 0.05)) * 100).toFixed(2)}%
+                                  {pctInvertido}%
                                 </p>
                               </div>
                             </div>
+                            <p className="text-xs text-center text-[#7A96A8] mt-3 italic">
+                              ¡Mirá si no vale la pena! 😉
+                            </p>
                           </div>
                         )}
                       </div>
