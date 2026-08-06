@@ -12,8 +12,6 @@ import {
   Aperture,
   Download,
 } from "lucide-react";
-import { GradientHeading } from "@/components/ui/gradient-heading";
-import { HeroHeadline } from "@/components/marketing/HeroHeadline";
 
 export default function HomePage() {
   return (
@@ -34,7 +32,9 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/80 pointer-events-none" />
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 text-center">
-          <HeroHeadline />
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight">
+            DESTACÁ TUS PROPIEDADES
+          </h1>
           <p className="text-xl md:text-2xl text-gray-400 mb-10 max-w-2xl mx-auto">
             Producción fotográfica profesional que convierte visitas en ventas
           </p>
@@ -81,9 +81,7 @@ export default function HomePage() {
             <span className="text-[#F2B968] text-sm font-semibold uppercase tracking-widest">
               Simple y rápido
             </span>
-            <GradientHeading variant="light" size="lg" weight="bold" asChild>
-              <h2>Cómo funciona</h2>
-            </GradientHeading>
+            <h2 className="text-4xl md:text-5xl font-bold mt-3">Cómo funciona</h2>
             <p className="text-gray-400 mt-4 text-base">
               Una sola plataforma para gestionar todas tus producciones y descargas.
             </p>
@@ -156,9 +154,7 @@ export default function HomePage() {
             <span className="text-[#F2B968] text-sm font-semibold uppercase tracking-widest">
               Nuestros servicios
             </span>
-            <GradientHeading variant="light" size="lg" weight="bold" asChild>
-              <h2>Todo lo que necesitás</h2>
-            </GradientHeading>
+            <h2 className="text-4xl md:text-5xl font-bold mt-3">Todo lo que necesitás</h2>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
             {[
@@ -225,9 +221,7 @@ export default function HomePage() {
           <span className="text-[#F2B968] text-sm font-semibold uppercase tracking-widest">
             Hablemos
           </span>
-          <GradientHeading variant="light" size="lg" weight="bold" className="mb-6" asChild>
-            <h2>Contactanos</h2>
-          </GradientHeading>
+          <h2 className="text-4xl md:text-5xl font-bold mt-3 mb-6">Contactanos</h2>
           <p className="text-xl text-gray-400 mb-12">
             Estamos listos para elevar tus propiedades
           </p>
