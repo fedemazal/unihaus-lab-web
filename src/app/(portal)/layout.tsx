@@ -26,7 +26,6 @@ import { useState } from "react";
 const agentNav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/producciones", label: "Producciones", icon: FolderOpen },
-  { href: "/estadisticas", label: "Estadísticas", icon: BarChart3 },
   { href: "/beneficios", label: "Beneficios", icon: Gift },
   { href: "/preparacion", label: "Preparación", icon: ClipboardCheck },
 ];
