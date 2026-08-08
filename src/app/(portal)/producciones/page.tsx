@@ -179,6 +179,11 @@ export default function ProduccionesPage() {
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <Badge className={`${status.color} border text-xs`}>{status.label}</Badge>
                       <span className="text-xs text-[#7A96A8] capitalize">{prod.tipoPropiedad}</span>
+                      {prod.estado === "listo" && (
+                        <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${prod.pagada ? "bg-green-500/15 text-green-400 border-green-500/30" : "bg-red-500/15 text-red-400 border-red-500/30"}`}>
+                          {prod.pagada ? "Pagada" : "Impaga"}
+                        </span>
+                      )}
                       {tieneEntregaActiva && (
                         <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 border border-green-500/30 flex items-center gap-1">
                           <Package className="w-3 h-3" /> Material listo
@@ -435,15 +440,13 @@ export default function ProduccionesPage() {
                                 <p className="text-base font-bold text-[#E2ECF4]">{usd(prod.precioFinal ?? 0)}</p>
                               </div>
                               <div className="bg-[#F2B968]/10 rounded-lg px-3 py-2.5">
-                                <p className="text-xs text-[#7A96A8] mb-1">% invertido en nuestros servicios</p>
+                                <p className="text-xs text-[#7A96A8] mb-1">% invertido de la comisión en nuestros servicios</p>
                                 <p className="text-base font-bold text-[#F2B968]">
                                   {pctInvertido}%
                                 </p>
+                                <p className="text-xs text-[#7A96A8] mt-1.5 italic">¡Mirá si no vale la pena! 😉</p>
                               </div>
                             </div>
-                            <p className="text-xs text-center text-[#7A96A8] mt-3 italic">
-                              ¡Mirá si no vale la pena! 😉
-                            </p>
                           </div>
                         )}
                       </div>

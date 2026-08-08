@@ -29,10 +29,24 @@ function usd(value: number, decimals = 2) {
   })}`;
 }
 
-function getDiasRestantes(): { dias: number; vencimiento: string } {
+function toTimestamp(val: unknown): Date | null {
+  if (!val) return null;
+  if (typeof val === "object" && val !== null && "toDate" in val)
+    return (val as { toDate: () => Date }).toDate();
+  if (val instanceof Date) return val;
+  return null;
+}
+
+function getDiasRestantes(impagas: Production[]): { dias: number; vencimiento: string } | null {
+  if (impagas.length === 0) return null;
+  let ultimaFecha: Date | null = null;
+  for (const p of impagas) {
+    const f = toTimestamp(p.fechaListo);
+    if (f && (!ultimaFecha || f > ultimaFecha)) ultimaFecha = f;
+  }
+  if (!ultimaFecha) return null;
+  const vto = new Date(ultimaFecha.getTime() + 10 * 24 * 60 * 60 * 1000);
   const hoy = new Date();
-  // Vencimiento: día 10 del mes siguiente
-  const vto = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 10);
   const dias = Math.ceil((vto.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
   const vencimiento = vto.toLocaleDateString("es-AR", { day: "numeric", month: "long" });
   return { dias, vencimiento };
@@ -73,9 +87,10 @@ export default function DashboardPage() {
   const enProceso = producciones.filter((p) => p.estado === "en_proceso").length;
   const listas = producciones.filter((p) => p.estado === "listo").length;
 
-  // Saldo = producciones listas (entregadas, pendientes de pago)
-  const prodsListas = producciones.filter((p) => p.estado === "listo");
-  const saldoPendiente = prodsListas.reduce((sum, p) => sum + (p.precioFinal || 0), 0);
+  // Saldo: producciones listas y no marcadas como pagadas
+  const impagas = producciones.filter((p) => p.estado === "listo" && !p.pagada);
+  const saldoPendiente = impagas.reduce((sum, p) => sum + (p.precioFinal || 0), 0);
+  const pagoInfo = getDiasRestantes(impagas);
 
   // Estadísticas de inversión
   const totalInvertido = producciones.reduce((sum, p) => sum + (p.precioFinal || 0), 0);
@@ -83,8 +98,6 @@ export default function DashboardPage() {
   const totalValorInmuebles = prodsConValor.reduce((sum, p) => sum + (p.valorEstimado || 0), 0);
   const totalComision = totalValorInmuebles * 0.05;
   const pctInvertido = totalComision > 0 ? (totalInvertido / totalComision) * 100 : 0;
-
-  const { dias: diasRestantes, vencimiento } = getDiasRestantes();
 
   async function handleComprobanteUpload(file: File) {
     setUploadingComprobante(true);
@@ -149,30 +162,83 @@ export default function DashboardPage() {
       <h1 className="text-2xl font-bold text-[#E2ECF4] mb-1">
         ¡Hola, {profile?.nombre?.split(" ")[0]}!
       </h1>
-      <p className="text-[#7A96A8] mb-8">Bienvenido a tu portal de producciones</p>
+      <p className="text-[#7A96A8] mb-6">Bienvenido a tu portal de producciones</p>
 
-      {/* Status cards */}
+      {/* Status cards — compactas */}
       {!loading && (
-        <div className="grid grid-cols-3 gap-3 mb-4">
+        <div className="grid grid-cols-3 gap-2 mb-4">
           {statusCards.map(({ label, value, icon: Icon, color, bg, border, href }) => (
             <Link
               key={label}
               href={href}
-              className={`rounded-xl border ${border} ${bg} p-4 flex flex-col gap-3 hover:brightness-110 transition group`}
+              className={`rounded-xl border ${border} ${bg} px-3 py-2.5 flex items-center gap-3 hover:brightness-110 transition group`}
             >
-              <div className={`w-9 h-9 rounded-lg bg-[#0D1117]/40 flex items-center justify-center ${color}`}>
-                <Icon className="w-4 h-4" />
+              <div className={`w-8 h-8 rounded-lg bg-[#0D1117]/40 flex items-center justify-center shrink-0 ${color}`}>
+                <Icon className="w-3.5 h-3.5" />
               </div>
               <div>
-                <p className="text-3xl font-bold text-[#E2ECF4] tabular-nums leading-none">
-                  {value}
-                </p>
-                <p className={`text-xs font-medium mt-1 ${color}`}>{label}</p>
+                <p className="text-2xl font-bold text-[#E2ECF4] tabular-nums leading-none">{value}</p>
+                <p className={`text-xs font-medium mt-0.5 ${color}`}>{label}</p>
               </div>
             </Link>
           ))}
         </div>
       )}
+
+      {/* Quick actions */}
+      <div className="grid sm:grid-cols-2 gap-3 mb-4">
+        <Link
+          href="/producciones/nueva"
+          className="bg-[#F2B968] hover:bg-[#d9a050] text-[#0D1117] p-5 rounded-xl transition group flex items-start gap-3"
+        >
+          <div className="w-9 h-9 rounded-lg bg-[#0D1117]/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+            <Plus className="w-4 h-4" />
+          </div>
+          <div>
+            <h2 className="text-base font-semibold mb-0.5">Nueva producción</h2>
+            <p className="text-[#0D1117]/60 text-sm">Solicitá una nueva producción fotográfica</p>
+          </div>
+        </Link>
+
+        <Link
+          href="/producciones"
+          className="bg-[#161C26] border border-[#263040] hover:border-[#F2B968]/50 p-5 rounded-xl transition group flex items-start gap-3"
+        >
+          <div className="w-9 h-9 rounded-lg bg-[#F2B968]/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+            <FolderOpen className="w-4 h-4 text-[#F2B968]" />
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-[#E2ECF4] mb-0.5">Mis producciones</h2>
+            <p className="text-[#7A96A8] text-sm">Mirá el estado de tus producciones</p>
+          </div>
+        </Link>
+
+        <Link
+          href="/beneficios"
+          className="bg-[#161C26] border border-[#263040] hover:border-[#F2B968]/50 p-5 rounded-xl transition group flex items-start gap-3"
+        >
+          <div className="w-9 h-9 rounded-lg bg-[#F2B968]/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+            <Gift className="w-4 h-4 text-[#F2B968]" />
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-[#E2ECF4] mb-0.5">Beneficios</h2>
+            <p className="text-[#7A96A8] text-sm">Descubrí los beneficios de tu inmobiliaria</p>
+          </div>
+        </Link>
+
+        <Link
+          href="/preparacion"
+          className="bg-[#161C26] border border-[#263040] hover:border-[#F2B968]/50 p-5 rounded-xl transition group flex items-start gap-3"
+        >
+          <div className="w-9 h-9 rounded-lg bg-[#F2B968]/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+            <ClipboardCheck className="w-4 h-4 text-[#F2B968]" />
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-[#E2ECF4] mb-0.5">Preparación</h2>
+            <p className="text-[#7A96A8] text-sm">Tips para preparar la propiedad</p>
+          </div>
+        </Link>
+      </div>
 
       {/* ── Cuentas y Saldos a pagar ── */}
       {!loading && (
@@ -186,7 +252,7 @@ export default function DashboardPage() {
               <span className="text-sm font-medium text-[#E2ECF4]">Cuentas y Saldos a pagar</span>
               {saldoPendiente > 0 && (
                 <span className="text-xs bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-medium">
-                  {usd(saldoPendiente, 0)} pendiente
+                  {impagas.length} impaga{impagas.length !== 1 ? "s" : ""}
                 </span>
               )}
             </div>
@@ -206,18 +272,28 @@ export default function DashboardPage() {
                     {saldoPendiente > 0 ? usd(saldoPendiente, 0) : "Al día ✓"}
                   </p>
                   {saldoPendiente > 0 && (
-                    <p className="text-xs text-[#7A96A8] mt-1">{prodsListas.length} producción{prodsListas.length !== 1 ? "es" : ""} entregada{prodsListas.length !== 1 ? "s" : ""}</p>
+                    <p className="text-xs text-[#7A96A8] mt-1">
+                      {impagas.length} producción{impagas.length !== 1 ? "es" : ""} sin pagar
+                    </p>
                   )}
                 </div>
-                <div className={`rounded-lg px-3 py-3 ${diasRestantes <= 5 ? "bg-red-500/10 border border-red-500/20" : diasRestantes <= 10 ? "bg-amber-500/10 border border-amber-500/20" : "bg-[#161C26]"}`}>
-                  <p className="text-xs text-[#7A96A8] mb-1 flex items-center gap-1">
-                    <CalendarClock className="w-3 h-3" /> Días restantes
-                  </p>
-                  <p className={`text-xl font-bold font-mono ${diasRestantes <= 5 ? "text-red-400" : diasRestantes <= 10 ? "text-amber-300" : "text-[#E2ECF4]"}`}>
-                    {diasRestantes} días
-                  </p>
-                  <p className="text-xs text-[#7A96A8] mt-1">Vence el {vencimiento}</p>
-                </div>
+                {pagoInfo ? (
+                  <div className={`rounded-lg px-3 py-3 ${pagoInfo.dias <= 3 ? "bg-red-500/10 border border-red-500/20" : pagoInfo.dias <= 7 ? "bg-amber-500/10 border border-amber-500/20" : "bg-[#161C26]"}`}>
+                    <p className="text-xs text-[#7A96A8] mb-1 flex items-center gap-1">
+                      <CalendarClock className="w-3 h-3" /> Días para pagar
+                    </p>
+                    <p className={`text-xl font-bold font-mono ${pagoInfo.dias <= 3 ? "text-red-400" : pagoInfo.dias <= 7 ? "text-amber-300" : "text-[#E2ECF4]"}`}>
+                      {pagoInfo.dias > 0 ? `${pagoInfo.dias} días` : "¡Vencido!"}
+                    </p>
+                    <p className="text-xs text-[#7A96A8] mt-1">
+                      {pagoInfo.dias > 0 ? `Vence el ${pagoInfo.vencimiento}` : `Venció el ${pagoInfo.vencimiento}`}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-[#161C26] rounded-lg px-3 py-3 flex items-center justify-center">
+                    <p className="text-xs text-[#7A96A8] text-center">Sin producciones<br />pendientes de pago</p>
+                  </div>
+                )}
               </div>
 
               {/* Cargar comprobante */}
@@ -271,7 +347,7 @@ export default function DashboardPage() {
                     <div className="flex items-start gap-2">
                       <AlertCircle className="w-3.5 h-3.5 text-[#7A96A8] shrink-0 mt-0.5" />
                       <p className="text-xs text-[#7A96A8]">
-                        Pago mensual por el total de producciones realizadas, con vencimiento el <span className="text-[#E2ECF4]">día 10 del mes siguiente</span>.
+                        Tenés <span className="text-[#E2ECF4]">10 días</span> para pagar contados desde la última producción entregada. Si solicitás otra producción durante ese período, el plazo se extiende 10 días desde esa nueva entrega.
                       </p>
                     </div>
                     {inmobiliaria.beneficios && (
@@ -283,8 +359,7 @@ export default function DashboardPage() {
                   </div>
                 ) : (
                   <p className="text-xs text-[#7A96A8]">
-                    Pago mensual por el total de producciones realizadas, con vencimiento el <span className="text-[#E2ECF4]">día 10 del mes siguiente</span>.
-                    Para consultas sobre condiciones especiales, contactá a Unihaus Lab.
+                    Tenés <span className="text-[#E2ECF4]">10 días</span> para pagar contados desde la última producción entregada. Si solicitás otra producción durante ese período, el plazo se extiende 10 días desde esa nueva entrega.
                   </p>
                 )}
               </div>
@@ -292,61 +367,6 @@ export default function DashboardPage() {
           )}
         </div>
       )}
-
-      {/* Quick actions */}
-      <div className="grid sm:grid-cols-2 gap-4 mb-4">
-        <Link
-          href="/producciones/nueva"
-          className="bg-[#F2B968] hover:bg-[#d9a050] text-[#0D1117] p-6 rounded-xl transition group flex items-start gap-4"
-        >
-          <div className="w-10 h-10 rounded-lg bg-[#0D1117]/15 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-            <Plus className="w-5 h-5" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold mb-0.5">Nueva producción</h2>
-            <p className="text-[#0D1117]/60 text-sm">Solicitá una nueva producción fotográfica</p>
-          </div>
-        </Link>
-
-        <Link
-          href="/producciones"
-          className="bg-[#161C26] border border-[#263040] hover:border-[#F2B968]/50 p-6 rounded-xl transition group flex items-start gap-4"
-        >
-          <div className="w-10 h-10 rounded-lg bg-[#F2B968]/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-            <FolderOpen className="w-5 h-5 text-[#F2B968]" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-[#E2ECF4] mb-0.5">Mis producciones</h2>
-            <p className="text-[#7A96A8] text-sm">Mirá el estado de tus producciones</p>
-          </div>
-        </Link>
-
-        <Link
-          href="/beneficios"
-          className="bg-[#161C26] border border-[#263040] hover:border-[#F2B968]/50 p-6 rounded-xl transition group flex items-start gap-4"
-        >
-          <div className="w-10 h-10 rounded-lg bg-[#F2B968]/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-            <Gift className="w-5 h-5 text-[#F2B968]" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-[#E2ECF4] mb-0.5">Beneficios</h2>
-            <p className="text-[#7A96A8] text-sm">Descubrí los beneficios de tu inmobiliaria</p>
-          </div>
-        </Link>
-
-        <Link
-          href="/preparacion"
-          className="bg-[#161C26] border border-[#263040] hover:border-[#F2B968]/50 p-6 rounded-xl transition group flex items-start gap-4"
-        >
-          <div className="w-10 h-10 rounded-lg bg-[#F2B968]/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-            <ClipboardCheck className="w-5 h-5 text-[#F2B968]" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-[#E2ECF4] mb-0.5">Preparación</h2>
-            <p className="text-[#7A96A8] text-sm">Tips para preparar la propiedad</p>
-          </div>
-        </Link>
-      </div>
 
       {/* ── Estadísticas de inversión en producciones (al fondo) ── */}
       {!loading && totalInvertido > 0 && (
@@ -367,48 +387,34 @@ export default function DashboardPage() {
           {estadisticasOpen && (
             <div className="border-t border-[#263040] bg-[#0D1117]/60 p-4">
               {prodsConValor.length > 0 ? (
-                <>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-[#161C26] rounded-lg px-3 py-2.5">
-                      <p className="text-xs text-[#7A96A8] mb-1">
-                        Total invertido en {producciones.length} producción{producciones.length !== 1 ? "es" : ""}
-                      </p>
-                      <p className="text-base font-bold text-[#E2ECF4] font-mono">
-                        {usd(totalInvertido, 0)}
-                      </p>
-                    </div>
-                    <div className="bg-[#161C26] rounded-lg px-3 py-2.5">
-                      <p className="text-xs text-[#7A96A8] mb-1">Valor total de inmuebles</p>
-                      <p className="text-base font-bold text-[#E2ECF4] font-mono">
-                        {usd(totalValorInmuebles, 0)}
-                      </p>
-                    </div>
-                    <div className="bg-[#161C26] rounded-lg px-3 py-2.5">
-                      <p className="text-xs text-[#7A96A8] mb-1">Comisión estimada (5%, según promedios generales)</p>
-                      <p className="text-base font-bold text-[#E2ECF4] font-mono">
-                        {usd(totalComision, 0)}
-                      </p>
-                    </div>
-                    <div className="bg-[#F2B968]/10 rounded-lg px-3 py-2.5">
-                      <p className="text-xs text-[#7A96A8] mb-1">% invertido en nuestros servicios</p>
-                      <p className="text-base font-bold text-[#F2B968] font-mono">
-                        {pctInvertido.toFixed(2)}%
-                      </p>
-                    </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-[#161C26] rounded-lg px-3 py-2.5">
+                    <p className="text-xs text-[#7A96A8] mb-1">
+                      Total invertido en {producciones.length} producción{producciones.length !== 1 ? "es" : ""}
+                    </p>
+                    <p className="text-base font-bold text-[#E2ECF4] font-mono">{usd(totalInvertido, 0)}</p>
                   </div>
-                  <p className="text-xs text-center text-[#7A96A8] mt-3 italic">
-                    ¡Mirá si no vale la pena! 😉
-                  </p>
-                </>
+                  <div className="bg-[#161C26] rounded-lg px-3 py-2.5">
+                    <p className="text-xs text-[#7A96A8] mb-1">Valor total de inmuebles</p>
+                    <p className="text-base font-bold text-[#E2ECF4] font-mono">{usd(totalValorInmuebles, 0)}</p>
+                  </div>
+                  <div className="bg-[#161C26] rounded-lg px-3 py-2.5">
+                    <p className="text-xs text-[#7A96A8] mb-1">Comisión estimada (5%, según promedios generales)</p>
+                    <p className="text-base font-bold text-[#E2ECF4] font-mono">{usd(totalComision, 0)}</p>
+                  </div>
+                  <div className="bg-[#F2B968]/10 rounded-lg px-3 py-2.5">
+                    <p className="text-xs text-[#7A96A8] mb-1">% invertido de la comisión en nuestros servicios</p>
+                    <p className="text-base font-bold text-[#F2B968] font-mono">{pctInvertido.toFixed(2)}%</p>
+                    <p className="text-xs text-[#7A96A8] mt-1.5 italic">¡Mirá si no vale la pena! 😉</p>
+                  </div>
+                </div>
               ) : (
                 <div className="grid grid-cols-2 gap-2">
                   <div className="col-span-2 bg-[#161C26] rounded-lg px-3 py-2.5">
                     <p className="text-xs text-[#7A96A8] mb-1">
                       Total invertido en {producciones.length} producción{producciones.length !== 1 ? "es" : ""}
                     </p>
-                    <p className="text-base font-bold text-[#E2ECF4] font-mono">
-                      {usd(totalInvertido, 0)}
-                    </p>
+                    <p className="text-base font-bold text-[#E2ECF4] font-mono">{usd(totalInvertido, 0)}</p>
                   </div>
                   <div className="col-span-2">
                     <p className="text-xs text-[#7A96A8] mt-1">

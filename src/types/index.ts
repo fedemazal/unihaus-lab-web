@@ -127,6 +127,7 @@ export interface Production {
   entregaArchivos?: ArchivoR2[];
   entregaUploadedAt?: Date | null;
   entregaExpiresAt?: Date | null;
+  pagada?: boolean;
 
   estado: ProductionStatus;
   tags: string[];

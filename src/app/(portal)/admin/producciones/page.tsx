@@ -189,6 +189,15 @@ export default function AdminProduccionesPage() {
     }
   }
 
+  async function togglePagada(prod: Production) {
+    try {
+      await updateProduction(prod.id, { pagada: !prod.pagada });
+      await loadData();
+    } catch (err) {
+      console.error("Error toggling pagada:", err);
+    }
+  }
+
   async function cancelProduction(prod: Production) {
     if (!confirm(`¿Cancelar la producción en ${prod.direccion}?`)) return;
     try {
@@ -359,6 +368,11 @@ export default function AdminProduccionesPage() {
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <Badge className={`${status.color} border text-xs`}>{status.label}</Badge>
                       <span className="text-xs text-[#7A96A8] capitalize">{prod.tipoPropiedad}</span>
+                      {prod.estado === "listo" && (
+                        <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${prod.pagada ? "bg-green-500/15 text-green-400 border-green-500/30" : "bg-red-500/15 text-red-400 border-red-500/30"}`}>
+                          {prod.pagada ? "Pagada" : "Impaga"}
+                        </span>
+                      )}
                       {prod.tags.map((tag) => (
                         <Badge key={tag} className="bg-[#1E2A38] text-[#7A96A8] border border-[#263040] text-xs">
                           {tag}
@@ -732,6 +746,15 @@ export default function AdminProduccionesPage() {
 
                     {/* Actions */}
                     <div className="flex flex-wrap gap-2 pt-2">
+                      {prod.estado === "listo" && (
+                        <Button
+                          variant="outline"
+                          onClick={() => togglePagada(prod)}
+                          className={`border font-semibold ${prod.pagada ? "border-red-500/40 text-red-400 hover:bg-red-500/10" : "border-green-500/40 text-green-400 hover:bg-green-500/10"}`}
+                        >
+                          {prod.pagada ? "Marcar como impaga" : "Marcar como pagada"}
+                        </Button>
+                      )}
                       {status.next && status.nextLabel && (
                         <Button
                           onClick={() => changeStatus(prod, status.next!)}

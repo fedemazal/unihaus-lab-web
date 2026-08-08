@@ -20,6 +20,7 @@ import {
   X,
   FileStack,
   Tag,
+  FileBarChart,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -39,6 +40,7 @@ const adminNav = [
   { href: "/admin/materiales", label: "Materiales", icon: FileStack },
   { href: "/admin/codigos", label: "Códigos", icon: Tag },
   { href: "/admin/estadisticas", label: "Estadísticas", icon: BarChart3 },
+  { href: "/admin/informes", label: "Informes", icon: FileBarChart },
 ];
 
 export default function PortalLayout({
