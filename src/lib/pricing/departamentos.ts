@@ -36,13 +36,6 @@ export function calcularPrecioDepto(datos: DeptoPricingInput) {
   let precioExtras = precioSemiDesc;
   const desglose: PriceBreakdownItem[] = [];
 
-  if (descubiertaExceso > 0) {
-    desglose.push({
-      concepto: "Semi + Descubiertos (exceso)",
-      calculo: `${descubiertaExceso}m² sobre 20m² — tarifa descubiertos`,
-      monto: precioSemiDesc,
-    });
-  }
 
   if (servicios.plano2d) {
     const monto = precioPlano(superficie);
