@@ -874,28 +874,31 @@ export default function NuevaProduccionPage() {
             const comision = valorEstimado * 0.05;
             const ratio = (totalFinal / comision) * 100;
             return (
-              <div className="bg-[#F2B968]/8 border border-[#F2B968]/25 rounded-xl p-5">
-                <p className="text-sm font-semibold text-[#F2B968] mb-4">Inversión vs. comisión de venta</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-[#0D1117]/40 rounded-lg px-3 py-3">
-                    <p className="text-xs text-[#7A96A8] mb-1">Valor inmueble</p>
-                    <p className="text-lg font-bold text-[#E2ECF4]">
-                      ${valorEstimado.toLocaleString("es-AR", { maximumFractionDigits: 0 })} USD
+              <div className="border border-[#F2B968]/25 rounded-xl overflow-hidden">
+                <div className="px-4 py-3 bg-[#F2B968]/8 flex items-center gap-2">
+                  <p className="text-sm font-medium text-[#F2B968]">Estadísticas de inversión</p>
+                </div>
+                <div className="p-4 bg-[#F2B968]/5 grid grid-cols-2 gap-2">
+                  <div className="bg-[#0D1117]/60 rounded-lg px-3 py-2.5">
+                    <p className="text-xs text-[#7A96A8] mb-1">Valor del inmueble</p>
+                    <p className="text-base font-bold text-[#E2ECF4]">
+                      USD {valorEstimado.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
                     </p>
                   </div>
-                  <div className="bg-[#0D1117]/40 rounded-lg px-3 py-3">
-                    <p className="text-xs text-[#7A96A8] mb-1">Comisión estimada (5% según promedios generales)</p>
-                    <p className="text-lg font-bold text-[#E2ECF4]">
-                      ${comision.toLocaleString("es-AR", { maximumFractionDigits: 0 })} USD
+                  <div className="bg-[#0D1117]/60 rounded-lg px-3 py-2.5">
+                    <p className="text-xs text-[#7A96A8] mb-1">Comisión estimada (5%, prom. gral.)</p>
+                    <p className="text-base font-bold text-[#E2ECF4]">
+                      USD {comision.toLocaleString("es-AR", { maximumFractionDigits: 0 })}
                     </p>
                   </div>
-                  <div className="bg-[#0D1117]/40 rounded-lg px-3 py-3">
+                  <div className="bg-[#0D1117]/60 rounded-lg px-3 py-2.5">
                     <p className="text-xs text-[#7A96A8] mb-1">Esta producción</p>
-                    <p className="text-lg font-bold text-[#E2ECF4]">${totalFinal.toFixed(2)} USD</p>
+                    <p className="text-base font-bold text-[#E2ECF4]">USD {totalFinal.toFixed(2)}</p>
                   </div>
-                  <div className="bg-[#F2B968]/10 rounded-lg px-3 py-3">
-                    <p className="text-xs text-[#7A96A8] mb-1">% de la comisión</p>
-                    <p className="text-lg font-bold text-[#F2B968]">{ratio.toFixed(2)}%</p>
+                  <div className="bg-[#F2B968]/10 rounded-lg px-3 py-2.5">
+                    <p className="text-xs text-[#7A96A8] mb-1">% invertido de la comisión en nuestros servicios</p>
+                    <p className="text-base font-bold text-[#F2B968]">{ratio.toFixed(2)}%</p>
+                    <p className="text-xs text-[#7A96A8] mt-1.5 italic">¡Mirá si no vale la pena! 😉</p>
                   </div>
                 </div>
               </div>
