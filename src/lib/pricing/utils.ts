@@ -1,11 +1,11 @@
 const TRAMOS_CONSTRUIDA: [number, number, number][] = [
   [0, 30, 1.5225],
-  [30, 45, 0.735],
-  [45, 80, 0.60],
-  [80, 114, 0.42],
+  [30, 45, 0.8085],
+  [45, 80, 0.66],
+  [80, 114, 0.3864],
   [114, 200, 0.18],
-  [200, 250, 0.40],
-  [250, Infinity, 0.35],
+  [200, 250, 0.368],
+  [250, Infinity, 0.322],
 ];
 
 const TRAMOS_DESCUBIERTA: [number, number, number][] = [
