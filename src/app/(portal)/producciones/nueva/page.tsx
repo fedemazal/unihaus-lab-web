@@ -349,7 +349,7 @@ export default function NuevaProduccionPage() {
           {tipoPropiedad === "departamento" ? (
             <>
               <div>
-                <Label className="text-[#E2ECF4]">Superficie (m²)</Label>
+                <Label className="text-[#E2ECF4]">Superficie cubierta (m²)</Label>
                 <Input
                   type="number"
                   min={1}
@@ -489,9 +489,13 @@ export default function NuevaProduccionPage() {
                 <p className="text-sm text-[#7A96A8]">
                   {tipoPropiedad === "departamento"
                     ? (() => {
-                        const m2T = superficie + amenidades * 7;
+                        const descComoCub = Math.min(descubierta, 20);
+                        const m2T = superficie + descComoCub + amenidades * 7;
                         const precio = precioBaseProgresivo(m2T);
-                        return `${superficie}m²${amenidades > 0 ? ` + ${amenidades} amenities (${amenidades * 7}m²) = ${m2T}m²` : ""} — tarifa progresiva = $${precio.toFixed(2)} USD`;
+                        const partes = [`${superficie}m² cub.`];
+                        if (descComoCub > 0) partes.push(`${descComoCub}m² semi/desc`);
+                        if (amenidades > 0) partes.push(`${amenidades} amenities (${amenidades * 7}m²)`);
+                        return `${partes.join(" + ")} = ${m2T}m² — tarifa progresiva = USD ${precio.toFixed(2)}`;
                       })()
                     : calcResult ? `Construida: $${calcResult.precioBase.toFixed(2)} USD base` : "Calculado según superficie construida y descubierta"}
                 </p>

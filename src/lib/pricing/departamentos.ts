@@ -12,8 +12,12 @@ interface DeptoPricingInput {
 export function calcularPrecioDepto(datos: DeptoPricingInput) {
   const { superficie, descubierta = 0, amenidades, servicios, descuentoPorcentaje = 0 } = datos;
 
-  // m² totales = propiedad + amenities (1 amenity = 7m²)
-  const m2Totales = superficie + amenidades * 7;
+  // Semi + descubiertos: los primeros 20m² se suman como cubiertos; el exceso usa tarifa descubiertos
+  const descubiertaComoCubierta = Math.min(descubierta, 20);
+  const descubiertaExceso = Math.max(0, descubierta - 20);
+
+  // m² totales = cubiertos + hasta 20m² de semi/desc + amenities (1 amenity = 7m²)
+  const m2Totales = superficie + descubiertaComoCubierta + amenidades * 7;
 
   // Precio base progresivo — fotos HDR + 1 video ya incluidos
   let precioBase = precioBaseProgresivo(m2Totales);
@@ -25,20 +29,17 @@ export function calcularPrecioDepto(datos: DeptoPricingInput) {
     precioBase = precioBase * 1.25; // +25%, 2do video
   }
 
-  // Semi + descubiertos: si > 30m², se pricean con la tarifa descubiertos de casas
-  let precioSemiDesc = 0;
-  if (descubierta > 30) {
-    precioSemiDesc = precioDescubiertoProgresivo(descubierta);
-  }
+  // Exceso de descubierta (> 20m²) se pricean con tarifa descubiertos de casas
+  const precioSemiDesc = descubiertaExceso > 0 ? precioDescubiertoProgresivo(descubiertaExceso) : 0;
 
   // Servicios adicionales
   let precioExtras = precioSemiDesc;
   const desglose: PriceBreakdownItem[] = [];
 
-  if (descubierta > 30) {
+  if (descubiertaExceso > 0) {
     desglose.push({
-      concepto: "Semi + Descubiertos",
-      calculo: `${descubierta}m² — tarifa descubiertos`,
+      concepto: "Semi + Descubiertos (exceso)",
+      calculo: `${descubiertaExceso}m² sobre 20m² — tarifa descubiertos`,
       monto: precioSemiDesc,
     });
   }
