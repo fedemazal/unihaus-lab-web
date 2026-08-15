@@ -148,3 +148,59 @@ export function produccionEnProceso(data: {
     `),
   };
 }
+
+export function recordatorioPago(data: {
+  nombre: string;
+  saldoPendiente: number;
+  diasRestantes: number;
+  producciones: number;
+  esUltimoDia: boolean;
+}) {
+  const urgency = data.esUltimoDia
+    ? `<p style="color: #e53e3e; font-weight: 600;">⚠️ Hoy vence tu plazo de pago.</p>`
+    : `<p style="color: ${MUTED_COLOR};">Te quedan <strong style="color: ${TEXT_COLOR};">${data.diasRestantes} día${data.diasRestantes !== 1 ? "s" : ""}</strong> para realizar el pago.</p>`;
+  return {
+    subject: data.esUltimoDia
+      ? `⚠️ Vence hoy: USD ${data.saldoPendiente.toFixed(2)} pendiente de pago`
+      : `Recordatorio de pago — USD ${data.saldoPendiente.toFixed(2)} pendiente`,
+    html: layout(`
+      <h2 style="color: ${TEXT_COLOR}; margin: 0 0 16px;">Recordatorio de pago</h2>
+      <p style="color: ${MUTED_COLOR}; line-height: 1.6;">
+        Hola ${data.nombre}, tenés ${data.producciones} producción${data.producciones !== 1 ? "es" : ""} entregada${data.producciones !== 1 ? "s" : ""} con saldo pendiente.
+      </p>
+      <div style="background: #F5F5F0; border-radius: 8px; padding: 16px; margin: 16px 0;">
+        <p style="margin: 4px 0; color: ${TEXT_COLOR}; font-size: 24px; font-weight: 700;">USD ${data.saldoPendiente.toFixed(2)}</p>
+        <p style="margin: 4px 0; color: ${MUTED_COLOR}; font-size: 14px;">Saldo total pendiente</p>
+      </div>
+      ${urgency}
+      <a href="https://unihaus.com.ar/dashboard" style="display: inline-block; background: ${BRAND_COLOR}; color: #fff; text-decoration: none; padding: 12px 24px; border-radius: 8px; margin-top: 16px; font-weight: 600;">
+        Ver mi saldo y cargar comprobante
+      </a>
+      <p style="color: ${MUTED_COLOR}; font-size: 12px; margin-top: 16px;">
+        El pago se realiza en efectivo en dólares. Cargá el comprobante desde tu dashboard.
+      </p>
+    `),
+  };
+}
+
+export function produccionLista(data: {
+  nombre: string;
+  direccion: string;
+  linkDescarga?: string;
+}) {
+  return {
+    subject: `✅ Tu producción está lista: ${data.direccion}`,
+    html: layout(`
+      <h2 style="color: ${TEXT_COLOR}; margin: 0 0 16px;">¡Tu producción está lista!</h2>
+      <p style="color: ${MUTED_COLOR}; line-height: 1.6;">
+        Hola ${data.nombre}, los archivos de tu propiedad en <strong>${data.direccion}</strong> ya están disponibles.
+      </p>
+      <a href="https://unihaus.com.ar/producciones" style="display: inline-block; background: ${BRAND_COLOR}; color: #fff; text-decoration: none; padding: 12px 24px; border-radius: 8px; margin-top: 16px; font-weight: 600;">
+        Ver mis producciones
+      </a>
+      <p style="color: ${MUTED_COLOR}; font-size: 12px; margin-top: 16px;">
+        Los archivos estarán disponibles por 15 días. Descargalos antes de que venzan.
+      </p>
+    `),
+  };
+}

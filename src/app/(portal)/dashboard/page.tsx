@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/hooks/useAuth";
-import { getProductions, getInmobiliaria } from "@/lib/firebase/firestore";
+import { getProductions, getInmobiliaria, LIMITE_CC, DIAS_PLAZO_CC } from "@/lib/firebase/firestore";
 import type { Inmobiliaria, Production } from "@/types";
 import Link from "next/link";
 import {
@@ -45,7 +45,7 @@ function getDiasRestantes(impagas: Production[]): { dias: number; vencimiento: s
     if (f && (!ultimaFecha || f > ultimaFecha)) ultimaFecha = f;
   }
   if (!ultimaFecha) return null;
-  const vto = new Date(ultimaFecha.getTime() + 10 * 24 * 60 * 60 * 1000);
+  const vto = new Date(ultimaFecha.getTime() + 5 * 24 * 60 * 60 * 1000);
   const hoy = new Date();
   const dias = Math.ceil((vto.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
   const vencimiento = vto.toLocaleDateString("es-AR", { day: "numeric", month: "long" });
@@ -91,6 +91,35 @@ export default function DashboardPage() {
   const impagas = producciones.filter((p) => p.estado === "listo" && !p.pagada);
   const saldoPendiente = impagas.reduce((sum, p) => sum + (p.precioFinal || 0), 0);
   const pagoInfo = getDiasRestantes(impagas);
+
+  // Cuenta corriente
+  const tieneCC = profile?.cuentaCorrienteAprobada === true;
+  const impagoCC = producciones.filter((p) => p.esCuentaCorriente && !p.pagada && p.estado === "listo");
+  const saldoCC = impagoCC.reduce((sum, p) => sum + (p.precioFinal || 0), 0);
+  const ccBloqueada = (() => {
+    if (!tieneCC) return false;
+    if (saldoCC >= LIMITE_CC) return true;
+    if (impagoCC.length > 0) {
+      const fechas = impagoCC.map((p) => {
+        const f = p.fechaListo;
+        if (!f) return new Date(0);
+        return typeof f === "object" && "toDate" in f ? (f as { toDate: () => Date }).toDate() : new Date(f as unknown as string);
+      });
+      const oldest = new Date(Math.min(...fechas.map((d) => d.getTime())));
+      return Math.floor((Date.now() - oldest.getTime()) / (1000 * 60 * 60 * 24)) > DIAS_PLAZO_CC;
+    }
+    return false;
+  })();
+  const diasCC = (() => {
+    if (impagoCC.length === 0) return null;
+    const fechas = impagoCC.map((p) => {
+      const f = p.fechaListo;
+      if (!f) return new Date(0);
+      return typeof f === "object" && "toDate" in f ? (f as { toDate: () => Date }).toDate() : new Date(f as unknown as string);
+    });
+    const oldest = new Date(Math.min(...fechas.map((d) => d.getTime())));
+    return Math.floor((Date.now() - oldest.getTime()) / (1000 * 60 * 60 * 24));
+  })();
 
   // Estadísticas de inversión
   const totalInvertido = producciones.reduce((sum, p) => sum + (p.precioFinal || 0), 0);
@@ -278,11 +307,11 @@ export default function DashboardPage() {
                   )}
                 </div>
                 {pagoInfo ? (
-                  <div className={`rounded-lg px-3 py-3 ${pagoInfo.dias <= 3 ? "bg-red-500/10 border border-red-500/20" : pagoInfo.dias <= 7 ? "bg-amber-500/10 border border-amber-500/20" : "bg-[#161C26]"}`}>
+                  <div className={`rounded-lg px-3 py-3 ${pagoInfo.dias <= 2 ? "bg-red-500/10 border border-red-500/20" : pagoInfo.dias <= 4 ? "bg-amber-500/10 border border-amber-500/20" : "bg-[#161C26]"}`}>
                     <p className="text-xs text-[#7A96A8] mb-1 flex items-center gap-1">
                       <CalendarClock className="w-3 h-3" /> Días para pagar
                     </p>
-                    <p className={`text-xl font-bold font-mono ${pagoInfo.dias <= 3 ? "text-red-400" : pagoInfo.dias <= 7 ? "text-amber-300" : "text-[#E2ECF4]"}`}>
+                    <p className={`text-xl font-bold font-mono ${pagoInfo.dias <= 2 ? "text-red-400" : pagoInfo.dias <= 4 ? "text-amber-300" : "text-[#E2ECF4]"}`}>
                       {pagoInfo.dias > 0 ? `${pagoInfo.dias} días` : "¡Vencido!"}
                     </p>
                     <p className="text-xs text-[#7A96A8] mt-1">
@@ -330,6 +359,56 @@ export default function DashboardPage() {
                 )}
               </div>
 
+              {/* Cuenta Corriente */}
+              {tieneCC && (
+                <div className={`rounded-lg p-3 border ${ccBloqueada ? "border-red-500/40 bg-red-500/5" : "border-blue-500/30 bg-blue-500/5"}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs text-blue-300 uppercase tracking-wide font-medium flex items-center gap-1">
+                      <CreditCard className="w-3.5 h-3.5" />
+                      Cliente con cuenta corriente activa
+                    </p>
+                    {ccBloqueada && (
+                      <span className="text-xs bg-red-500/15 text-red-300 border border-red-500/30 rounded px-2 py-0.5">
+                        BLOQUEADA
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-xs text-[#7A96A8]">Saldo CC pendiente</p>
+                      <p className={`text-lg font-bold font-mono ${saldoCC >= LIMITE_CC ? "text-red-400" : saldoCC > LIMITE_CC * 0.7 ? "text-amber-300" : "text-[#E2ECF4]"}`}>
+                        {usd(saldoCC, 0)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-[#7A96A8]">Límite de cuenta</p>
+                      <p className="text-lg font-bold font-mono text-[#E2ECF4]">{usd(LIMITE_CC, 0)}</p>
+                    </div>
+                  </div>
+                  <div className="mt-2">
+                    <div className="h-1.5 bg-[#0D1117] rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${saldoCC >= LIMITE_CC ? "bg-red-500" : saldoCC > LIMITE_CC * 0.7 ? "bg-amber-400" : "bg-blue-500"}`}
+                        style={{ width: `${Math.min((saldoCC / LIMITE_CC) * 100, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                  {diasCC !== null && (
+                    <p className={`text-xs mt-2 ${diasCC > DIAS_PLAZO_CC ? "text-red-400" : "text-[#7A96A8]"}`}>
+                      {diasCC > DIAS_PLAZO_CC
+                        ? `En mora: ${diasCC} días desde la primera entrega (límite ${DIAS_PLAZO_CC} días)`
+                        : `${diasCC} días desde la primera entrega · límite ${DIAS_PLAZO_CC} días`}
+                    </p>
+                  )}
+                  {ccBloqueada && (
+                    <p className="text-xs text-red-300 mt-1">
+                      Nuevas producciones bloqueadas hasta saldar la cuenta corriente
+                    </p>
+                  )}
+                  <p className="text-xs text-[#4A6070] mt-2">Pago exclusivamente en efectivo en dólares</p>
+                </div>
+              )}
+
               {/* Condiciones de pago */}
               <div className="bg-[#161C26] rounded-lg p-3 border border-[#263040]">
                 <p className="text-xs text-[#7A96A8] uppercase tracking-wide mb-2 font-medium">Condiciones de pago</p>
@@ -347,7 +426,7 @@ export default function DashboardPage() {
                     <div className="flex items-start gap-2">
                       <AlertCircle className="w-3.5 h-3.5 text-[#7A96A8] shrink-0 mt-0.5" />
                       <p className="text-xs text-[#7A96A8]">
-                        Tenés <span className="text-[#E2ECF4]">10 días</span> para pagar contados desde la última producción entregada. Si solicitás otra producción durante ese período, el plazo se extiende 10 días desde esa nueva entrega.
+                        Tenés <span className="text-[#E2ECF4]">5 días</span> para pagar contados desde la última producción entregada. Si solicitás otra producción durante ese período, el plazo se extiende 5 días desde esa nueva entrega.
                       </p>
                     </div>
                     {inmobiliaria.beneficios && (
@@ -359,7 +438,7 @@ export default function DashboardPage() {
                   </div>
                 ) : (
                   <p className="text-xs text-[#7A96A8]">
-                    Tenés <span className="text-[#E2ECF4]">10 días</span> para pagar contados desde la última producción entregada. Si solicitás otra producción durante ese período, el plazo se extiende 10 días desde esa nueva entrega.
+                    Tenés <span className="text-[#E2ECF4]">5 días</span> para pagar contados desde la última producción entregada. Si solicitás otra producción durante ese período, el plazo se extiende 5 días desde esa nueva entrega.
                   </p>
                 )}
               </div>

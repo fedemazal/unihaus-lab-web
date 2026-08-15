@@ -11,6 +11,8 @@ import {
   computeCapa1,
   validateCodigo,
   usarCodigo,
+  LIMITE_CC,
+  DIAS_PLAZO_CC,
 } from "@/lib/firebase/firestore";
 import type { CodigoDescuento } from "@/types";
 import { sendEmail, ADMIN_EMAIL } from "@/lib/email/send";
@@ -36,6 +38,7 @@ import {
   Loader2,
   X,
   Plus,
+  CreditCard,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 
@@ -52,6 +55,7 @@ export default function NuevaProduccionPage() {
   const [step, setStep] = useState<Step>(1);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [ccBloqueada, setCcBloqueada] = useState(false);
   const [descuento, setDescuento] = useState(0);
   const [descuentoManual, setDescuentoManual] = useState(0);
   const [descuentoCapa1, setDescuentoCapa1] = useState(0);
@@ -95,6 +99,23 @@ export default function NuevaProduccionPage() {
         getProductions({ inmobiliariaId: profile.inmobiliariaId }),
       ]);
       const manual = inmob?.descuento ?? 0;
+      // Check CC block
+      if (profile?.cuentaCorrienteAprobada) {
+        const impagoCC = prods.filter((p) => p.esCuentaCorriente && !p.pagada && p.estado === "listo");
+        const saldoCC = impagoCC.reduce((sum, p) => sum + (p.precioFinal || 0), 0);
+        let bloqueada = saldoCC >= LIMITE_CC;
+        if (!bloqueada && impagoCC.length > 0) {
+          const fechas = impagoCC.map((p) => {
+            const f = p.fechaListo;
+            if (!f) return new Date(0);
+            return typeof f === "object" && "toDate" in f ? (f as { toDate: () => Date }).toDate() : new Date(f as unknown as string);
+          });
+          const oldest = new Date(Math.min(...fechas.map((d) => d.getTime())));
+          bloqueada = Math.floor((Date.now() - oldest.getTime()) / (1000 * 60 * 60 * 24)) > DIAS_PLAZO_CC;
+        }
+        setCcBloqueada(bloqueada);
+      }
+
       const countMes = prods.filter((p) => {
         const d = p.createdAt instanceof Date ? p.createdAt
           : (p.createdAt as unknown as { toDate?: () => Date })?.toDate?.() ?? new Date(p.createdAt as unknown as string ?? 0);
@@ -246,6 +267,7 @@ export default function NuevaProduccionPage() {
         precioFinal: precioFinalReal,
         desglose: calcResult.desglose,
         valorEstimado,
+        ...(profile.cuentaCorrienteAprobada ? { esCuentaCorriente: true } : {}),
         estado: "pendiente",
         tags: [],
         archivos: { fotosVideosZip: null, planoImagen: null },
@@ -266,6 +288,29 @@ export default function NuevaProduccionPage() {
       setLoading(false);
     }
   };
+
+  if (ccBloqueada) {
+    return (
+      <div className="max-w-lg mx-auto text-center py-16">
+        <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center mx-auto mb-6">
+          <CreditCard className="w-8 h-8 text-red-400" />
+        </div>
+        <h1 className="text-2xl font-bold text-[#E2ECF4] mb-3">Cuenta corriente bloqueada</h1>
+        <p className="text-[#7A96A8] mb-2">
+          Tu cuenta corriente alcanzó el límite o el plazo de pago de {DIAS_PLAZO_CC} días.
+        </p>
+        <p className="text-[#7A96A8] mb-8">
+          Saldá total o parcialmente el saldo pendiente para volver a solicitar producciones. El pago es en <strong className="text-[#E2ECF4]">efectivo en dólares</strong>.
+        </p>
+        <Button
+          onClick={() => router.push("/dashboard")}
+          className="bg-[#F2B968] hover:bg-[#d9a050] text-[#0D1117] font-semibold"
+        >
+          Ver mi saldo
+        </Button>
+      </div>
+    );
+  }
 
   if (submitted) {
     return (
@@ -599,28 +644,28 @@ export default function NuevaProduccionPage() {
 
           {/* Property summary — compact */}
           <div className="bg-[#161C26] rounded-xl border border-[#263040] px-4 py-3">
-            <p className="text-xs text-[#7A96A8] truncate mb-1">{direccion}</p>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-              <span className="text-[#E2ECF4] capitalize font-medium">{tipoPropiedad}</span>
-              <span className="text-[#263040]">·</span>
+            <p className="text-sm text-[#C8D8E4] truncate mb-1.5 font-medium">{direccion}</p>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+              <span className="text-[#F2B968] capitalize font-semibold">{tipoPropiedad}</span>
+              <span className="text-[#4A6070]">·</span>
               {tipoPropiedad === "departamento" ? (
-                <span className="text-[#7A96A8]">
+                <span className="text-[#A8BCC8]">
                   {superficie}m² construidos
                   {descubierta > 0 && ` · ${descubierta}m² semi+desc`}
                 </span>
               ) : (
-                <span className="text-[#7A96A8]">
+                <span className="text-[#A8BCC8]">
                   {construida}m² construidos · {descubierta}m² semi+desc
                 </span>
               )}
               {amenidades > 0 && (
                 <>
-                  <span className="text-[#263040]">·</span>
-                  <span className="text-[#7A96A8]">{amenidades} amenities</span>
+                  <span className="text-[#4A6070]">·</span>
+                  <span className="text-[#A8BCC8]">{amenidades} amenities</span>
                 </>
               )}
-              <span className="text-[#263040]">·</span>
-              <span className="text-[#7A96A8] capitalize">{ocupacion}</span>
+              <span className="text-[#4A6070]">·</span>
+              <span className="text-[#A8BCC8] capitalize">{ocupacion}</span>
             </div>
           </div>
 
@@ -632,15 +677,15 @@ export default function NuevaProduccionPage() {
               {/* Base package line */}
               <div className="flex items-center justify-between py-0.5">
                 <div className="flex items-center gap-2">
-                  <span className="text-[#7A96A8]">
+                  <span className="text-[#C8D8E4]">
                     {servicios.soloFotos
                       ? "Solo Fotos (−25%)"
                       : servicios.videoAdicional
                       ? "Fotos + Video + 2do Video (+25%)"
                       : "Fotos + Video"}
-                    <span className="text-xs ml-1 opacity-60">
+                    <span className="text-xs ml-1 text-[#7A96A8]">
                       {tipoPropiedad === "departamento"
-                        ? `(para ${superficie + amenidades * 7}m²)`
+                        ? `(para ${superficie + Math.min(descubierta, 20) + amenidades * 7}m²)`
                         : `(para ${construida}m² construidos)`}
                     </span>
                   </span>
@@ -668,9 +713,9 @@ export default function NuevaProduccionPage() {
                 return (
                   <div key={i} className="flex items-center justify-between py-0.5">
                     <div className="flex items-center gap-2">
-                      <span className="text-[#7A96A8]">
+                      <span className="text-[#C8D8E4]">
                         {item.concepto}
-                        <span className="text-xs ml-1 opacity-60">({item.calculo})</span>
+                        <span className="text-xs ml-1 text-[#7A96A8]">({item.calculo})</span>
                       </span>
                       {serviceKey && (
                         <button
@@ -690,7 +735,7 @@ export default function NuevaProduccionPage() {
               <hr className="border-[#263040] my-1" />
 
               <div className="flex justify-between">
-                <span className="text-[#7A96A8]">Subtotal</span>
+                <span className="text-[#A8BCC8]">Subtotal</span>
                 <span className="text-[#E2ECF4] font-mono">${calcResult.subtotal.toFixed(2)}</span>
               </div>
 

@@ -10,7 +10,7 @@ import {
   DEFAULT_BENEFICIOS_CONFIG,
 } from "@/lib/firebase/firestore";
 import type { BeneficiosConfig, Inmobiliaria, Production } from "@/types";
-import { Building2, Percent, Gift, Loader2, Star, Zap, CheckCircle, Lock } from "lucide-react";
+import { Building2, Percent, Gift, Loader2, Star, Zap, CheckCircle, Lock, CreditCard } from "lucide-react";
 import { Timestamp } from "firebase/firestore";
 
 function toDate(v: unknown): Date {
@@ -268,6 +268,51 @@ export default function BeneficiosPage() {
         </div>
 
       </div>
+
+      {/* Cuenta Corriente — solo si tiene CC aprobada */}
+      {profile?.cuentaCorrienteAprobada && (
+        <div className="mt-6 bg-gradient-to-br from-blue-500/10 to-blue-900/5 border border-blue-500/30 rounded-xl p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <CreditCard className="w-5 h-5 text-blue-400" />
+            <p className="font-semibold text-blue-300 text-sm">Beneficio especial · Cuenta Corriente</p>
+            <span className="ml-auto text-xs bg-blue-500/15 text-blue-300 border border-blue-500/30 rounded px-2 py-0.5">Activa</span>
+          </div>
+          <p className="text-sm text-[#A8BCC8] mb-4">
+            Tenés acceso a una <strong className="text-[#E2ECF4]">línea de crédito en USD</strong> para pagar tus producciones de forma diferida, exclusiva para clientes seleccionados.
+          </p>
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="bg-[#0D1117]/60 rounded-lg p-3">
+              <p className="text-xs text-[#7A96A8] mb-1">Límite de cuenta</p>
+              <p className="text-xl font-bold font-mono text-blue-300">USD 400</p>
+            </div>
+            <div className="bg-[#0D1117]/60 rounded-lg p-3">
+              <p className="text-xs text-[#7A96A8] mb-1">Plazo de pago</p>
+              <p className="text-xl font-bold font-mono text-blue-300">90 días</p>
+            </div>
+          </div>
+          <ul className="space-y-2 text-sm text-[#A8BCC8]">
+            <li className="flex items-start gap-2">
+              <CheckCircle className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
+              Acumulás saldo a medida que entregamos producciones, sin pagar de inmediato
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
+              El saldo es de la inmobiliaria — si cambiás de agencia, la deuda queda donde corresponde
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
+              Compatible con los descuentos de Capa 1, 2 y 3 — corren en paralelo
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
+              Pago único y exclusivo: <strong className="text-[#E2ECF4]">efectivo en dólares</strong>
+            </li>
+          </ul>
+          <p className="text-xs text-[#4A6070] mt-4">
+            Al cumplirse USD 400 o 90 días desde la primera entrega sin pagar (lo que ocurra primero), se suspenden nuevas solicitudes hasta saldar la cuenta.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

@@ -100,6 +100,18 @@ export default function AdminProduccionesPage() {
             nombre: agent.nombre,
             direccion: prod.direccion,
           });
+          // WhatsApp al teléfono del agente si tiene número
+          if (agent.telefono) {
+            fetch("/api/notify-whatsapp", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                telefono: agent.telefono,
+                nombre: agent.nombre,
+                direccion: prod.direccion,
+              }),
+            }).catch(() => {});
+          }
         }
       }
       await loadData();

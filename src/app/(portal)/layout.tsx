@@ -21,6 +21,7 @@ import {
   FileStack,
   Tag,
   FileBarChart,
+  CreditCard,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -41,6 +42,7 @@ const adminNav = [
   { href: "/admin/codigos", label: "Códigos", icon: Tag },
   { href: "/admin/estadisticas", label: "Estadísticas", icon: BarChart3 },
   { href: "/admin/informes", label: "Informes", icon: FileBarChart },
+  { href: "/admin/cuentas-corrientes", label: "Ctas. Corrientes", icon: CreditCard },
 ];
 
 export default function PortalLayout({

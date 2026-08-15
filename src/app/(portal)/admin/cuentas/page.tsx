@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckCircle, XCircle, Loader2, Mail, Phone, Building2, Search } from "lucide-react";
+import { CheckCircle, XCircle, Loader2, Mail, Phone, Building2, Search, CreditCard } from "lucide-react";
 
 type Tab = "pendiente" | "aprobado" | "rechazado";
 
@@ -88,6 +88,20 @@ export default function CuentasPage() {
       console.error("Error approving user:", err);
     } finally {
       setActionLoading(false);
+    }
+  }
+
+  async function toggleCC(user: UserProfile) {
+    const next = !user.cuentaCorrienteAprobada;
+    const msg = next
+      ? `¿Aprobar cuenta corriente para ${user.nombre}?`
+      : `¿Revocar cuenta corriente de ${user.nombre}?`;
+    if (!confirm(msg)) return;
+    try {
+      await updateUser(user.uid, { cuentaCorrienteAprobada: next });
+      await loadData();
+    } catch (err) {
+      console.error("Error toggling CC:", err);
     }
   }
 
@@ -204,9 +218,28 @@ export default function CuentasPage() {
                 )}
 
                 {tab === "aprobado" && (
-                  <Badge className="bg-green-500/15 text-green-300 border border-green-500/30">
-                    Aprobado
-                  </Badge>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {user.cuentaCorrienteAprobada && (
+                      <Badge className="bg-blue-500/15 text-blue-300 border border-blue-500/30 text-xs">
+                        <CreditCard className="w-3 h-3 mr-1" />
+                        Cta. Corriente
+                      </Badge>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => toggleCC(user)}
+                      className={user.cuentaCorrienteAprobada
+                        ? "border-blue-500/40 text-blue-400 hover:bg-blue-500/10 text-xs"
+                        : "border-[#263040] text-[#7A96A8] hover:bg-[#1E2A38] text-xs"}
+                    >
+                      <CreditCard className="w-3 h-3 mr-1" />
+                      {user.cuentaCorrienteAprobada ? "Revocar CC" : "Aprobar CC"}
+                    </Button>
+                    <Badge className="bg-green-500/15 text-green-300 border border-green-500/30">
+                      Aprobado
+                    </Badge>
+                  </div>
                 )}
               </div>
             </div>

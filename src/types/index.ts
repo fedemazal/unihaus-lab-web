@@ -17,6 +17,7 @@ export interface UserProfile {
   rol: UserRole;
   estado: UserStatus;
   inmobiliariaId: string | null;
+  cuentaCorrienteAprobada?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -128,6 +129,7 @@ export interface Production {
   entregaUploadedAt?: Date | null;
   entregaExpiresAt?: Date | null;
   pagada?: boolean;
+  esCuentaCorriente?: boolean;
 
   estado: ProductionStatus;
   tags: string[];

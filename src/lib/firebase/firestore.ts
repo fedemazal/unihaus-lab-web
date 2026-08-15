@@ -358,6 +358,97 @@ export async function usarCodigo(codigoId: string): Promise<boolean> {
   }
 }
 
+// ============================================
+// CUENTA CORRIENTE
+// ============================================
+
+export const LIMITE_CC = 400;
+export const DIAS_PLAZO_CC = 90;
+export const RECARGO_MORA_CC = 0.05; // 5% mensual
+
+export interface CCResumenInmobiliaria {
+  inmobiliariaId: string;
+  inmobiliariaNombre: string;
+  saldoPendiente: number;
+  producciones: number;
+  diasDesdeFirstEntrega: number | null;
+  enMora: boolean;
+  bloqueada: boolean;
+  agentesCC: { uid: string; nombre: string; email: string }[];
+}
+
+// Devuelve el resumen CC de una inmobiliaria dado sus producciones CC impagadas
+export function calcularResumenCC(
+  inmobiliariaId: string,
+  inmobiliariaNombre: string,
+  prodsCC: import("@/types").Production[],
+  agentesCC: { uid: string; nombre: string; email: string }[]
+): CCResumenInmobiliaria {
+  const impagadas = prodsCC.filter(
+    (p) => p.esCuentaCorriente && !p.pagada && p.estado === "listo"
+  );
+  const saldoPendiente = impagadas.reduce((sum, p) => sum + (p.precioFinal ?? 0), 0);
+
+  let diasDesdeFirstEntrega: number | null = null;
+  let enMora = false;
+  if (impagadas.length > 0) {
+    const fechas = impagadas.map((p) => {
+      const f = p.fechaListo;
+      return f instanceof Timestamp ? f.toDate() : new Date(f as unknown as string);
+    });
+    const oldest = new Date(Math.min(...fechas.map((d) => d.getTime())));
+    diasDesdeFirstEntrega = Math.floor((Date.now() - oldest.getTime()) / (1000 * 60 * 60 * 24));
+    enMora = diasDesdeFirstEntrega > DIAS_PLAZO_CC;
+  }
+
+  const bloqueada = saldoPendiente >= LIMITE_CC || enMora;
+
+  return {
+    inmobiliariaId,
+    inmobiliariaNombre,
+    saldoPendiente,
+    producciones: impagadas.length,
+    diasDesdeFirstEntrega,
+    enMora,
+    bloqueada,
+    agentesCC,
+  };
+}
+
+// Obtiene todos los usuarios con CC aprobada
+export async function getUsuariosCC(): Promise<import("@/types").UserProfile[]> {
+  const ref = collection(getFirebaseDb(), "users");
+  const snap = await getDocs(query(ref));
+  return snap.docs
+    .map((d) => ({ ...d.data(), uid: d.id } as import("@/types").UserProfile))
+    .filter((u) => u.cuentaCorrienteAprobada === true);
+}
+
+// Verifica si un agente CC está bloqueado para nueva producción
+export async function isCCBloqueada(inmobiliariaId: string): Promise<boolean> {
+  const ref = collection(getFirebaseDb(), "producciones");
+  const q = query(
+    ref,
+    where("inmobiliariaId", "==", inmobiliariaId),
+    where("esCuentaCorriente", "==", true)
+  );
+  const snap = await getDocs(q);
+  const prods = snap.docs.map((d) => ({ ...d.data(), id: d.id } as import("@/types").Production));
+  const impagadas = prods.filter((p) => !p.pagada && p.estado === "listo");
+  const saldo = impagadas.reduce((sum, p) => sum + (p.precioFinal ?? 0), 0);
+  if (saldo >= LIMITE_CC) return true;
+  if (impagadas.length > 0) {
+    const fechas = impagadas.map((p) => {
+      const f = p.fechaListo;
+      return f instanceof Timestamp ? f.toDate() : new Date(f as unknown as string);
+    });
+    const oldest = new Date(Math.min(...fechas.map((d) => d.getTime())));
+    const dias = Math.floor((Date.now() - oldest.getTime()) / (1000 * 60 * 60 * 24));
+    if (dias > DIAS_PLAZO_CC) return true;
+  }
+  return false;
+}
+
 export async function getProduccionesCountAnio(agenteId: string, year: number): Promise<number> {
   const ref = collection(getFirebaseDb(), "producciones");
   const q = query(ref, where("agenteId", "==", agenteId));

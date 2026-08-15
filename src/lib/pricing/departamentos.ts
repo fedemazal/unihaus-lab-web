@@ -38,10 +38,11 @@ export function calcularPrecioDepto(datos: DeptoPricingInput) {
 
 
   if (servicios.plano2d) {
-    const monto = precioPlano(superficie);
-    const tarifa = superficie <= 35 ? 0.30 : 0.25;
+    const m2Plano = superficie + descubiertaComoCubierta;
+    const monto = precioPlano(m2Plano);
+    const tarifa = m2Plano <= 35 ? 0.30 : 0.25;
     precioExtras += monto;
-    desglose.push({ concepto: "Plano 2D", calculo: `${superficie}m² × $${tarifa.toFixed(2)}`, monto });
+    desglose.push({ concepto: "Plano 2D", calculo: `${m2Plano}m² × $${tarifa.toFixed(2)}`, monto });
   }
 
   if (servicios.tour360) {
