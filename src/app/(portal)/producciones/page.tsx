@@ -9,10 +9,12 @@ import {
   Plus, Search, MapPin, Calendar, DollarSign,
   Download, Loader2, ChevronDown, ChevronUp,
   CheckCircle, Package, Clock, TrendingUp, Building2,
+  Banknote, CreditCard, Upload, Copy, Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { CUENTA_BANCARIA } from "@/lib/config/cuentaBancaria";
 
 const statusConfig: Record<ProductionStatus, { label: string; color: string }> = {
   pendiente: { label: "Pendiente", color: "bg-amber-500/15 text-amber-300 border-amber-500/30" },
@@ -46,6 +48,13 @@ export default function ProduccionesPage() {
   const [downloadingKey, setDownloadingKey] = useState<string | null>(null);
   const [inmobiliaria, setInmobiliaria] = useState<Inmobiliaria | null>(null);
   const [derivando, setDerivando] = useState<string | null>(null);
+  // Pago directo
+  const [expandedBanco, setExpandedBanco] = useState<string | null>(null);
+  const [expandedPesos, setExpandedPesos] = useState<string | null>(null);
+  const [dolarBlue, setDolarBlue] = useState<number | null>(null);
+  const [montoUsd, setMontoUsd] = useState<Record<string, string>>({});
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [uploadingComp, setUploadingComp] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -64,6 +73,11 @@ export default function ProduccionesPage() {
       }
     }
     load();
+    // Fetch dolar blue rate
+    fetch("https://dolarapi.com/v1/dolares/blue")
+      .then((r) => r.json())
+      .then((d) => setDolarBlue(d.venta ?? null))
+      .catch(() => {});
   }, [profile]);
 
   const filtered = producciones.filter((p) => {
@@ -71,6 +85,40 @@ export default function ProduccionesPage() {
     if (busqueda && !p.direccion.toLowerCase().includes(busqueda.toLowerCase())) return false;
     return true;
   });
+
+  function copyToClipboard(text: string, field: string) {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
+    });
+  }
+
+  async function handleSubirComprobante(prod: Production, file: File) {
+    setUploadingComp(prod.id);
+    try {
+      const presignRes = await fetch("/api/r2/presign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          produccionId: `comprobante-${prod.id}`,
+          nombre: file.name,
+          contentType: file.type,
+        }),
+      });
+      if (!presignRes.ok) throw new Error("Error generando URL de subida");
+      const { url, key } = await presignRes.json();
+      const uploadRes = await fetch(url, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
+      if (!uploadRes.ok) throw new Error("Error subiendo el archivo");
+      const comprobanteUrl = `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL || ""}/${key}`;
+      await updateProduction(prod.id, { comprobanteUrl, comprobanteKey: key });
+      setProducciones((prev) => prev.map((p) => p.id === prod.id ? { ...p, comprobanteUrl, comprobanteKey: key } : p));
+    } catch (err) {
+      console.error("Error subiendo comprobante:", err);
+      alert("Hubo un error al subir el comprobante. Intentá de nuevo.");
+    } finally {
+      setUploadingComp(null);
+    }
+  }
 
   async function handleDerivar(prod: Production) {
     if (!confirm(`¿Derivar el pago de "${prod.direccion}" a ${inmobiliaria?.nombre}?`)) return;
@@ -474,6 +522,175 @@ export default function ProduccionesPage() {
                             </div>
                           </div>
                         )}
+                      </div>
+                    )}
+
+                    {/* ── Pago directo (solo si está listo, no pagada, no derivada, sin CC) ── */}
+                    {prod.estado === "listo" && !prod.pagada && !prod.derivadoAOficina && !prod.esCuentaCorriente && !profile?.cuentaCorrienteAprobada && (
+                      <div className="space-y-3">
+                        <p className="text-xs text-[#7A96A8] uppercase tracking-wider font-medium">Abonar producción</p>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {/* Card izquierda: datos bancarios */}
+                          <div className="border border-[#263040] rounded-xl overflow-hidden">
+                            <button
+                              onClick={() => setExpandedBanco(expandedBanco === prod.id ? null : prod.id)}
+                              className="w-full flex items-center justify-between px-4 py-3 hover:bg-[#1E2A38] transition text-left"
+                            >
+                              <span className="text-sm font-medium text-[#E2ECF4] flex items-center gap-2">
+                                <Banknote className="w-4 h-4 text-[#F2B968]" />
+                                Datos para transferir
+                              </span>
+                              {expandedBanco === prod.id
+                                ? <ChevronUp className="w-4 h-4 text-[#7A96A8]" />
+                                : <ChevronDown className="w-4 h-4 text-[#7A96A8]" />}
+                            </button>
+                            {expandedBanco === prod.id && (
+                              <div className="px-4 pb-4 pt-1 bg-[#0D1117] border-t border-[#263040] space-y-2.5">
+                                {[
+                                  { label: "Banco", value: CUENTA_BANCARIA.banco, id: `banco-${prod.id}` },
+                                  { label: "Tipo", value: CUENTA_BANCARIA.tipoCuenta, id: `tipo-${prod.id}` },
+                                  { label: "CBU", value: CUENTA_BANCARIA.cbu, id: `cbu-${prod.id}` },
+                                  { label: "Alias", value: CUENTA_BANCARIA.alias, id: `alias-${prod.id}` },
+                                  { label: "Titular", value: CUENTA_BANCARIA.titular, id: `titular-${prod.id}` },
+                                  { label: "CUIT", value: CUENTA_BANCARIA.cuit, id: `cuit-${prod.id}` },
+                                ].map(({ label, value, id }) => (
+                                  <div key={id} className="flex items-center justify-between gap-2 group">
+                                    <div className="min-w-0">
+                                      <p className="text-xs text-[#7A96A8]">{label}</p>
+                                      <p className="text-sm text-[#E2ECF4] font-medium font-mono truncate">{value}</p>
+                                    </div>
+                                    <button
+                                      onClick={() => copyToClipboard(value, id)}
+                                      className="shrink-0 p-1.5 rounded hover:bg-[#1E2A38] text-[#7A96A8] hover:text-[#E2ECF4] transition"
+                                      title="Copiar"
+                                    >
+                                      {copiedField === id ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+                                    </button>
+                                  </div>
+                                ))}
+                                <p className="text-xs text-amber-400/80 pt-1 border-t border-[#263040] mt-2">
+                                  {CUENTA_BANCARIA.nota}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Card derecha: cargar comprobante */}
+                          <div className="border border-[#263040] rounded-xl p-4 bg-[#0D1117] flex flex-col justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-[#E2ECF4] flex items-center gap-2 mb-1">
+                                <CreditCard className="w-4 h-4 text-[#F2B968]" />
+                                Cargar comprobante
+                              </p>
+                              {prod.comprobanteUrl ? (
+                                <p className="text-xs text-green-400 flex items-center gap-1 mt-2">
+                                  <CheckCircle className="w-3.5 h-3.5" />
+                                  Comprobante enviado — en revisión
+                                </p>
+                              ) : (
+                                <p className="text-xs text-[#7A96A8] mt-1">
+                                  Subí el comprobante de la transferencia para que podamos validar el pago.
+                                </p>
+                              )}
+                            </div>
+                            <div className="mt-3">
+                              {prod.comprobanteUrl ? (
+                                <label className="cursor-pointer inline-flex items-center gap-1.5 text-xs text-[#7A96A8] hover:text-[#E2ECF4] transition">
+                                  <Upload className="w-3.5 h-3.5" />
+                                  Reemplazar comprobante
+                                  <input
+                                    type="file"
+                                    accept="image/*,.pdf"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                      const f = e.target.files?.[0];
+                                      if (f) handleSubirComprobante(prod, f);
+                                    }}
+                                  />
+                                </label>
+                              ) : (
+                                <label className={`cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition ${uploadingComp === prod.id ? "opacity-50 cursor-not-allowed bg-[#1E2A38] border-[#263040] text-[#7A96A8]" : "bg-[#F2B968]/10 hover:bg-[#F2B968]/20 border-[#F2B968]/40 text-[#F2B968]"}`}>
+                                  {uploadingComp === prod.id
+                                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Subiendo...</>
+                                    : <><Upload className="w-4 h-4" /> Subir comprobante</>}
+                                  <input
+                                    type="file"
+                                    accept="image/*,.pdf"
+                                    className="hidden"
+                                    disabled={uploadingComp === prod.id}
+                                    onChange={(e) => {
+                                      const f = e.target.files?.[0];
+                                      if (f) handleSubirComprobante(prod, f);
+                                    }}
+                                  />
+                                </label>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Calculadora en pesos */}
+                        <div className="border border-[#263040] rounded-xl overflow-hidden">
+                          <button
+                            onClick={() => {
+                              setExpandedPesos(expandedPesos === prod.id ? null : prod.id);
+                              if (expandedPesos !== prod.id && !montoUsd[prod.id]) {
+                                setMontoUsd((prev) => ({ ...prev, [prod.id]: String(prod.precioFinal ?? "") }));
+                              }
+                            }}
+                            className="w-full flex items-center justify-between px-4 py-3 hover:bg-[#1E2A38] transition text-left"
+                          >
+                            <span className="text-sm font-medium text-[#E2ECF4] flex items-center gap-2">
+                              <DollarSign className="w-4 h-4 text-blue-400" />
+                              Calculadora pesos (dólar blue)
+                            </span>
+                            {expandedPesos === prod.id
+                              ? <ChevronUp className="w-4 h-4 text-[#7A96A8]" />
+                              : <ChevronDown className="w-4 h-4 text-[#7A96A8]" />}
+                          </button>
+                          {expandedPesos === prod.id && (
+                            <div className="px-4 pb-4 pt-3 bg-[#0D1117] border-t border-[#263040]">
+                              <div className="flex items-center gap-2 mb-3">
+                                {dolarBlue ? (
+                                  <p className="text-xs text-[#7A96A8]">
+                                    Cotización actual: <span className="text-blue-300 font-semibold">$1 USD = ${dolarBlue.toLocaleString("es-AR")} ARS</span>
+                                    <span className="ml-1 opacity-60">(blue)</span>
+                                  </p>
+                                ) : (
+                                  <p className="text-xs text-[#7A96A8]">Cargando cotización...</p>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <div className="flex-1">
+                                  <p className="text-xs text-[#7A96A8] mb-1">Monto en USD</p>
+                                  <Input
+                                    type="number"
+                                    min={0}
+                                    value={montoUsd[prod.id] ?? ""}
+                                    onChange={(e) => setMontoUsd((prev) => ({ ...prev, [prod.id]: e.target.value }))}
+                                    className="bg-[#161C26] border-[#263040] text-[#E2ECF4] font-mono"
+                                    placeholder={String(prod.precioFinal ?? "")}
+                                  />
+                                </div>
+                                <div className="text-[#7A96A8] text-lg mt-4">=</div>
+                                <div className="flex-1">
+                                  <p className="text-xs text-[#7A96A8] mb-1">Equivalente en ARS</p>
+                                  <div className="h-10 flex items-center px-3 rounded-md border border-[#263040] bg-[#161C26]/50">
+                                    <span className="text-base font-bold text-blue-300 font-mono">
+                                      {dolarBlue && montoUsd[prod.id]
+                                        ? `$${(parseFloat(montoUsd[prod.id]) * dolarBlue).toLocaleString("es-AR", { maximumFractionDigits: 0 })}`
+                                        : "—"}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                              <p className="text-xs text-amber-400/70 mt-3">
+                                Nota: los precios de nuestros servicios están en USD. El monto en pesos es orientativo y depende del valor del dólar blue del momento del pago.
+                              </p>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
 

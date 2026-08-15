@@ -135,6 +135,8 @@ export interface Production {
   pagada?: boolean;
   esCuentaCorriente?: boolean;
   derivadoAOficina?: boolean; // el agente derivó el pago a la cuenta central de su inmobiliaria
+  comprobanteUrl?: string;   // URL de descarga del comprobante de pago subido por el agente
+  comprobanteKey?: string;
 
   estado: ProductionStatus;
   tags: string[];
