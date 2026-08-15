@@ -87,6 +87,20 @@ export default function InmobiliariasPage() {
     }
   }
 
+  async function toggleCuentaCentral(inmob: Inmobiliaria) {
+    const next = !inmob.cuentaCentralActiva;
+    const msg = next
+      ? `¿Activar cuenta central para ${inmob.nombre}? Sus agentes podrán derivar pagos a la oficina.`
+      : `¿Desactivar cuenta central de ${inmob.nombre}?`;
+    if (!confirm(msg)) return;
+    try {
+      await updateInmobiliaria(inmob.id, { cuentaCentralActiva: next });
+      await loadData();
+    } catch (err) {
+      console.error("Error toggling cuenta central:", err);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -119,7 +133,7 @@ export default function InmobiliariasPage() {
             <div key={inmob.id} className="bg-[#161C26] rounded-xl border border-[#263040] p-5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <p className="font-semibold text-[#E2ECF4]">{inmob.nombre}</p>
                     <Badge className={inmob.activa
                       ? "bg-green-500/15 text-green-300 border border-green-500/30"
@@ -127,6 +141,11 @@ export default function InmobiliariasPage() {
                     }>
                       {inmob.activa ? "Activa" : "Inactiva"}
                     </Badge>
+                    {inmob.cuentaCentralActiva && (
+                      <Badge className="bg-purple-500/15 text-purple-300 border border-purple-500/30 text-xs">
+                        Cuenta central activa
+                      </Badge>
+                    )}
                   </div>
                   <p className="text-sm text-[#7A96A8]">
                     Descuento: <strong className="text-[#E2ECF4]">{inmob.descuento}%</strong>
@@ -152,6 +171,16 @@ export default function InmobiliariasPage() {
                     className="border-[#263040] text-[#E2ECF4] hover:bg-[#1E2A38]"
                   >
                     {inmob.activa ? "Desactivar" : "Activar"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => toggleCuentaCentral(inmob)}
+                    className={inmob.cuentaCentralActiva
+                      ? "border-purple-500/40 text-purple-400 hover:bg-purple-500/10 text-xs"
+                      : "border-[#263040] text-[#7A96A8] hover:bg-[#1E2A38] text-xs"}
+                  >
+                    {inmob.cuentaCentralActiva ? "Desactivar cta. central" : "Activar cta. central"}
                   </Button>
                 </div>
               </div>

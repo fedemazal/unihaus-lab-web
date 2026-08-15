@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/hooks/useAuth";
-import { getProductions } from "@/lib/firebase/firestore";
-import type { Production, ProductionStatus } from "@/types";
+import { getProductions, getInmobiliaria, updateProduction } from "@/lib/firebase/firestore";
+import type { Inmobiliaria, Production, ProductionStatus } from "@/types";
 import Link from "next/link";
 import {
   Plus, Search, MapPin, Calendar, DollarSign,
   Download, Loader2, ChevronDown, ChevronUp,
-  CheckCircle, Package, Clock, TrendingUp,
+  CheckCircle, Package, Clock, TrendingUp, Building2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,13 +44,19 @@ export default function ProduccionesPage() {
   const [expandedDesglose, setExpandedDesglose] = useState<string | null>(null);
   const [expandedRatio, setExpandedRatio] = useState<string | null>(null);
   const [downloadingKey, setDownloadingKey] = useState<string | null>(null);
+  const [inmobiliaria, setInmobiliaria] = useState<Inmobiliaria | null>(null);
+  const [derivando, setDerivando] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
       if (!profile) return;
       try {
-        const data = await getProductions({ agenteId: profile.uid });
+        const [data, inmo] = await Promise.all([
+          getProductions({ agenteId: profile.uid }),
+          profile.inmobiliariaId ? getInmobiliaria(profile.inmobiliariaId) : Promise.resolve(null),
+        ]);
         setProducciones(data);
+        setInmobiliaria(inmo);
       } catch (err) {
         console.error("Error loading productions:", err);
       } finally {
@@ -65,6 +71,21 @@ export default function ProduccionesPage() {
     if (busqueda && !p.direccion.toLowerCase().includes(busqueda.toLowerCase())) return false;
     return true;
   });
+
+  async function handleDerivar(prod: Production) {
+    if (!confirm(`¿Derivar el pago de "${prod.direccion}" a ${inmobiliaria?.nombre}?`)) return;
+    setDerivando(prod.id);
+    try {
+      await updateProduction(prod.id, { derivadoAOficina: true });
+      setProducciones((prev) =>
+        prev.map((p) => p.id === prod.id ? { ...p, derivadoAOficina: true } : p)
+      );
+    } catch (err) {
+      console.error("Error derivando:", err);
+    } finally {
+      setDerivando(null);
+    }
+  }
 
   async function handleDescargar(key: string, nombre: string) {
     setDownloadingKey(key);
@@ -180,8 +201,12 @@ export default function ProduccionesPage() {
                       <Badge className={`${status.color} border text-xs`}>{status.label}</Badge>
                       <span className="text-xs text-[#7A96A8] capitalize">{prod.tipoPropiedad}</span>
                       {prod.estado === "listo" && (
-                        <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${prod.pagada ? "bg-green-500/15 text-green-400 border-green-500/30" : "bg-red-500/15 text-red-400 border-red-500/30"}`}>
-                          {prod.pagada ? "Pagada" : "Impaga"}
+                        <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${
+                          prod.pagada ? "bg-green-500/15 text-green-400 border-green-500/30"
+                          : prod.derivadoAOficina ? "bg-purple-500/15 text-purple-400 border-purple-500/30"
+                          : "bg-red-500/15 text-red-400 border-red-500/30"
+                        }`}>
+                          {prod.pagada ? "Pagada" : prod.derivadoAOficina ? `Paga oficina` : "Impaga"}
                         </span>
                       )}
                       {tieneEntregaActiva && (
@@ -449,6 +474,31 @@ export default function ProduccionesPage() {
                             </div>
                           </div>
                         )}
+                      </div>
+                    )}
+
+                    {/* Derivar pago a oficina */}
+                    {prod.estado === "listo" && !prod.pagada && !prod.derivadoAOficina && inmobiliaria?.cuentaCentralActiva && (
+                      <div className="mt-3 border border-purple-500/20 rounded-xl p-3 bg-purple-500/5">
+                        <p className="text-xs text-purple-300 mb-2 flex items-center gap-1">
+                          <Building2 className="w-3.5 h-3.5" />
+                          Tu oficina puede hacerse cargo de este pago
+                        </p>
+                        <button
+                          onClick={() => handleDerivar(prod)}
+                          disabled={derivando === prod.id}
+                          className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-300 text-sm font-medium transition disabled:opacity-50"
+                        >
+                          {derivando === prod.id
+                            ? <><Loader2 className="w-4 h-4 animate-spin" /> Derivando...</>
+                            : <><Building2 className="w-4 h-4" /> Derivar pago a {inmobiliaria.nombre}</>}
+                        </button>
+                      </div>
+                    )}
+                    {prod.derivadoAOficina && !prod.pagada && (
+                      <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs">
+                        <Building2 className="w-3.5 h-3.5 shrink-0" />
+                        Pago derivado a <strong className="text-purple-200">{prod.inmobiliariaNombre}</strong> — tu oficina se hace cargo
                       </div>
                     )}
 

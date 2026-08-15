@@ -29,6 +29,7 @@ export interface Inmobiliaria {
   beneficios: string;
   activa: boolean;
   bonoBienvenidaUsado?: boolean;
+  cuentaCentralActiva?: boolean; // permite recibir pagos derivados de sus agentes
   createdAt: Date;
   updatedAt: Date;
 }
@@ -130,6 +131,7 @@ export interface Production {
   entregaExpiresAt?: Date | null;
   pagada?: boolean;
   esCuentaCorriente?: boolean;
+  derivadoAOficina?: boolean; // el agente derivó el pago a la cuenta central de su inmobiliaria
 
   estado: ProductionStatus;
   tags: string[];
