@@ -5,13 +5,16 @@ import {
   getInmobiliarias,
   createInmobiliaria,
   updateInmobiliaria,
+  getUserByEmail,
+  linkCuentaCentral,
+  unlinkCuentaCentral,
 } from "@/lib/firebase/firestore";
-import type { Inmobiliaria } from "@/types";
+import type { Inmobiliaria, UserProfile } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Loader2 } from "lucide-react";
+import { Plus, Pencil, Loader2, UserCog } from "lucide-react";
 
 export default function InmobiliariasPage() {
   const [inmobiliarias, setInmobiliarias] = useState<Inmobiliaria[]>([]);
@@ -26,6 +29,14 @@ export default function InmobiliariasPage() {
     activa: true,
   });
   const [saving, setSaving] = useState(false);
+
+  // Vincular cuenta central
+  const [linkTarget, setLinkTarget] = useState<Inmobiliaria | null>(null);
+  const [linkEmail, setLinkEmail] = useState("");
+  const [linkSearching, setLinkSearching] = useState(false);
+  const [linkUser, setLinkUser] = useState<UserProfile | null>(null);
+  const [linkError, setLinkError] = useState("");
+  const [linking, setLinking] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -84,6 +95,57 @@ export default function InmobiliariasPage() {
       await loadData();
     } catch (err) {
       console.error("Error toggling:", err);
+    }
+  }
+
+  function openLinkModal(inmob: Inmobiliaria) {
+    setLinkTarget(inmob);
+    setLinkEmail(inmob.cuentaCentralEmail || "");
+    setLinkUser(null);
+    setLinkError("");
+  }
+
+  async function handleSearchUser() {
+    if (!linkEmail.trim()) return;
+    setLinkSearching(true);
+    setLinkUser(null);
+    setLinkError("");
+    try {
+      const found = await getUserByEmail(linkEmail.trim().toLowerCase());
+      if (!found) {
+        setLinkError("No se encontró ninguna cuenta con ese correo.");
+      } else {
+        setLinkUser(found);
+      }
+    } catch {
+      setLinkError("Error al buscar el usuario.");
+    } finally {
+      setLinkSearching(false);
+    }
+  }
+
+  async function handleLinkConfirm() {
+    if (!linkTarget || !linkUser) return;
+    setLinking(true);
+    try {
+      await linkCuentaCentral(linkTarget.id, linkUser.uid, linkUser.email);
+      setLinkTarget(null);
+      await loadData();
+    } catch {
+      setLinkError("Error al vincular. Intentá de nuevo.");
+    } finally {
+      setLinking(false);
+    }
+  }
+
+  async function handleUnlink(inmob: Inmobiliaria) {
+    if (!inmob.cuentaCentralUid) return;
+    if (!confirm(`¿Desvincular a ${inmob.cuentaCentralEmail} como responsable de ${inmob.nombre}?`)) return;
+    try {
+      await unlinkCuentaCentral(inmob.id, inmob.cuentaCentralUid);
+      await loadData();
+    } catch (err) {
+      console.error("Error desvinculando:", err);
     }
   }
 
@@ -150,6 +212,11 @@ export default function InmobiliariasPage() {
                   <p className="text-sm text-[#7A96A8]">
                     Descuento: <strong className="text-[#E2ECF4]">{inmob.descuento}%</strong>
                   </p>
+                  {inmob.cuentaCentralEmail && (
+                    <p className="text-xs text-purple-300 mt-1">
+                      Responsable: <span className="font-medium">{inmob.cuentaCentralEmail}</span>
+                    </p>
+                  )}
                   {inmob.beneficios && (
                     <p className="text-sm text-[#7A96A8] mt-1 whitespace-pre-line">{inmob.beneficios}</p>
                   )}
@@ -182,10 +249,90 @@ export default function InmobiliariasPage() {
                   >
                     {inmob.cuentaCentralActiva ? "Desactivar cta. central" : "Activar cta. central"}
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => inmob.cuentaCentralUid ? handleUnlink(inmob) : openLinkModal(inmob)}
+                    className={inmob.cuentaCentralUid
+                      ? "border-purple-500/40 text-purple-400 hover:bg-purple-500/10 text-xs"
+                      : "border-[#263040] text-[#7A96A8] hover:bg-[#1E2A38] text-xs"}
+                  >
+                    <UserCog className="w-3.5 h-3.5 mr-1" />
+                    {inmob.cuentaCentralUid ? "Desvincular responsable" : "Vincular responsable"}
+                  </Button>
                 </div>
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Vincular responsable de cuenta central modal */}
+      {linkTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setLinkTarget(null)}>
+          <div className="bg-[#161C26] border border-[#263040] rounded-xl p-6 w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-lg font-bold text-[#E2ECF4] mb-1">Vincular responsable</h2>
+            <p className="text-sm text-[#7A96A8] mb-5">
+              Asociar una cuenta existente como responsable de la cuenta central de{" "}
+              <span className="text-[#E2ECF4] font-medium">{linkTarget.nombre}</span>.
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <Label className="text-[#E2ECF4]">Correo de la cuenta</Label>
+                <div className="flex gap-2 mt-1">
+                  <Input
+                    value={linkEmail}
+                    onChange={(e) => { setLinkEmail(e.target.value); setLinkUser(null); setLinkError(""); }}
+                    placeholder="correo@inmobiliaria.com"
+                    className="bg-[#0D1117] border-[#263040] text-[#E2ECF4] placeholder:text-[#7A96A8]"
+                    onKeyDown={(e) => e.key === "Enter" && handleSearchUser()}
+                  />
+                  <Button
+                    onClick={handleSearchUser}
+                    disabled={!linkEmail.trim() || linkSearching}
+                    className="bg-[#1E2A38] hover:bg-[#263040] text-[#E2ECF4] border border-[#263040] shrink-0"
+                  >
+                    {linkSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : "Buscar"}
+                  </Button>
+                </div>
+              </div>
+
+              {linkError && (
+                <p className="text-sm text-red-400">{linkError}</p>
+              )}
+
+              {linkUser && (
+                <div className="rounded-lg border border-purple-500/30 bg-purple-500/10 p-4">
+                  <p className="text-sm text-purple-200 font-medium">{linkUser.nombre}</p>
+                  <p className="text-xs text-purple-300 mt-0.5">{linkUser.email}</p>
+                  <p className="text-xs text-[#7A96A8] mt-1">
+                    Rol: {linkUser.rol} · Estado: {linkUser.estado}
+                    {linkUser.esCuentaCentral && (
+                      <span className="ml-2 text-amber-400">⚠ Ya es responsable de otra cuenta central</span>
+                    )}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <Button
+                variant="outline"
+                onClick={() => setLinkTarget(null)}
+                className="border-[#263040] text-[#E2ECF4] hover:bg-[#1E2A38]"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleLinkConfirm}
+                disabled={!linkUser || linking}
+                className="bg-purple-600 hover:bg-purple-700 text-white font-semibold"
+              >
+                {linking ? <Loader2 className="w-4 h-4 animate-spin" /> : "Vincular cuenta"}
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 

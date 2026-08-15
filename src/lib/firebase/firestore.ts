@@ -91,6 +91,58 @@ export async function getInmobiliaria(id: string) {
   return { ...snap.data(), id: snap.id } as Inmobiliaria;
 }
 
+export async function getUserByEmail(email: string): Promise<UserProfile | null> {
+  const q = query(collection(getFirebaseDb(), "users"), where("email", "==", email));
+  const snap = await getDocs(q);
+  if (snap.empty) return null;
+  return { ...snap.docs[0].data(), uid: snap.docs[0].id } as UserProfile;
+}
+
+export async function linkCuentaCentral(inmobiliariaId: string, uid: string, email: string) {
+  const db = getFirebaseDb();
+  await updateDoc(doc(db, "inmobiliarias", inmobiliariaId), {
+    cuentaCentralUid: uid,
+    cuentaCentralEmail: email,
+    updatedAt: serverTimestamp(),
+  });
+  await updateDoc(doc(db, "users", uid), {
+    esCuentaCentral: true,
+    inmobiliariaId: inmobiliariaId,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function unlinkCuentaCentral(inmobiliariaId: string, uid: string) {
+  const db = getFirebaseDb();
+  await updateDoc(doc(db, "inmobiliarias", inmobiliariaId), {
+    cuentaCentralUid: null,
+    cuentaCentralEmail: null,
+    updatedAt: serverTimestamp(),
+  });
+  await updateDoc(doc(db, "users", uid), {
+    esCuentaCentral: false,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function getProduccionesDerivadasAOficina(inmobiliariaId: string): Promise<Production[]> {
+  const q = query(
+    collection(getFirebaseDb(), "producciones"),
+    where("inmobiliariaId", "==", inmobiliariaId),
+    where("derivadoAOficina", "==", true)
+  );
+  const snap = await getDocs(q);
+  const prods = snap.docs.map((d) => ({ ...d.data(), id: d.id } as Production));
+  return prods.sort((a, b) => {
+    const toMs = (d: unknown) => {
+      if (!d) return 0;
+      if (typeof d === "object" && "toDate" in (d as object)) return (d as { toDate: () => Date }).toDate().getTime();
+      return new Date(d as string).getTime();
+    };
+    return toMs(b.createdAt) - toMs(a.createdAt);
+  });
+}
+
 // ============================================
 // PRODUCCIONES
 // ============================================

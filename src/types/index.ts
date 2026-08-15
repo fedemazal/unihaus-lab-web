@@ -18,6 +18,7 @@ export interface UserProfile {
   estado: UserStatus;
   inmobiliariaId: string | null;
   cuentaCorrienteAprobada?: boolean;
+  esCuentaCentral?: boolean; // es responsable de la cuenta central de una inmobiliaria
   createdAt: Date;
   updatedAt: Date;
 }
@@ -30,6 +31,8 @@ export interface Inmobiliaria {
   activa: boolean;
   bonoBienvenidaUsado?: boolean;
   cuentaCentralActiva?: boolean; // permite recibir pagos derivados de sus agentes
+  cuentaCentralUid?: string; // UID del responsable de la cuenta central
+  cuentaCentralEmail?: string; // email del responsable (para mostrar en admin)
   createdAt: Date;
   updatedAt: Date;
 }

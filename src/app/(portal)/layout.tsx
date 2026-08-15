@@ -22,6 +22,7 @@ import {
   Tag,
   FileBarChart,
   CreditCard,
+  Building2,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -60,7 +61,11 @@ export default function PortalLayout({
     router.push("/");
   };
 
-  const navItems = isAdmin ? [...agentNav, ...adminNav] : agentNav;
+  const oficinaNav = profile?.esCuentaCentral
+    ? [{ href: "/oficina", label: "Mi Oficina", icon: Building2 }]
+    : [];
+
+  const navItems = isAdmin ? [...agentNav, ...adminNav] : [...agentNav, ...oficinaNav];
 
   return (
     <ProtectedRoute>
