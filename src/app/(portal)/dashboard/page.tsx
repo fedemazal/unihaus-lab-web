@@ -330,16 +330,16 @@ export default function DashboardPage() {
                         )}
                       </div>
                       <div>
-                        <p className="text-xs text-[#7A96A8] mb-0.5">Cupo disponible</p>
+                        <p className="text-xs text-[#7A96A8] mb-0.5">Límite de cuenta</p>
                         <p className="text-xl font-bold font-mono text-[#E2ECF4]">
-                          {usd(Math.max(0, LIMITE_CC - saldoCC), 0)}
+                          {usd(LIMITE_CC, 0)}
                         </p>
-                        <p className="text-xs text-[#7A96A8] mt-0.5">de {usd(LIMITE_CC, 0)}</p>
+                        <p className="text-xs text-[#7A96A8] mt-0.5">en efectivo USD</p>
                       </div>
                     </div>
                     <div className="mb-3">
                       <div className="flex justify-between text-xs text-[#7A96A8] mb-1">
-                        <span>Cupo usado</span>
+                        <span>Saldo acumulado</span>
                         <span>{Math.min(Math.round((saldoCC / LIMITE_CC) * 100), 100)}%</span>
                       </div>
                       <div className="h-2 bg-[#0D1117] rounded-full overflow-hidden">
@@ -358,7 +358,7 @@ export default function DashboardPage() {
                     )}
                     {ccBloqueada && (
                       <p className="text-xs text-red-300 mt-1.5">
-                        Nuevas producciones bloqueadas hasta saldar la deuda
+                        Nuevas producciones bloqueadas hasta saldar el saldo total
                       </p>
                     )}
                   </div>
@@ -379,7 +379,7 @@ export default function DashboardPage() {
                     )}
                     {[
                       { text: <>Plazo de pago: hasta <span className="text-[#E2ECF4]">{DIAS_PLAZO_CC} días corridos</span> desde la primera producción entregada sin pagar.</> },
-                      { text: <>Límite de crédito: <span className="text-[#E2ECF4]">{usd(LIMITE_CC, 0)}</span>. Al alcanzarlo, se bloquean nuevas producciones hasta saldar parcial o totalmente.</> },
+                      { text: <>Al llegar a <span className="text-[#E2ECF4]">{usd(LIMITE_CC, 0)}</span> acumulados, se bloquean nuevas producciones hasta saldar el <span className="text-[#E2ECF4]">saldo total</span>.</> },
                       { text: <>Pago exclusivamente en <span className="text-[#E2ECF4]">efectivo en dólares</span>.</> },
                       { text: <>Recargo por mora: <span className="text-[#E2ECF4]">5% mensual</span> sobre el saldo vencido si superás los {DIAS_PLAZO_CC} días sin pagar.</> },
                     ].map((item, i) => (

@@ -300,7 +300,7 @@ export default function NuevaProduccionPage() {
           Tu cuenta corriente alcanzó el límite o el plazo de pago de {DIAS_PLAZO_CC} días.
         </p>
         <p className="text-[#7A96A8] mb-8">
-          Saldá total o parcialmente el saldo pendiente para volver a solicitar producciones. El pago es en <strong className="text-[#E2ECF4]">efectivo en dólares</strong>.
+          Para volver a solicitar producciones es necesario saldar el <strong className="text-[#E2ECF4]">saldo total</strong> de la cuenta corriente. El pago es en <strong className="text-[#E2ECF4]">efectivo en dólares</strong>.
         </p>
         <Button
           onClick={() => router.push("/dashboard")}

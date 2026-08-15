@@ -306,7 +306,7 @@ export default function BeneficiosPage() {
           </ul>
           <div className="mt-4 bg-blue-500/10 border border-blue-500/20 rounded-lg px-4 py-3">
             <p className="text-sm text-blue-200 font-medium">
-              Al cumplirse <strong>USD 400</strong> o <strong>90 días</strong> desde la primera entrega sin pagar —lo que ocurra primero— se suspenden nuevas solicitudes hasta saldar la cuenta.
+              Al cumplirse <strong>USD 400</strong> acumulados o <strong>90 días</strong> desde la primera entrega sin pagar —lo que ocurra primero— se suspenden nuevas solicitudes hasta saldar el <strong>saldo total</strong>.
             </p>
           </div>
         </div>
