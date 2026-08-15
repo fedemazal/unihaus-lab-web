@@ -2,11 +2,11 @@
 // Actualizar estos valores con los datos reales antes de hacer deploy.
 
 export const CUENTA_BANCARIA = {
-  banco: "Banco Galicia",
-  tipoCuenta: "Cuenta en USD",
-  cbu: "0070999800000000000000",   // ← reemplazar con CBU real
-  alias: "UNIHAUS.LAB.USD",        // ← reemplazar con alias real
-  titular: "Unihaus Lab",
-  cuit: "30-00000000-0",           // ← reemplazar con CUIT real
-  nota: "Transferencia exclusiva en dólares billete (USD). No aceptamos transferencias en pesos a esta cuenta.",
+  banco: "Uala",
+  tipoCuenta: "Caja de ahorro en pesos",
+  cbu: "3840200500000052149148",
+  alias: "UNIHAUSPESOS",
+  titular: "Hilda Tripichio",
+  cuit: "27-03863292-8",
+  nota: "Transferencia en pesos. El monto en pesos se calcula al tipo de cambio dólar blue del día del pago.",
 };
