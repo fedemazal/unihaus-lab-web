@@ -279,10 +279,18 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2.5">
               <CreditCard className="w-4 h-4 text-[#7A96A8]" />
               <span className="text-sm font-medium text-[#E2ECF4]">Cuentas y Saldos a pagar</span>
-              {saldoPendiente > 0 && (
-                <span className="text-xs bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-medium">
-                  {impagas.length} impaga{impagas.length !== 1 ? "s" : ""}
-                </span>
+              {tieneCC ? (
+                saldoCC > 0 && (
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${ccBloqueada ? "bg-red-500/15 text-red-300 border-red-500/30" : "bg-blue-500/15 text-blue-300 border-blue-500/30"}`}>
+                    {usd(saldoCC, 0)} pendiente
+                  </span>
+                )
+              ) : (
+                saldoPendiente > 0 && (
+                  <span className="text-xs bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-medium">
+                    {impagas.length} impaga{impagas.length !== 1 ? "s" : ""}
+                  </span>
+                )
               )}
             </div>
             {cuentasOpen
@@ -293,155 +301,199 @@ export default function DashboardPage() {
           {cuentasOpen && (
             <div className="border-t border-[#263040] bg-[#0D1117]/60 p-4 space-y-3">
 
-              {/* Saldo + Días restantes */}
-              <div className="grid grid-cols-2 gap-2">
-                <div className="bg-[#161C26] rounded-lg px-3 py-3">
-                  <p className="text-xs text-[#7A96A8] mb-1">Saldo pendiente de pago</p>
-                  <p className={`text-xl font-bold font-mono ${saldoPendiente > 0 ? "text-amber-300" : "text-green-400"}`}>
-                    {saldoPendiente > 0 ? usd(saldoPendiente, 0) : "Al día ✓"}
-                  </p>
-                  {saldoPendiente > 0 && (
-                    <p className="text-xs text-[#7A96A8] mt-1">
-                      {impagas.length} producción{impagas.length !== 1 ? "es" : ""} sin pagar
-                    </p>
-                  )}
-                </div>
-                {pagoInfo ? (
-                  <div className={`rounded-lg px-3 py-3 ${pagoInfo.dias <= 2 ? "bg-red-500/10 border border-red-500/20" : pagoInfo.dias <= 4 ? "bg-amber-500/10 border border-amber-500/20" : "bg-[#161C26]"}`}>
-                    <p className="text-xs text-[#7A96A8] mb-1 flex items-center gap-1">
-                      <CalendarClock className="w-3 h-3" /> Días para pagar
-                    </p>
-                    <p className={`text-xl font-bold font-mono ${pagoInfo.dias <= 2 ? "text-red-400" : pagoInfo.dias <= 4 ? "text-amber-300" : "text-[#E2ECF4]"}`}>
-                      {pagoInfo.dias > 0 ? `${pagoInfo.dias} días` : "¡Vencido!"}
-                    </p>
-                    <p className="text-xs text-[#7A96A8] mt-1">
-                      {pagoInfo.dias > 0 ? `Vence el ${pagoInfo.vencimiento}` : `Venció el ${pagoInfo.vencimiento}`}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="bg-[#161C26] rounded-lg px-3 py-3 flex items-center justify-center">
-                    <p className="text-xs text-[#7A96A8] text-center">Sin producciones<br />pendientes de pago</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Cargar comprobante */}
-              <div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*,.pdf"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) {
-                      setComprobanteFile(f);
-                      setComprobanteOk(false);
-                      handleComprobanteUpload(f);
-                    }
-                  }}
-                />
-                {comprobanteOk ? (
-                  <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-green-500/10 border border-green-500/25 text-green-400 text-sm font-medium">
-                    <CheckCircle className="w-4 h-4" />
-                    Comprobante enviado correctamente
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploadingComprobante}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-dashed border-[#263040] hover:border-[#F2B968]/50 hover:bg-[#F2B968]/5 transition text-sm text-[#7A96A8] hover:text-[#F2B968] disabled:opacity-50"
-                  >
-                    {uploadingComprobante
-                      ? <><Loader2 className="w-4 h-4 animate-spin" /> Subiendo comprobante...</>
-                      : <><Upload className="w-4 h-4" /> {comprobanteFile ? comprobanteFile.name : "Cargar comprobante de pago"}</>}
-                  </button>
-                )}
-              </div>
-
-              {/* Cuenta Corriente */}
-              {tieneCC && (
-                <div className={`rounded-lg p-3 border ${ccBloqueada ? "border-red-500/40 bg-red-500/5" : "border-blue-500/30 bg-blue-500/5"}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs text-blue-300 uppercase tracking-wide font-medium flex items-center gap-1">
-                      <CreditCard className="w-3.5 h-3.5" />
-                      Cliente con cuenta corriente activa
-                    </p>
+              {tieneCC ? (
+                /* ── Vista cuenta corriente: solo info CC ── */
+                <>
+                  {/* Card CC */}
+                  <div className={`rounded-lg p-4 border ${ccBloqueada ? "border-red-500/40 bg-red-500/5" : "border-blue-500/30 bg-blue-500/5"}`}>
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-xs text-blue-300 uppercase tracking-wide font-semibold flex items-center gap-1.5">
+                        <CreditCard className="w-3.5 h-3.5" />
+                        Cuenta corriente activa
+                      </p>
+                      {ccBloqueada && (
+                        <span className="text-xs bg-red-500/15 text-red-300 border border-red-500/30 rounded px-2 py-0.5">
+                          BLOQUEADA
+                        </span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <div>
+                        <p className="text-xs text-[#7A96A8] mb-0.5">Saldo pendiente</p>
+                        <p className={`text-xl font-bold font-mono ${saldoCC >= LIMITE_CC ? "text-red-400" : saldoCC > LIMITE_CC * 0.7 ? "text-amber-300" : saldoCC > 0 ? "text-[#E2ECF4]" : "text-green-400"}`}>
+                          {saldoCC > 0 ? usd(saldoCC, 0) : "Al día ✓"}
+                        </p>
+                        {impagoCC.length > 0 && (
+                          <p className="text-xs text-[#7A96A8] mt-0.5">
+                            {impagoCC.length} producción{impagoCC.length !== 1 ? "es" : ""}
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-xs text-[#7A96A8] mb-0.5">Cupo disponible</p>
+                        <p className="text-xl font-bold font-mono text-[#E2ECF4]">
+                          {usd(Math.max(0, LIMITE_CC - saldoCC), 0)}
+                        </p>
+                        <p className="text-xs text-[#7A96A8] mt-0.5">de {usd(LIMITE_CC, 0)}</p>
+                      </div>
+                    </div>
+                    <div className="mb-3">
+                      <div className="flex justify-between text-xs text-[#7A96A8] mb-1">
+                        <span>Cupo usado</span>
+                        <span>{Math.min(Math.round((saldoCC / LIMITE_CC) * 100), 100)}%</span>
+                      </div>
+                      <div className="h-2 bg-[#0D1117] rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${saldoCC >= LIMITE_CC ? "bg-red-500" : saldoCC > LIMITE_CC * 0.7 ? "bg-amber-400" : "bg-blue-500"}`}
+                          style={{ width: `${Math.min((saldoCC / LIMITE_CC) * 100, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                    {diasCC !== null && (
+                      <p className={`text-xs ${diasCC > DIAS_PLAZO_CC ? "text-red-400" : "text-[#7A96A8]"}`}>
+                        {diasCC > DIAS_PLAZO_CC
+                          ? `⚠ En mora: ${diasCC} días desde la primera entrega (límite ${DIAS_PLAZO_CC} días)`
+                          : `${diasCC} días transcurridos desde la primera entrega sin pagar · límite ${DIAS_PLAZO_CC} días`}
+                      </p>
+                    )}
                     {ccBloqueada && (
-                      <span className="text-xs bg-red-500/15 text-red-300 border border-red-500/30 rounded px-2 py-0.5">
-                        BLOQUEADA
-                      </span>
+                      <p className="text-xs text-red-300 mt-1.5">
+                        Nuevas producciones bloqueadas hasta saldar la deuda
+                      </p>
                     )}
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <p className="text-xs text-[#7A96A8]">Saldo CC pendiente</p>
-                      <p className={`text-lg font-bold font-mono ${saldoCC >= LIMITE_CC ? "text-red-400" : saldoCC > LIMITE_CC * 0.7 ? "text-amber-300" : "text-[#E2ECF4]"}`}>
-                        {usd(saldoCC, 0)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-[#7A96A8]">Límite de cuenta</p>
-                      <p className="text-lg font-bold font-mono text-[#E2ECF4]">{usd(LIMITE_CC, 0)}</p>
-                    </div>
-                  </div>
-                  <div className="mt-2">
-                    <div className="h-1.5 bg-[#0D1117] rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${saldoCC >= LIMITE_CC ? "bg-red-500" : saldoCC > LIMITE_CC * 0.7 ? "bg-amber-400" : "bg-blue-500"}`}
-                        style={{ width: `${Math.min((saldoCC / LIMITE_CC) * 100, 100)}%` }}
-                      />
-                    </div>
-                  </div>
-                  {diasCC !== null && (
-                    <p className={`text-xs mt-2 ${diasCC > DIAS_PLAZO_CC ? "text-red-400" : "text-[#7A96A8]"}`}>
-                      {diasCC > DIAS_PLAZO_CC
-                        ? `En mora: ${diasCC} días desde la primera entrega (límite ${DIAS_PLAZO_CC} días)`
-                        : `${diasCC} días desde la primera entrega · límite ${DIAS_PLAZO_CC} días`}
-                    </p>
-                  )}
-                  {ccBloqueada && (
-                    <p className="text-xs text-red-300 mt-1">
-                      Nuevas producciones bloqueadas hasta saldar la cuenta corriente
-                    </p>
-                  )}
-                  <p className="text-xs text-[#4A6070] mt-2">Pago exclusivamente en efectivo en dólares</p>
-                </div>
-              )}
 
-              {/* Condiciones de pago */}
-              <div className="bg-[#161C26] rounded-lg p-3 border border-[#263040]">
-                <p className="text-xs text-[#7A96A8] uppercase tracking-wide mb-2 font-medium">Condiciones de pago</p>
-                {inmobiliaria ? (
-                  <div className="space-y-1.5">
-                    <div className="flex items-start gap-2">
-                      <AlertCircle className="w-3.5 h-3.5 text-[#F2B968] shrink-0 mt-0.5" />
-                      <p className="text-xs text-[#7A96A8]">
-                        Agente de <span className="text-[#E2ECF4] font-medium">{inmobiliaria.nombre}</span>
-                        {inmobiliaria.descuento > 0 && (
-                          <span className="ml-1 text-green-400">· {inmobiliaria.descuento}% de descuento aplicado</span>
-                        )}
-                      </p>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <AlertCircle className="w-3.5 h-3.5 text-[#7A96A8] shrink-0 mt-0.5" />
-                      <p className="text-xs text-[#7A96A8]">
-                        Tenés <span className="text-[#E2ECF4]">5 días</span> para pagar contados desde la última producción entregada. Si solicitás otra producción durante ese período, el plazo se extiende 5 días desde esa nueva entrega.
-                      </p>
-                    </div>
-                    {inmobiliaria.beneficios && (
-                      <div className="flex items-start gap-2">
+                  {/* Condiciones CC */}
+                  <div className="bg-[#161C26] rounded-lg p-3 border border-[#263040]">
+                    <p className="text-xs text-[#7A96A8] uppercase tracking-wide mb-2 font-medium">Condiciones de tu cuenta corriente</p>
+                    {inmobiliaria && (
+                      <div className="flex items-start gap-2 mb-1.5">
+                        <AlertCircle className="w-3.5 h-3.5 text-[#F2B968] shrink-0 mt-0.5" />
+                        <p className="text-xs text-[#7A96A8]">
+                          Agente de <span className="text-[#E2ECF4] font-medium">{inmobiliaria.nombre}</span>
+                          {inmobiliaria.descuento > 0 && (
+                            <span className="ml-1 text-green-400">· {inmobiliaria.descuento}% de descuento aplicado</span>
+                          )}
+                        </p>
+                      </div>
+                    )}
+                    {[
+                      { text: <>Plazo de pago: hasta <span className="text-[#E2ECF4]">{DIAS_PLAZO_CC} días corridos</span> desde la primera producción entregada sin pagar.</> },
+                      { text: <>Límite de crédito: <span className="text-[#E2ECF4]">{usd(LIMITE_CC, 0)}</span>. Al alcanzarlo, se bloquean nuevas producciones hasta saldar parcial o totalmente.</> },
+                      { text: <>Pago exclusivamente en <span className="text-[#E2ECF4]">efectivo en dólares</span>.</> },
+                      { text: <>Recargo por mora: <span className="text-[#E2ECF4]">5% mensual</span> sobre el saldo vencido si superás los {DIAS_PLAZO_CC} días sin pagar.</> },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-start gap-2 mt-1.5">
                         <AlertCircle className="w-3.5 h-3.5 text-[#7A96A8] shrink-0 mt-0.5" />
-                        <p className="text-xs text-[#7A96A8] whitespace-pre-line">{inmobiliaria.beneficios}</p>
+                        <p className="text-xs text-[#7A96A8]">{item.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                /* ── Vista normal sin CC ── */
+                <>
+                  {/* Saldo + Días restantes */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-[#161C26] rounded-lg px-3 py-3">
+                      <p className="text-xs text-[#7A96A8] mb-1">Saldo pendiente de pago</p>
+                      <p className={`text-xl font-bold font-mono ${saldoPendiente > 0 ? "text-amber-300" : "text-green-400"}`}>
+                        {saldoPendiente > 0 ? usd(saldoPendiente, 0) : "Al día ✓"}
+                      </p>
+                      {saldoPendiente > 0 && (
+                        <p className="text-xs text-[#7A96A8] mt-1">
+                          {impagas.length} producción{impagas.length !== 1 ? "es" : ""} sin pagar
+                        </p>
+                      )}
+                    </div>
+                    {pagoInfo ? (
+                      <div className={`rounded-lg px-3 py-3 ${pagoInfo.dias <= 2 ? "bg-red-500/10 border border-red-500/20" : pagoInfo.dias <= 4 ? "bg-amber-500/10 border border-amber-500/20" : "bg-[#161C26]"}`}>
+                        <p className="text-xs text-[#7A96A8] mb-1 flex items-center gap-1">
+                          <CalendarClock className="w-3 h-3" /> Días para pagar
+                        </p>
+                        <p className={`text-xl font-bold font-mono ${pagoInfo.dias <= 2 ? "text-red-400" : pagoInfo.dias <= 4 ? "text-amber-300" : "text-[#E2ECF4]"}`}>
+                          {pagoInfo.dias > 0 ? `${pagoInfo.dias} días` : "¡Vencido!"}
+                        </p>
+                        <p className="text-xs text-[#7A96A8] mt-1">
+                          {pagoInfo.dias > 0 ? `Vence el ${pagoInfo.vencimiento}` : `Venció el ${pagoInfo.vencimiento}`}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="bg-[#161C26] rounded-lg px-3 py-3 flex items-center justify-center">
+                        <p className="text-xs text-[#7A96A8] text-center">Sin producciones<br />pendientes de pago</p>
                       </div>
                     )}
                   </div>
-                ) : (
-                  <p className="text-xs text-[#7A96A8]">
-                    Tenés <span className="text-[#E2ECF4]">5 días</span> para pagar contados desde la última producción entregada. Si solicitás otra producción durante ese período, el plazo se extiende 5 días desde esa nueva entrega.
-                  </p>
-                )}
-              </div>
+
+                  {/* Cargar comprobante */}
+                  <div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*,.pdf"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) {
+                          setComprobanteFile(f);
+                          setComprobanteOk(false);
+                          handleComprobanteUpload(f);
+                        }
+                      }}
+                    />
+                    {comprobanteOk ? (
+                      <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-green-500/10 border border-green-500/25 text-green-400 text-sm font-medium">
+                        <CheckCircle className="w-4 h-4" />
+                        Comprobante enviado correctamente
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingComprobante}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-dashed border-[#263040] hover:border-[#F2B968]/50 hover:bg-[#F2B968]/5 transition text-sm text-[#7A96A8] hover:text-[#F2B968] disabled:opacity-50"
+                      >
+                        {uploadingComprobante
+                          ? <><Loader2 className="w-4 h-4 animate-spin" /> Subiendo comprobante...</>
+                          : <><Upload className="w-4 h-4" /> {comprobanteFile ? comprobanteFile.name : "Cargar comprobante de pago"}</>}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Condiciones de pago normales */}
+                  <div className="bg-[#161C26] rounded-lg p-3 border border-[#263040]">
+                    <p className="text-xs text-[#7A96A8] uppercase tracking-wide mb-2 font-medium">Condiciones de pago</p>
+                    {inmobiliaria ? (
+                      <div className="space-y-1.5">
+                        <div className="flex items-start gap-2">
+                          <AlertCircle className="w-3.5 h-3.5 text-[#F2B968] shrink-0 mt-0.5" />
+                          <p className="text-xs text-[#7A96A8]">
+                            Agente de <span className="text-[#E2ECF4] font-medium">{inmobiliaria.nombre}</span>
+                            {inmobiliaria.descuento > 0 && (
+                              <span className="ml-1 text-green-400">· {inmobiliaria.descuento}% de descuento aplicado</span>
+                            )}
+                          </p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <AlertCircle className="w-3.5 h-3.5 text-[#7A96A8] shrink-0 mt-0.5" />
+                          <p className="text-xs text-[#7A96A8]">
+                            Tenés <span className="text-[#E2ECF4]">5 días</span> para pagar contados desde la última producción entregada. Si solicitás otra producción durante ese período, el plazo se extiende 5 días desde esa nueva entrega.
+                          </p>
+                        </div>
+                        {inmobiliaria.beneficios && (
+                          <div className="flex items-start gap-2">
+                            <AlertCircle className="w-3.5 h-3.5 text-[#7A96A8] shrink-0 mt-0.5" />
+                            <p className="text-xs text-[#7A96A8] whitespace-pre-line">{inmobiliaria.beneficios}</p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-[#7A96A8]">
+                        Tenés <span className="text-[#E2ECF4]">5 días</span> para pagar contados desde la última producción entregada. Si solicitás otra producción durante ese período, el plazo se extiende 5 días desde esa nueva entrega.
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
