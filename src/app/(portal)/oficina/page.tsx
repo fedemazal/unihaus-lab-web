@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import {
   Loader2, Building2, CheckCircle, Clock,
   Banknote, ChevronDown, ChevronUp, Copy, Check, DollarSign,
+  Upload, Info,
 } from "lucide-react";
 import { Timestamp } from "firebase/firestore";
 import { CUENTA_BANCARIA } from "@/lib/config/cuentaBancaria";
@@ -50,6 +51,8 @@ export default function OficinaPage() {
   const [showCalc, setShowCalc] = useState(false);
   const [calcUsd, setCalcUsd] = useState("");
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [uploadingComp, setUploadingComp] = useState(false);
+  const [comprobanteOk, setComprobanteOk] = useState(false);
 
   const inmobiliariaId = profile?.inmobiliariaId;
 
@@ -120,6 +123,36 @@ export default function OficinaPage() {
     });
   }
 
+  async function handleSubirComprobante(file: File) {
+    setUploadingComp(true);
+    setComprobanteOk(false);
+    try {
+      const presignRes = await fetch("/api/r2/presign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          produccionId: `comprobante-oficina-${inmobiliariaId}`,
+          nombre: file.name,
+          contentType: file.type || "application/octet-stream",
+        }),
+      });
+      if (!presignRes.ok) throw new Error("Error generando URL de subida");
+      const { url } = await presignRes.json();
+      const uploadRes = await fetch(url, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type || "application/octet-stream" },
+      });
+      if (!uploadRes.ok) throw new Error("Error subiendo archivo");
+      setComprobanteOk(true);
+    } catch (err) {
+      console.error("Error subiendo comprobante:", err);
+      alert("Hubo un error al subir el comprobante. Intentá de nuevo.");
+    } finally {
+      setUploadingComp(false);
+    }
+  }
+
   const pendientes = productions.filter((p) => !p.pagada);
   const pagadas = productions.filter((p) => p.pagada);
   const totalPendiente = pendientes.reduce((sum, p) => sum + (p.precioFinal || 0), 0);
@@ -169,6 +202,22 @@ export default function OficinaPage() {
           <p className="text-xs text-[#7A96A8] uppercase tracking-wider mb-1">Total derivado</p>
           <p className="text-2xl font-bold text-[#E2ECF4]">{productions.length}</p>
           <p className="text-xs text-[#7A96A8] mt-1">producciones en total</p>
+        </div>
+      </div>
+
+      {/* Formas de pago */}
+      <div className="mb-4 bg-[#161C26] border border-[#263040] rounded-xl p-4 flex items-start gap-3">
+        <Info className="w-4 h-4 text-[#F2B968] shrink-0 mt-0.5" />
+        <div>
+          <p className="text-sm font-medium text-[#E2ECF4] mb-2">Formas de pago aceptadas</p>
+          <div className="flex flex-wrap gap-2">
+            <span className="text-xs bg-green-500/10 text-green-300 border border-green-500/20 rounded-full px-3 py-1 font-medium">
+              Efectivo en USD
+            </span>
+            <span className="text-xs bg-blue-500/10 text-blue-300 border border-blue-500/20 rounded-full px-3 py-1 font-medium">
+              Transferencia bancaria en pesos
+            </span>
+          </div>
         </div>
       </div>
 
@@ -223,7 +272,7 @@ export default function OficinaPage() {
         >
           <span className="font-medium text-[#E2ECF4] flex items-center gap-2">
             <DollarSign className="w-5 h-5 text-blue-400" />
-            Calculadora en pesos (dólar blue)
+            Calculadora para pago en transferencias
           </span>
           {showCalc ? <ChevronUp className="w-4 h-4 text-[#7A96A8]" /> : <ChevronDown className="w-4 h-4 text-[#7A96A8]" />}
         </button>
@@ -231,7 +280,7 @@ export default function OficinaPage() {
           <div className="px-5 pb-5 pt-3 bg-[#0D1117] border-t border-[#263040]">
             {dolarBlue ? (
               <p className="text-xs text-[#7A96A8] mb-4">
-                Cotización blue actual: <span className="text-blue-300 font-semibold">$1 USD = ${dolarBlue.toLocaleString("es-AR")} ARS</span>
+                Cotización de referencia: <span className="text-blue-300 font-semibold">$1 USD = ${dolarBlue.toLocaleString("es-AR")} ARS</span>
               </p>
             ) : (
               <p className="text-xs text-[#7A96A8] mb-4">Cargando cotización...</p>
@@ -261,9 +310,50 @@ export default function OficinaPage() {
               </div>
             </div>
             <p className="text-xs text-amber-400/70 mt-3">
-              Orientativo. El monto exacto en pesos queda sujeto al valor del blue al momento del pago.
+              Orientativo. El monto exacto en pesos queda sujeto a la cotización acordada al momento del pago.
             </p>
           </div>
+        )}
+      </div>
+
+      {/* Cargar comprobante */}
+      <div className="mb-6 border border-[#263040] rounded-xl p-5 bg-[#0D1117]">
+        <p className="font-medium text-[#E2ECF4] flex items-center gap-2 mb-1">
+          <Upload className="w-5 h-5 text-[#F2B968]" />
+          Cargar comprobante de pago
+        </p>
+        <p className="text-xs text-[#7A96A8] mb-4">
+          Subí el comprobante de la transferencia o el recibo de pago en efectivo. Lo revisamos y actualizamos el estado de las producciones.
+        </p>
+        {comprobanteOk ? (
+          <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-green-500/10 border border-green-500/25 text-green-400 text-sm font-medium">
+            <CheckCircle className="w-4 h-4" />
+            Comprobante enviado correctamente — lo revisaremos a la brevedad
+          </div>
+        ) : (
+          <label className={`cursor-pointer flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-dashed text-sm transition ${uploadingComp ? "opacity-50 cursor-not-allowed border-[#263040] text-[#7A96A8]" : "border-[#F2B968]/40 hover:border-[#F2B968]/70 hover:bg-[#F2B968]/5 text-[#F2B968]"}`}>
+            {uploadingComp
+              ? <><Loader2 className="w-4 h-4 animate-spin" /> Subiendo comprobante...</>
+              : <><Upload className="w-4 h-4" /> Subir comprobante (imagen o PDF)</>}
+            <input
+              type="file"
+              accept="image/*,.pdf"
+              className="hidden"
+              disabled={uploadingComp}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleSubirComprobante(f);
+              }}
+            />
+          </label>
+        )}
+        {comprobanteOk && (
+          <button
+            onClick={() => setComprobanteOk(false)}
+            className="mt-2 text-xs text-[#7A96A8] hover:text-[#E2ECF4] transition"
+          >
+            Subir otro comprobante
+          </button>
         )}
       </div>
 
