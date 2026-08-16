@@ -205,22 +205,6 @@ export default function OficinaPage() {
         </div>
       </div>
 
-      {/* Formas de pago */}
-      <div className="mb-4 bg-[#161C26] border border-[#263040] rounded-xl p-4 flex items-start gap-3">
-        <Info className="w-4 h-4 text-[#F2B968] shrink-0 mt-0.5" />
-        <div>
-          <p className="text-sm font-medium text-[#E2ECF4] mb-2">Formas de pago aceptadas</p>
-          <div className="flex flex-wrap gap-2">
-            <span className="text-xs bg-green-500/10 text-green-300 border border-green-500/20 rounded-full px-3 py-1 font-medium">
-              Efectivo en USD
-            </span>
-            <span className="text-xs bg-blue-500/10 text-blue-300 border border-blue-500/20 rounded-full px-3 py-1 font-medium">
-              Transferencia bancaria en pesos
-            </span>
-          </div>
-        </div>
-      </div>
-
       {/* Datos bancarios */}
       <div className="mb-4 border border-[#263040] rounded-xl overflow-hidden">
         <button
@@ -316,45 +300,48 @@ export default function OficinaPage() {
         )}
       </div>
 
-      {/* Cargar comprobante */}
+      {/* Pago + comprobante unificados */}
       <div className="mb-6 border border-[#263040] rounded-xl p-5 bg-[#0D1117]">
-        <p className="font-medium text-[#E2ECF4] flex items-center gap-2 mb-1">
-          <Upload className="w-5 h-5 text-[#F2B968]" />
-          Cargar comprobante de pago
-        </p>
-        <p className="text-xs text-[#7A96A8] mb-4">
-          Subí el comprobante de la transferencia o el recibo de pago en efectivo. Lo revisamos y actualizamos el estado de las producciones.
-        </p>
-        {comprobanteOk ? (
-          <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-green-500/10 border border-green-500/25 text-green-400 text-sm font-medium">
-            <CheckCircle className="w-4 h-4" />
-            Comprobante enviado correctamente — lo revisaremos a la brevedad
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div>
+            <p className="font-medium text-[#E2ECF4] flex items-center gap-2 mb-2">
+              <Info className="w-4 h-4 text-[#F2B968]" />
+              Formas de pago aceptadas
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <span className="text-xs bg-green-500/10 text-green-300 border border-green-500/20 rounded-full px-3 py-1 font-medium">
+                Efectivo en USD
+              </span>
+              <span className="text-xs bg-blue-500/10 text-blue-300 border border-blue-500/20 rounded-full px-3 py-1 font-medium">
+                Transferencia en pesos
+              </span>
+            </div>
+            <p className="text-xs text-[#7A96A8] mt-2">
+              Subí el comprobante de la transferencia o el recibo en efectivo y lo verificamos.
+            </p>
           </div>
-        ) : (
-          <label className={`cursor-pointer flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-dashed text-sm transition ${uploadingComp ? "opacity-50 cursor-not-allowed border-[#263040] text-[#7A96A8]" : "border-[#F2B968]/40 hover:border-[#F2B968]/70 hover:bg-[#F2B968]/5 text-[#F2B968]"}`}>
-            {uploadingComp
-              ? <><Loader2 className="w-4 h-4 animate-spin" /> Subiendo comprobante...</>
-              : <><Upload className="w-4 h-4" /> Subir comprobante (imagen o PDF)</>}
-            <input
-              type="file"
-              accept="image/*,.pdf"
-              className="hidden"
-              disabled={uploadingComp}
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) handleSubirComprobante(f);
-              }}
-            />
-          </label>
-        )}
-        {comprobanteOk && (
-          <button
-            onClick={() => setComprobanteOk(false)}
-            className="mt-2 text-xs text-[#7A96A8] hover:text-[#E2ECF4] transition"
-          >
-            Subir otro comprobante
-          </button>
-        )}
+          <div className="shrink-0">
+            {comprobanteOk ? (
+              <div className="flex flex-col items-end gap-1">
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-500/10 border border-green-500/25 text-green-400 text-xs font-medium">
+                  <CheckCircle className="w-3.5 h-3.5" />
+                  Comprobante enviado
+                </div>
+                <button onClick={() => setComprobanteOk(false)} className="text-xs text-[#7A96A8] hover:text-[#E2ECF4] transition">
+                  Subir otro
+                </button>
+              </div>
+            ) : (
+              <label className={`cursor-pointer flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition ${uploadingComp ? "opacity-50 cursor-not-allowed border-[#263040] text-[#7A96A8]" : "border-[#F2B968]/40 hover:border-[#F2B968]/70 hover:bg-[#F2B968]/5 text-[#F2B968]"}`}>
+                {uploadingComp
+                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Subiendo...</>
+                  : <><Upload className="w-4 h-4" /> Cargar comprobante</>}
+                <input type="file" accept="image/*,.pdf" className="hidden" disabled={uploadingComp}
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSubirComprobante(f); }} />
+              </label>
+            )}
+          </div>
+        </div>
       </div>
 
       {loading ? (
