@@ -27,6 +27,7 @@ export default function InmobiliariasPage() {
     descuento: 0,
     beneficios: "",
     activa: true,
+    descuentoManualCapa1: 0,
   });
   const [saving, setSaving] = useState(false);
 
@@ -56,7 +57,7 @@ export default function InmobiliariasPage() {
 
   function openCreate() {
     setEditing(null);
-    setFormData({ nombre: "", descuento: 0, beneficios: "", activa: true });
+    setFormData({ nombre: "", descuento: 0, beneficios: "", activa: true, descuentoManualCapa1: 0 });
     setShowForm(true);
   }
 
@@ -67,6 +68,7 @@ export default function InmobiliariasPage() {
       descuento: inmob.descuento,
       beneficios: inmob.beneficios,
       activa: inmob.activa,
+      descuentoManualCapa1: inmob.descuentoManualCapa1 ?? 0,
     });
     setShowForm(true);
   }
@@ -210,7 +212,10 @@ export default function InmobiliariasPage() {
                     )}
                   </div>
                   <p className="text-sm text-[#7A96A8]">
-                    Descuento: <strong className="text-[#E2ECF4]">{inmob.descuento}%</strong>
+                    Descuento base: <strong className="text-[#E2ECF4]">{inmob.descuento}%</strong>
+                    {(inmob.descuentoManualCapa1 ?? 0) > 0 && (
+                      <span className="ml-2 text-[#F2B968]">· Capa 1 manual: <strong>{inmob.descuentoManualCapa1}%</strong></span>
+                    )}
                   </p>
                   {inmob.cuentaCentralEmail && (
                     <p className="text-xs text-purple-300 mt-1">
@@ -355,7 +360,7 @@ export default function InmobiliariasPage() {
                 />
               </div>
               <div>
-                <Label className="text-[#E2ECF4]">Descuento (%)</Label>
+                <Label className="text-[#E2ECF4]">Descuento base (%)</Label>
                 <Input
                   type="number"
                   min={0}
@@ -363,6 +368,20 @@ export default function InmobiliariasPage() {
                   value={formData.descuento || ""}
                   onChange={(e) => setFormData((p) => ({ ...p, descuento: Number(e.target.value) }))}
                   placeholder="15"
+                  className="mt-1 bg-[#0D1117] border-[#263040] text-[#E2ECF4] placeholder:text-[#7A96A8] w-32"
+                />
+              </div>
+              <div>
+                <Label className="text-[#E2ECF4]">Capa 1 manual (%)</Label>
+                <p className="text-xs text-[#7A96A8] mt-0.5 mb-1">Descuento por volumen histórico (fuera de plataforma). Se aplica cuando no hay producciones registradas en el mes. Ej: 5, 7.5 o 10.</p>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={0.5}
+                  value={formData.descuentoManualCapa1 || ""}
+                  onChange={(e) => setFormData((p) => ({ ...p, descuentoManualCapa1: Number(e.target.value) }))}
+                  placeholder="7.5"
                   className="mt-1 bg-[#0D1117] border-[#263040] text-[#E2ECF4] placeholder:text-[#7A96A8] w-32"
                 />
               </div>

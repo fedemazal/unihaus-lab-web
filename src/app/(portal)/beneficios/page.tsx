@@ -82,7 +82,11 @@ export default function BeneficiosPage() {
   if (!config) return null;
 
   const countMes = prodsInmob.length;
-  const capa1 = inmobiliaria ? computeCapa1(countMes, config.capa1) : 0;
+  const capa1Calculado = inmobiliaria ? computeCapa1(countMes, config.capa1) : 0;
+  const capa1Manual = inmobiliaria?.descuentoManualCapa1 ?? 0;
+  // Si hay producciones en plataforma → se usa la calculada; si no → la manual. Siempre toma el mayor.
+  const capa1 = Math.max(capa1Calculado, countMes === 0 ? capa1Manual : capa1Calculado);
+  const usandoManual = capa1Manual > 0 && countMes === 0;
   const manualDescuento = inmobiliaria?.descuento ?? 0;
   const totalDescuento = manualDescuento + capa1;
   const nextCapa1 = config.capa1.find((t) => t.min > countMes);
@@ -115,21 +119,34 @@ export default function BeneficiosPage() {
                 {capa1 > 0 && manualDescuento > 0 && (
                   <p className="text-xs text-[#7A96A8] mt-0.5">{manualDescuento}% base + {capa1}% Capa 1</p>
                 )}
-                {capa1 > 0 && manualDescuento === 0 && (
-                  <p className="text-xs text-[#7A96A8] mt-0.5">por volumen mensual</p>
+                {usandoManual && (
+                  <p className="text-xs text-[#7A96A8] mt-0.5">asignado por volumen histórico</p>
+                )}
+                {capa1 > 0 && !usandoManual && manualDescuento === 0 && (
+                  <p className="text-xs text-[#7A96A8] mt-0.5">por volumen mensual en plataforma</p>
                 )}
               </div>
               <Percent className="w-8 h-8 text-[#F2B968]/40" />
             </div>
 
+            {/* Explicación */}
+            <p className="text-xs text-[#7A96A8] mb-3">
+              Cuantas más producciones hagan <span className="text-[#E2ECF4]">entre todos los agentes</span> de {inmobiliaria.nombre} en el mes, mayor descuento tenés en cada producción.
+            </p>
+
             {/* Monthly progress */}
             <div className="flex-1">
               <div className="flex justify-between text-xs text-[#7A96A8] mb-1">
-                <span>{countMes} prod. este mes · todos los agentes</span>
-                {nextCapa1 && <span>{nextCapa1.min - countMes} más para {nextCapa1.porcentaje}%</span>}
+                {usandoManual ? (
+                  <span>Producciones en plataforma: <span className="text-[#E2ECF4]">0</span> este mes</span>
+                ) : (
+                  <span><span className="text-[#E2ECF4] font-medium">{countMes}</span> producciones este mes entre todos los agentes</span>
+                )}
+                {nextCapa1 && !usandoManual && <span>{nextCapa1.min - countMes} más para {nextCapa1.porcentaje}%</span>}
+                {nextCapa1 && usandoManual && <span>{nextCapa1.min} en plataforma para {nextCapa1.porcentaje}%</span>}
                 {!nextCapa1 && capa1 > 0 && <span className="text-green-400">Nivel máximo ✓</span>}
                 {!nextCapa1 && capa1 === 0 && config.capa1[0] && (
-                  <span>{config.capa1[0].min - countMes} más para {config.capa1[0].porcentaje}%</span>
+                  <span>{config.capa1[0].min} para {config.capa1[0].porcentaje}%</span>
                 )}
               </div>
               <div className="h-2 bg-[#263040] rounded-full overflow-hidden mb-3">

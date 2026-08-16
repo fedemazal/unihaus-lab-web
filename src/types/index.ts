@@ -33,6 +33,7 @@ export interface Inmobiliaria {
   cuentaCentralActiva?: boolean; // permite recibir pagos derivados de sus agentes
   cuentaCentralUid?: string; // UID del responsable de la cuenta central
   cuentaCentralEmail?: string; // email del responsable (para mostrar en admin)
+  descuentoManualCapa1?: number; // descuento Capa 1 asignado manualmente (histórico fuera de plataforma)
   createdAt: Date;
   updatedAt: Date;
 }
