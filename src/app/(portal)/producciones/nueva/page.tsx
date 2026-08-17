@@ -123,7 +123,9 @@ export default function NuevaProduccionPage() {
           && d.getMonth() === now.getMonth()
           && p.estado !== "cancelado";
       }).length;
-      const capa1 = computeCapa1(countMes, cfg.capa1);
+      const capa1Calculado = computeCapa1(countMes, cfg.capa1);
+      const capa1ManualInmob = inmob?.descuentoManualCapa1 ?? 0;
+      const capa1 = Math.max(capa1Calculado, countMes === 0 ? capa1ManualInmob : capa1Calculado);
       setDescuentoManual(manual);
       setDescuentoCapa1(capa1);
       setDescuento(manual + capa1);
