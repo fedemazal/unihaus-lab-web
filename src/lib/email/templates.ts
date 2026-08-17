@@ -207,7 +207,35 @@ export function horarioConfirmadoAgente(data: {
   fecha: string;
   horario: string;
   servicios: string[];
+  ocupacion?: string;
+  tipoOcupante?: string | null;
 }) {
+  const BASE = "https://unihaus.com.ar";
+  let guiaHtml = `
+    <a href="${BASE}/preparacion-cliente" style="display: inline-block; background: ${BRAND_COLOR}; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 14px;">
+      Ver guía de preparación
+    </a>`;
+  if (data.ocupacion === "ocupada") {
+    if (data.tipoOcupante === "inquilino") {
+      guiaHtml = `
+        <div style="background: #FFF8F5; border: 1px solid #F0DDD4; border-radius: 10px; padding: 16px; margin-bottom: 16px;">
+          <p style="margin: 0 0 6px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: ${BRAND_COLOR};">La propiedad tiene inquilino</p>
+          <p style="margin: 0 0 12px; font-size: 13px; color: ${MUTED_COLOR}; line-height: 1.5;">Por favor compartí esta guía con el inquilino para que pueda preparar la propiedad antes de la visita.</p>
+          <a href="${BASE}/guia-inquilinos.html" style="display: inline-block; background: ${BRAND_COLOR}; color: #fff; text-decoration: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 13px;">
+            Guía para inquilinos
+          </a>
+        </div>`;
+    } else if (data.tipoOcupante === "propietario") {
+      guiaHtml = `
+        <div style="background: #FFF8F5; border: 1px solid #F0DDD4; border-radius: 10px; padding: 16px; margin-bottom: 16px;">
+          <p style="margin: 0 0 6px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: ${BRAND_COLOR};">La propiedad está habitada por el propietario</p>
+          <p style="margin: 0 0 12px; font-size: 13px; color: ${MUTED_COLOR}; line-height: 1.5;">Compartí esta guía con el propietario para que prepare la propiedad antes de la visita.</p>
+          <a href="${BASE}/guia-propietarios.html" style="display: inline-block; background: ${BRAND_COLOR}; color: #fff; text-decoration: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 13px;">
+            Guía para propietarios
+          </a>
+        </div>`;
+    }
+  }
   return {
     subject: `Producción confirmada — ${data.direccion}`,
     html: layout(`
@@ -244,11 +272,9 @@ export function horarioConfirmadoAgente(data: {
 
       ${CANCELACION_HTML}
 
-      <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px;">
-        <a href="https://unihaus.com.ar/preparacion" style="display: inline-block; background: ${BRAND_COLOR}; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 14px;">
-          Ver guía de preparación
-        </a>
-        <a href="${WSP_URL}" style="display: inline-block; background: #25D366; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 14px;">
+      <div style="margin-top: 24px;">
+        ${guiaHtml}
+        <a href="${WSP_URL}" style="display: inline-block; background: #25D366; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; margin-top: 8px;">
           Escribinos por WhatsApp
         </a>
       </div>

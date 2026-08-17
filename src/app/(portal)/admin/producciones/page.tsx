@@ -122,14 +122,6 @@ export default function AdminProduccionesPage() {
       await updateProduction(prod.id, updates);
       const agent = await getUser(prod.agenteId);
       if (agent) {
-        if (newStatus === "en_proceso") {
-          sendEmail("produccion_en_proceso", agent.email, {
-            nombre: agent.nombre,
-            direccion: prod.direccion,
-            fecha: prod.horarioConfirmado?.fecha,
-            horario: prod.horarioConfirmado?.horario,
-          });
-        }
         if (newStatus === "listo") {
           sendEmail("archivos_listos", agent.email, {
             nombre: agent.nombre,
@@ -276,6 +268,8 @@ export default function AdminProduccionesPage() {
                     horario: scheduleTime,
                     servicios: serviciosList,
                     agenteTelefono,
+                    ocupacion: prod.estadoPropiedad?.ocupacion,
+                    tipoOcupante: prod.estadoPropiedad?.tipo,
                   },
             }),
           });
