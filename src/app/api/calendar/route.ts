@@ -67,6 +67,8 @@ export async function POST(req: NextRequest) {
         "Servicios: " + (servicios || []).join(", "),
       ].filter(Boolean);
 
+      // No agregamos al agente como attendee — Zoho le mandaría su propia invitación
+      // duplicando el email de confirmación que ya recibe con el .ics adjunto.
       const eventData: Record<string, unknown> = {
         title,
         dateandtime: {
@@ -77,11 +79,6 @@ export async function POST(req: NextRequest) {
         location: direccion,
         description: descLines.join("\n"),
       };
-
-      // Zoho attendees only accept { email }
-      if (agenteEmail) {
-        eventData.attendees = [{ email: agenteEmail }];
-      }
 
       const formBody = new URLSearchParams();
       formBody.append("eventdata", JSON.stringify(eventData));

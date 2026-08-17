@@ -530,6 +530,16 @@ export default function ProduccionesPage() {
                       <div className="space-y-3">
                         <p className="text-xs text-[#7A96A8] uppercase tracking-wider font-medium">Abonar producción</p>
 
+                        {/* Formas de pago */}
+                        <div className="flex flex-wrap gap-2">
+                          <span className="flex items-center gap-1.5 text-xs bg-[#1E2A38] border border-[#263040] rounded-full px-3 py-1 text-[#C8D8E4]">
+                            <DollarSign className="w-3 h-3 text-[#F2B968]" /> Efectivo en USD
+                          </span>
+                          <span className="flex items-center gap-1.5 text-xs bg-[#1E2A38] border border-[#263040] rounded-full px-3 py-1 text-[#C8D8E4]">
+                            <Banknote className="w-3 h-3 text-[#F2B968]" /> Transferencia en pesos
+                          </span>
+                        </div>
+
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {/* Card izquierda: datos bancarios */}
                           <div className="border border-[#263040] rounded-xl overflow-hidden">
