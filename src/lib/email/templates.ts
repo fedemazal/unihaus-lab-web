@@ -97,7 +97,7 @@ export function nuevaProduccionAdmin(data: {
         <p style="margin: 4px 0; color: ${TEXT_COLOR};"><strong>Agente:</strong> ${data.agenteNombre}</p>
         <p style="margin: 4px 0; color: ${TEXT_COLOR};"><strong>Dirección:</strong> ${data.direccion}</p>
         <p style="margin: 4px 0; color: ${TEXT_COLOR};"><strong>Tipo:</strong> ${data.tipoPropiedad}</p>
-        <p style="margin: 4px 0; color: ${TEXT_COLOR};"><strong>Precio final:</strong> $${data.precioFinal} USD</p>
+        <p style="margin: 4px 0; color: ${TEXT_COLOR};"><strong>Precio final:</strong> $${data.precioFinal.toFixed(2)} USD</p>
       </div>
       <p style="color: ${MUTED_COLOR}; line-height: 1.6;">
         Ingresá al panel para gestionar esta producción.
