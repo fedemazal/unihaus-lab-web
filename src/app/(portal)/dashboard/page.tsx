@@ -20,7 +20,14 @@ import {
   Upload,
   AlertCircle,
   CalendarClock,
+  Banknote,
+  DollarSign,
+  Copy,
+  Check,
+  Info,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { CUENTA_BANCARIA } from "@/lib/config/cuentaBancaria";
 
 function usd(value: number, decimals = 2) {
   return `USD ${value.toLocaleString("es-AR", {
@@ -63,6 +70,25 @@ export default function DashboardPage() {
   const [uploadingComprobante, setUploadingComprobante] = useState(false);
   const [comprobanteOk, setComprobanteOk] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [expandedBanco, setExpandedBanco] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [blueRate, setBlueRate] = useState<number | null>(null);
+  const [expandedCalc, setExpandedCalc] = useState(false);
+  const [montoUsdDash, setMontoUsdDash] = useState("");
+
+  function copyField(value: string, id: string) {
+    navigator.clipboard.writeText(value).then(() => {
+      setCopiedField(id);
+      setTimeout(() => setCopiedField(null), 2000);
+    });
+  }
+
+  useEffect(() => {
+    fetch("https://dolarapi.com/v1/dolares/blue")
+      .then((r) => r.json())
+      .then((d) => setBlueRate(d.venta ?? null))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -425,41 +451,165 @@ export default function DashboardPage() {
                     )}
                   </div>
 
-                  {/* Cargar comprobante */}
-                  <div>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*,.pdf"
-                      className="hidden"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) {
-                          setComprobanteFile(f);
-                          setComprobanteOk(false);
-                          handleComprobanteUpload(f);
-                        }
-                      }}
-                    />
-                    {comprobanteOk ? (
-                      <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-green-500/10 border border-green-500/25 text-green-400 text-sm font-medium">
-                        <CheckCircle className="w-4 h-4" />
-                        Comprobante enviado correctamente
+                  {/* Datos bancarios colapsable */}
+                  <div className="border border-[#263040] rounded-xl overflow-hidden">
+                    <button
+                      onClick={() => setExpandedBanco(!expandedBanco)}
+                      className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-[#1E2A38] transition text-left"
+                    >
+                      <span className="font-medium text-[#E2ECF4] flex items-center gap-2 text-sm">
+                        <Banknote className="w-4 h-4 text-[#F2B968]" />
+                        Datos bancarios para abonar
+                      </span>
+                      {expandedBanco ? <ChevronUp className="w-4 h-4 text-[#7A96A8]" /> : <ChevronDown className="w-4 h-4 text-[#7A96A8]" />}
+                    </button>
+                    {expandedBanco && (
+                      <div className="px-4 pb-4 pt-2 bg-[#0D1117] border-t border-[#263040] grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+                        {[
+                          { label: "Banco", value: CUENTA_BANCARIA.banco, id: "dash-banco" },
+                          { label: "Tipo de cuenta", value: CUENTA_BANCARIA.tipoCuenta, id: "dash-tipo" },
+                          { label: "CBU", value: CUENTA_BANCARIA.cbu, id: "dash-cbu" },
+                          { label: "Alias", value: CUENTA_BANCARIA.alias, id: "dash-alias" },
+                          { label: "Titular", value: CUENTA_BANCARIA.titular, id: "dash-titular" },
+                          { label: "CUIT", value: CUENTA_BANCARIA.cuit, id: "dash-cuit" },
+                        ].map(({ label, value, id }) => (
+                          <div key={id} className="flex items-center justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="text-xs text-[#7A96A8]">{label}</p>
+                              <p className="text-sm text-[#E2ECF4] font-medium font-mono truncate">{value}</p>
+                            </div>
+                            <button
+                              onClick={() => copyField(value, id)}
+                              className="shrink-0 p-1.5 rounded hover:bg-[#1E2A38] text-[#7A96A8] hover:text-[#E2ECF4] transition"
+                              title="Copiar"
+                            >
+                              {copiedField === id ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+                            </button>
+                          </div>
+                        ))}
+                        <div className="sm:col-span-2 pt-2 border-t border-[#263040]">
+                          <p className="text-xs text-amber-400/80">{CUENTA_BANCARIA.nota}</p>
+                        </div>
                       </div>
-                    ) : (
-                      <button
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={uploadingComprobante}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-dashed border-[#263040] hover:border-[#F2B968]/50 hover:bg-[#F2B968]/5 transition text-sm text-[#7A96A8] hover:text-[#F2B968] disabled:opacity-50"
-                      >
-                        {uploadingComprobante
-                          ? <><Loader2 className="w-4 h-4 animate-spin" /> Subiendo comprobante...</>
-                          : <><Upload className="w-4 h-4" /> {comprobanteFile ? comprobanteFile.name : "Cargar comprobante de pago"}</>}
-                      </button>
                     )}
                   </div>
 
-                  {/* Condiciones de pago normales */}
+                  {/* Calculadora pesos colapsable */}
+                  <div className="border border-[#263040] rounded-xl overflow-hidden">
+                    <button
+                      onClick={() => {
+                        setExpandedCalc(!expandedCalc);
+                        if (!expandedCalc && !montoUsdDash) setMontoUsdDash(String(Math.round(saldoPendiente)));
+                      }}
+                      className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-[#1E2A38] transition text-left"
+                    >
+                      <span className="font-medium text-[#E2ECF4] flex items-center gap-2 text-sm">
+                        <DollarSign className="w-4 h-4 text-blue-400" />
+                        Calculadora para pago en transferencias
+                      </span>
+                      {expandedCalc ? <ChevronUp className="w-4 h-4 text-[#7A96A8]" /> : <ChevronDown className="w-4 h-4 text-[#7A96A8]" />}
+                    </button>
+                    {expandedCalc && (
+                      <div className="px-4 pb-4 pt-3 bg-[#0D1117] border-t border-[#263040]">
+                        {blueRate ? (
+                          <p className="text-xs text-[#7A96A8] mb-3">
+                            Cotización de referencia: <span className="text-blue-300 font-semibold">$1 USD = ${blueRate.toLocaleString("es-AR")} ARS</span>
+                          </p>
+                        ) : (
+                          <p className="text-xs text-[#7A96A8] mb-3">Cargando cotización...</p>
+                        )}
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1">
+                            <p className="text-xs text-[#7A96A8] mb-1">Monto en USD</p>
+                            <Input
+                              type="number"
+                              min={0}
+                              value={montoUsdDash}
+                              onChange={(e) => setMontoUsdDash(e.target.value)}
+                              className="bg-[#161C26] border-[#263040] text-[#E2ECF4] font-mono"
+                              placeholder="0"
+                            />
+                          </div>
+                          <div className="text-[#7A96A8] text-xl mt-4">=</div>
+                          <div className="flex-1">
+                            <p className="text-xs text-[#7A96A8] mb-1">Equivalente ARS</p>
+                            <div className="h-10 flex items-center px-3 rounded-md border border-[#263040] bg-[#161C26]/50">
+                              <span className="text-base font-bold text-blue-300 font-mono">
+                                {blueRate && montoUsdDash
+                                  ? `$${(parseFloat(montoUsdDash) * blueRate).toLocaleString("es-AR", { maximumFractionDigits: 0 })}`
+                                  : "—"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-xs text-amber-400/70 mt-3">
+                          Orientativo. El monto exacto en pesos queda sujeto a la cotización acordada al momento del pago.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Formas de pago + comprobante */}
+                  <div className="border border-[#263040] rounded-xl p-4 bg-[#0D1117]">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                      <div>
+                        <p className="font-medium text-[#E2ECF4] flex items-center gap-2 mb-2 text-sm">
+                          <Info className="w-4 h-4 text-[#F2B968]" />
+                          Formas de pago aceptadas
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          <span className="text-xs bg-green-500/10 text-green-300 border border-green-500/20 rounded-full px-3 py-1 font-medium">
+                            Efectivo en USD
+                          </span>
+                          <span className="text-xs bg-blue-500/10 text-blue-300 border border-blue-500/20 rounded-full px-3 py-1 font-medium">
+                            Transferencia en pesos
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#7A96A8] mt-2">
+                          Subí el comprobante de la transferencia o el recibo en efectivo y lo verificamos.
+                        </p>
+                      </div>
+                      <div className="shrink-0">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*,.pdf"
+                          className="hidden"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) {
+                              setComprobanteFile(f);
+                              setComprobanteOk(false);
+                              handleComprobanteUpload(f);
+                            }
+                          }}
+                        />
+                        {comprobanteOk ? (
+                          <div className="flex flex-col items-end gap-1">
+                            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-500/10 border border-green-500/25 text-green-400 text-xs font-medium">
+                              <CheckCircle className="w-3.5 h-3.5" />
+                              Comprobante enviado
+                            </div>
+                            <button onClick={() => setComprobanteOk(false)} className="text-xs text-[#7A96A8] hover:text-[#E2ECF4] transition">
+                              Subir otro
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploadingComprobante}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition ${uploadingComprobante ? "opacity-50 cursor-not-allowed border-[#263040] text-[#7A96A8]" : "border-[#F2B968]/40 hover:border-[#F2B968]/70 hover:bg-[#F2B968]/5 text-[#F2B968]"}`}
+                          >
+                            {uploadingComprobante
+                              ? <><Loader2 className="w-4 h-4 animate-spin" /> Subiendo...</>
+                              : <><Upload className="w-4 h-4" /> {comprobanteFile ? comprobanteFile.name : "Cargar comprobante"}</>}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Condiciones de pago */}
                   <div className="bg-[#161C26] rounded-lg p-3 border border-[#263040]">
                     <p className="text-xs text-[#7A96A8] uppercase tracking-wide mb-2 font-medium">Condiciones de pago</p>
                     {inmobiliaria ? (
