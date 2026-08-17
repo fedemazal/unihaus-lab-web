@@ -183,6 +183,24 @@ export function recordatorioPago(data: {
   };
 }
 
+function formatFechaEmail(fecha: string): string {
+  const dias = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+  const meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+  const [y, m, d] = fecha.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  return `${dias[date.getDay()]} ${d} de ${meses[m - 1]} de ${y}`;
+}
+
+const WSP_URL = "https://wa.me/5491126141525";
+
+const CANCELACION_HTML = `
+  <div style="background: #FFF8F0; border-left: 3px solid ${BRAND_COLOR}; border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 20px 0;">
+    <p style="margin: 0 0 6px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: ${BRAND_COLOR};">Política de cancelación</p>
+    <p style="margin: 2px 0; font-size: 13px; color: ${MUTED_COLOR};">• <strong>Por clima:</strong> sin costo, reagendamos sin cargo.</p>
+    <p style="margin: 2px 0; font-size: 13px; color: ${MUTED_COLOR};">• <strong>Cancelación en el día por otros motivos:</strong> se cobrará el 10% del valor de la producción.</p>
+  </div>
+`;
+
 export function horarioConfirmadoAgente(data: {
   nombre: string;
   direccion: string;
@@ -191,26 +209,49 @@ export function horarioConfirmadoAgente(data: {
   servicios: string[];
 }) {
   return {
-    subject: `📅 Horario confirmado: ${data.direccion}`,
+    subject: `Producción confirmada — ${data.direccion}`,
     html: layout(`
-      <h2 style="color: ${TEXT_COLOR}; margin: 0 0 16px;">¡Tu producción tiene fecha!</h2>
-      <p style="color: ${MUTED_COLOR}; line-height: 1.6;">
-        Hola ${data.nombre}, confirmamos el horario para la producción en <strong>${data.direccion}</strong>.
+      <h2 style="color: ${TEXT_COLOR}; margin: 0 0 8px; font-size: 22px;">¡Tu producción tiene fecha! 📅</h2>
+      <p style="color: ${MUTED_COLOR}; line-height: 1.6; margin: 0 0 20px;">
+        Hola <strong>${data.nombre}</strong>, confirmamos el horario de tu producción.
       </p>
-      <div style="background: #F5F5F0; border-radius: 8px; padding: 16px; margin: 16px 0;">
-        <p style="margin: 4px 0; color: ${TEXT_COLOR};"><strong>Fecha:</strong> ${data.fecha}</p>
-        <p style="margin: 4px 0; color: ${TEXT_COLOR};"><strong>Horario:</strong> ${data.horario}</p>
-        ${data.servicios.length > 0 ? `<p style="margin: 12px 0 4px 0; color: ${TEXT_COLOR};"><strong>Servicios:</strong></p>
-        <ul style="margin: 4px 0; padding-left: 20px; color: ${MUTED_COLOR};">
-          ${data.servicios.map((s) => `<li>${s}</li>`).join("")}
-        </ul>` : ""}
+
+      <div style="background: #F5F5F0; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+        <p style="margin: 0 0 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: ${BRAND_COLOR};">Propiedad</p>
+        <p style="margin: 0 0 16px; font-size: 15px; font-weight: 600; color: ${TEXT_COLOR};">${data.direccion}</p>
+
+        <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 130px;">
+            <p style="margin: 0 0 2px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: ${MUTED_COLOR};">Fecha</p>
+            <p style="margin: 0; font-size: 15px; font-weight: 700; color: ${TEXT_COLOR}; text-transform: capitalize;">${formatFechaEmail(data.fecha)}</p>
+          </div>
+          <div style="flex: 1; min-width: 100px;">
+            <p style="margin: 0 0 2px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: ${MUTED_COLOR};">Horario</p>
+            <p style="margin: 0; font-size: 15px; font-weight: 700; color: ${TEXT_COLOR};">${data.horario}</p>
+          </div>
+        </div>
+
+        ${data.servicios.length > 0 ? `
+        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #E8E8E4;">
+          <p style="margin: 0 0 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: ${MUTED_COLOR};">Servicios contratados</p>
+          ${data.servicios.map((s) => `<span style="display: inline-block; background: #fff; border: 1px solid #E0DDD8; border-radius: 20px; padding: 3px 10px; font-size: 13px; color: ${TEXT_COLOR}; margin: 2px 4px 2px 0;">${s}</span>`).join("")}
+        </div>` : ""}
       </div>
-      <p style="color: ${MUTED_COLOR}; line-height: 1.6;">
-        Recibís una invitación de calendario por separado. Si no podés en ese horario, contactanos a la brevedad.
+
+      <p style="color: ${MUTED_COLOR}; font-size: 14px; line-height: 1.6; margin: 0 0 20px;">
+        Adjuntamos una invitación de calendario (.ics) para agregar el evento a tu agenda.
       </p>
-      <a href="https://unihaus.com.ar/preparacion" style="display: inline-block; background: ${BRAND_COLOR}; color: #fff; text-decoration: none; padding: 12px 24px; border-radius: 8px; margin-top: 16px; font-weight: 600;">
-        Ver guía de preparación
-      </a>
+
+      ${CANCELACION_HTML}
+
+      <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px;">
+        <a href="https://unihaus.com.ar/preparacion" style="display: inline-block; background: ${BRAND_COLOR}; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 14px;">
+          Ver guía de preparación
+        </a>
+        <a href="${WSP_URL}" style="display: inline-block; background: #25D366; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 14px;">
+          Escribinos por WhatsApp
+        </a>
+      </div>
     `),
   };
 }
@@ -224,24 +265,36 @@ export function horarioReagendadoAgente(data: {
   horarioNuevo: string;
 }) {
   return {
-    subject: `🔄 Producción reagendada: ${data.direccion}`,
+    subject: `Producción reagendada — ${data.direccion}`,
     html: layout(`
-      <h2 style="color: ${TEXT_COLOR}; margin: 0 0 16px;">Tu producción fue reagendada</h2>
-      <p style="color: ${MUTED_COLOR}; line-height: 1.6;">
-        Hola ${data.nombre}, modificamos el horario de la producción en <strong>${data.direccion}</strong>.
+      <h2 style="color: ${TEXT_COLOR}; margin: 0 0 8px; font-size: 22px;">Tu producción fue reagendada 🔄</h2>
+      <p style="color: ${MUTED_COLOR}; line-height: 1.6; margin: 0 0 20px;">
+        Hola <strong>${data.nombre}</strong>, modificamos el horario de tu producción en <strong>${data.direccion}</strong>.
       </p>
-      <div style="background: #F5F5F0; border-radius: 8px; padding: 16px; margin: 16px 0;">
-        <p style="margin: 0 0 8px; color: ${MUTED_COLOR}; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Fecha anterior</p>
-        <p style="margin: 0 0 4px; color: ${TEXT_COLOR}; text-decoration: line-through; opacity: 0.5;">${data.fechaAnterior} — ${data.horarioAnterior}</p>
-        <p style="margin: 12px 0 8px; color: ${MUTED_COLOR}; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Nueva fecha</p>
-        <p style="margin: 0; color: ${TEXT_COLOR}; font-weight: 700; font-size: 16px;">${data.fechaNueva} — ${data.horarioNuevo}</p>
+
+      <div style="background: #F5F5F0; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+        <p style="margin: 0 0 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: ${MUTED_COLOR};">Fecha anterior</p>
+        <p style="margin: 0 0 16px; font-size: 14px; color: ${MUTED_COLOR}; text-decoration: line-through; text-transform: capitalize;">${formatFechaEmail(data.fechaAnterior)} — ${data.horarioAnterior}</p>
+
+        <p style="margin: 0 0 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: ${BRAND_COLOR};">Nueva fecha</p>
+        <p style="margin: 0; font-size: 17px; font-weight: 700; color: ${TEXT_COLOR}; text-transform: capitalize;">${formatFechaEmail(data.fechaNueva)}</p>
+        <p style="margin: 4px 0 0; font-size: 15px; color: ${TEXT_COLOR};">${data.horarioNuevo}</p>
       </div>
-      <p style="color: ${MUTED_COLOR}; line-height: 1.6;">
-        Recibís una nueva invitación de calendario. Si tenés alguna consulta, respondé este correo.
+
+      <p style="color: ${MUTED_COLOR}; font-size: 14px; line-height: 1.6; margin: 0 0 20px;">
+        Adjuntamos una nueva invitación de calendario. Si tenés alguna consulta, contactanos.
       </p>
-      <a href="https://unihaus.com.ar/producciones" style="display: inline-block; background: ${BRAND_COLOR}; color: #fff; text-decoration: none; padding: 12px 24px; border-radius: 8px; margin-top: 16px; font-weight: 600;">
-        Ver mis producciones
-      </a>
+
+      ${CANCELACION_HTML}
+
+      <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px;">
+        <a href="https://unihaus.com.ar/producciones" style="display: inline-block; background: ${BRAND_COLOR}; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 14px;">
+          Ver mis producciones
+        </a>
+        <a href="${WSP_URL}" style="display: inline-block; background: #25D366; color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 14px;">
+          Escribinos por WhatsApp
+        </a>
+      </div>
     `),
   };
 }

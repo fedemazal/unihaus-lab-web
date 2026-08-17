@@ -309,6 +309,17 @@ export default function AdminProduccionesPage() {
     }
   }
 
+  async function aplicarRecargo(prod: Production) {
+    const monto = prod.precioFinal * 0.1;
+    if (!confirm(`¿Aplicar cargo del 10% por cancelación/reagendado en el día? Monto: $${monto.toFixed(2)} USD`)) return;
+    try {
+      await updateProduction(prod.id, { recargoCancelacion: monto });
+      await loadData();
+    } catch (err) {
+      console.error("Error aplicando recargo:", err);
+    }
+  }
+
   async function cancelProduction(prod: Production) {
     if (!confirm(`¿Cancelar la producción en ${prod.direccion}?`)) return;
     try {
@@ -942,6 +953,19 @@ export default function AdminProduccionesPage() {
                           <XCircle className="w-4 h-4 mr-1" />
                           Cancelar
                         </Button>
+                      )}
+                      {!prod.recargoCancelacion ? (
+                        <Button
+                          variant="outline"
+                          onClick={() => aplicarRecargo(prod)}
+                          className="border-orange-500/40 text-orange-400 hover:bg-orange-500/10 text-xs"
+                        >
+                          Cobrar 10% cancelación
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-orange-400 border border-orange-500/30 rounded-md px-3 py-1.5 font-medium">
+                          Recargo 10%: ${prod.recargoCancelacion.toFixed(2)} USD
+                        </span>
                       )}
                       {(prod.estado === "cancelado" || prod.estado === "pendiente") && (
                         <Button

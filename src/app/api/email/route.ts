@@ -27,10 +27,19 @@ type TemplateType =
 
 function buildIcs(fecha: string, horario: string, title: string, location: string, description: string): string {
   // fecha: "2026-08-19", horario: "09:00" or "09:00 - 11:00"
-  const startHora = horario.split(/[-–]/)[0].trim();
+  // Use -03:00 so the local Argentina time is correctly converted to UTC
+  const parts = horario.split(/[-–]/);
+  const startHora = parts[0].trim();
+  const endHora = parts[1]?.trim() || null;
   const [sh, sm] = startHora.split(":").map((n) => n.padStart(2, "0"));
-  const startDate = new Date(`${fecha}T${sh}:${sm || "00"}:00`);
-  const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000);
+  const startDate = new Date(`${fecha}T${sh}:${sm || "00"}:00-03:00`);
+  let endDate: Date;
+  if (endHora) {
+    const [eh, em] = endHora.split(":").map((n) => n.padStart(2, "0"));
+    endDate = new Date(`${fecha}T${eh}:${em || "00"}:00-03:00`);
+  } else {
+    endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000);
+  }
 
   const fmt = (d: Date) =>
     d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
