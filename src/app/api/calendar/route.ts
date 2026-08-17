@@ -89,13 +89,16 @@ export async function POST(req: NextRequest) {
         ],
       };
 
+      const formBody = new URLSearchParams();
+      formBody.append("eventdata", JSON.stringify(eventData));
+
       const res = await fetch(`${ZOHO_API_BASE}/calendars/${calendarId}/events`, {
         method: "POST",
         headers: {
           Authorization: `Zoho-oauthtoken ${token}`,
-          "Content-Type": "application/json",
+          "Content-Type": "application/x-www-form-urlencoded",
         },
-        body: JSON.stringify({ eventdata: eventData }),
+        body: formBody.toString(),
       });
 
       const result = await res.json();
