@@ -170,19 +170,37 @@ export default function NuevaProduccionPage() {
       })
     : null;
 
+  const [stepErrors, setStepErrors] = useState<Record<string, string>>({});
+
   const canNext = (): boolean => {
     switch (step) {
       case 1: return tipoPropiedad !== null;
-      case 2:
-        if (!direccion) return false;
-        if (!valorEstimado) return false;
-        if (tipoPropiedad === "departamento") return superficie > 0;
-        return construida > 0;
+      case 2: return true; // validated on click
       case 3: return true;
       case 4: return true;
-      case 5: return horarios.trim().length > 0;
+      case 5: return true; // validated on click
       case 6: return true;
       default: return false;
+    }
+  };
+
+  const validateAndNext = () => {
+    const errors: Record<string, string> = {};
+
+    if (step === 2) {
+      if (!direccion.trim()) errors.direccion = "Este campo es obligatorio";
+      if (tipoPropiedad === "departamento" && superficie <= 0) errors.superficie = "Este campo es obligatorio";
+      if (tipoPropiedad === "casa" && construida <= 0) errors.construida = "Este campo es obligatorio";
+      if (!valorEstimado) errors.valorEstimado = "Este campo es obligatorio";
+    }
+
+    if (step === 5 && !horarios.trim()) {
+      errors.horarios = "Ingresá al menos un rango horario";
+    }
+
+    setStepErrors(errors);
+    if (Object.keys(errors).length === 0) {
+      setStep((step + 1) as Step);
     }
   };
 
@@ -386,25 +404,31 @@ export default function NuevaProduccionPage() {
           <h2 className="text-lg font-semibold text-[#E2ECF4] mb-6">Datos de la propiedad</h2>
 
           <div>
-            <Label className="text-[#E2ECF4] mb-1.5 block">Dirección completa</Label>
+            <Label className="text-[#E2ECF4] mb-1.5 block">
+              Dirección completa <span className="text-red-400">*</span>
+            </Label>
             <AddressInput
               address={direccion}
-              onAddressChange={setDireccion}
+              onAddressChange={(val) => { setDireccion(val); setStepErrors((prev) => ({ ...prev, direccion: "" })); }}
             />
+            {stepErrors.direccion && <p className="text-xs text-red-400 mt-1">{stepErrors.direccion}</p>}
           </div>
 
           {tipoPropiedad === "departamento" ? (
             <>
               <div>
-                <Label className="text-[#E2ECF4]">Superficie cubierta (m²)</Label>
+                <Label className="text-[#E2ECF4]">
+                  Superficie cubierta (m²) <span className="text-red-400">*</span>
+                </Label>
                 <Input
                   type="number"
                   min={1}
                   value={superficie || ""}
-                  onChange={(e) => setSuperficie(Number(e.target.value))}
+                  onChange={(e) => { setSuperficie(Number(e.target.value)); setStepErrors((prev) => ({ ...prev, superficie: "" })); }}
                   placeholder="85"
-                  className="mt-1 bg-[#0D1117] border-[#263040] text-[#E2ECF4] placeholder:text-[#7A96A8]"
+                  className={`mt-1 bg-[#0D1117] text-[#E2ECF4] placeholder:text-[#7A96A8] ${stepErrors.superficie ? "border-red-500" : "border-[#263040]"}`}
                 />
+                {stepErrors.superficie && <p className="text-xs text-red-400 mt-1">{stepErrors.superficie}</p>}
               </div>
               <div>
                 <Label className="text-[#E2ECF4]">Semi + descubiertos (m²) <span className="text-[#7A96A8] font-normal">— opcional</span></Label>
@@ -422,18 +446,21 @@ export default function NuevaProduccionPage() {
           ) : (
             <>
               <div>
-                <Label className="text-[#E2ECF4]">Superficie construida (m²)</Label>
+                <Label className="text-[#E2ECF4]">
+                  Superficie construida (m²) <span className="text-red-400">*</span>
+                </Label>
                 <Input
                   type="number"
                   min={1}
                   value={construida || ""}
-                  onChange={(e) => setConstruida(Number(e.target.value))}
+                  onChange={(e) => { setConstruida(Number(e.target.value)); setStepErrors((prev) => ({ ...prev, construida: "" })); }}
                   placeholder="180"
-                  className="mt-1 bg-[#0D1117] border-[#263040] text-[#E2ECF4] placeholder:text-[#7A96A8]"
+                  className={`mt-1 bg-[#0D1117] text-[#E2ECF4] placeholder:text-[#7A96A8] ${stepErrors.construida ? "border-red-500" : "border-[#263040]"}`}
                 />
+                {stepErrors.construida && <p className="text-xs text-red-400 mt-1">{stepErrors.construida}</p>}
               </div>
               <div>
-                <Label className="text-[#E2ECF4]">Semi + descubiertos (m²)</Label>
+                <Label className="text-[#E2ECF4]">Semi + descubiertos (m²) <span className="text-[#7A96A8] font-normal">— opcional</span></Label>
                 <Input
                   type="number"
                   min={0}
@@ -447,7 +474,7 @@ export default function NuevaProduccionPage() {
           )}
 
           <div>
-            <Label className="text-[#E2ECF4]">Amenities (cantidad)</Label>
+            <Label className="text-[#E2ECF4]">Amenities (cantidad) <span className="text-[#7A96A8] font-normal">— opcional</span></Label>
             <Input
               type="number"
               min={0}
@@ -460,16 +487,19 @@ export default function NuevaProduccionPage() {
           </div>
 
           <div>
-            <Label className="text-[#E2ECF4]">Valor estimado de la propiedad (USD)</Label>
+            <Label className="text-[#E2ECF4]">
+              Valor estimado de la propiedad (USD) <span className="text-red-400">*</span>
+            </Label>
             <Input
               type="number"
               min={0}
               value={valorEstimado || ""}
-              onChange={(e) => setValorEstimado(Number(e.target.value))}
+              onChange={(e) => { setValorEstimado(Number(e.target.value)); setStepErrors((prev) => ({ ...prev, valorEstimado: "" })); }}
               placeholder="200000"
-              className="mt-1 bg-[#0D1117] border-[#263040] text-[#E2ECF4] placeholder:text-[#7A96A8] w-48"
+              className={`mt-1 bg-[#0D1117] text-[#E2ECF4] placeholder:text-[#7A96A8] w-48 ${stepErrors.valorEstimado ? "border-red-500" : "border-[#263040]"}`}
             />
-            <p className="text-xs text-[#7A96A8] mt-1">Para calcular el ratio de inversión en fotografía</p>
+            {stepErrors.valorEstimado && <p className="text-xs text-red-400 mt-1">{stepErrors.valorEstimado}</p>}
+            {!stepErrors.valorEstimado && <p className="text-xs text-[#7A96A8] mt-1">Para calcular el ratio de inversión en fotografía</p>}
           </div>
         </div>
       )}
@@ -479,7 +509,9 @@ export default function NuevaProduccionPage() {
         <div className="space-y-6">
           <h2 className="text-lg font-semibold text-[#E2ECF4] mb-6">Estado de la propiedad</h2>
           <div>
-            <Label className="text-[#E2ECF4] mb-3 block">Ocupación</Label>
+            <Label className="text-[#E2ECF4] mb-3 block">
+              Ocupación <span className="text-red-400">*</span>
+            </Label>
             <div className="flex gap-3">
               {(["vacia", "ocupada"] as const).map((opt) => (
                 <button
@@ -559,7 +591,7 @@ export default function NuevaProduccionPage() {
             { key: "plano2d" as const, label: "Plano 2D", desc: "$0.30/m² (≤35m²) o $0.25/m²" },
             { key: "tour360" as const, label: "Tour 360°", desc: "Calculado por superficie" },
             { key: "drone" as const, label: "Drone", desc: "$65 USD" },
-            { key: "amoblamiento" as const, label: "Amoblamiento Virtual", desc: "$2/foto" },
+            { key: "amoblamiento" as const, label: "Amoblamiento Virtual", desc: "1 foto incluida gratis · adicionales $2/foto" },
           ].map((item) => (
             <div key={item.key}>
               <button
@@ -591,10 +623,10 @@ export default function NuevaProduccionPage() {
 
               {item.key === "amoblamiento" && servicios.amoblamiento && (
                 <div className="mt-2 ml-4">
-                  <Label className="text-[#E2ECF4]">Cantidad de fotos a amoblar</Label>
+                  <Label className="text-[#E2ECF4]">Fotos adicionales a amoblar <span className="text-[#7A96A8] font-normal">(1ª incluida gratis)</span></Label>
                   <Input
                     type="number"
-                    min={1}
+                    min={0}
                     value={servicios.cantidadFotosAmobladas || ""}
                     onChange={(e) =>
                       setServicios((prev) => ({
@@ -602,9 +634,10 @@ export default function NuevaProduccionPage() {
                         cantidadFotosAmobladas: Number(e.target.value),
                       }))
                     }
-                    placeholder="3"
+                    placeholder="0"
                     className="mt-1 bg-[#0D1117] border-[#263040] text-[#E2ECF4] placeholder:text-[#7A96A8] w-32"
                   />
+                  <p className="text-xs text-[#7A96A8] mt-1">Ingresá cuántas fotos adicionales querés amoblar — $2/foto</p>
                 </div>
               )}
             </div>
@@ -617,14 +650,17 @@ export default function NuevaProduccionPage() {
         <div className="space-y-4">
           <h2 className="text-lg font-semibold text-[#E2ECF4] mb-6">Coordinación</h2>
           <div>
-            <Label className="text-[#E2ECF4]">Sugerí 2-3 rangos horarios</Label>
+            <Label className="text-[#E2ECF4]">
+              Sugerí 2-3 rangos horarios <span className="text-red-400">*</span>
+            </Label>
             <textarea
               value={horarios}
-              onChange={(e) => setHorarios(e.target.value)}
+              onChange={(e) => { setHorarios(e.target.value); setStepErrors((prev) => ({ ...prev, horarios: "" })); }}
               placeholder={"Lunes 18/3 de 9-11hs\nMartes 19/3 de 14-16hs\nMiércoles 20/3 de 10-12hs"}
               rows={4}
-              className="mt-1 w-full rounded-md border border-[#263040] bg-[#0D1117] px-3 py-2 text-sm text-[#E2ECF4] placeholder:text-[#7A96A8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F2B968] resize-none"
+              className={`mt-1 w-full rounded-md border bg-[#0D1117] px-3 py-2 text-sm text-[#E2ECF4] placeholder:text-[#7A96A8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F2B968] resize-none ${stepErrors.horarios ? "border-red-500" : "border-[#263040]"}`}
             />
+            {stepErrors.horarios && <p className="text-xs text-red-400 mt-1">{stepErrors.horarios}</p>}
           </div>
           <div>
             <Label className="text-[#E2ECF4]">Observaciones</Label>
@@ -959,7 +995,7 @@ export default function NuevaProduccionPage() {
         {step > 1 ? (
           <Button
             variant="outline"
-            onClick={() => setStep((step - 1) as Step)}
+            onClick={() => { setStep((step - 1) as Step); setStepErrors({}); }}
             className="border-[#263040] bg-transparent text-[#E2ECF4] hover:bg-[#1E2A38]"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -978,7 +1014,7 @@ export default function NuevaProduccionPage() {
 
         {step < 6 ? (
           <Button
-            onClick={() => setStep((step + 1) as Step)}
+            onClick={validateAndNext}
             disabled={!canNext()}
             className="bg-[#F2B968] hover:bg-[#d9a050] text-[#0D1117] font-semibold"
           >

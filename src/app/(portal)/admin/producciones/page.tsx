@@ -34,6 +34,29 @@ const statusConfig: Record<ProductionStatus, { label: string; color: string; nex
 
 const SUGGESTED_TAGS = ["Premium", "Urgente", "Con Drone", "Video Vertical", "Amoblamiento", "Tour 360"];
 
+const DIAS = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
+
+function formatFechaConfirmada(fecha: string): string {
+  const [year, month, day] = fecha.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  const diaNombre = DIAS[date.getDay()];
+  const dd = String(day).padStart(2, "0");
+  const mm = String(month).padStart(2, "0");
+  const yy = String(year).slice(-2);
+  return `${diaNombre} ${dd}/${mm}/${yy}`;
+}
+
+function formatHorario(horario: string): string {
+  if (!horario) return "";
+  // Convert "09:00" or "09:00 - 11:00" → "9:00 AM - 11:00 AM" style
+  return horario.replace(/(\d{1,2}):(\d{2})/g, (_, h, m) => {
+    const hour = parseInt(h, 10);
+    const suffix = hour < 12 ? "AM" : "PM";
+    const h12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    return m === "00" ? `${h12} ${suffix}` : `${h12}:${m} ${suffix}`;
+  });
+}
+
 export default function AdminProduccionesPage() {
   const [producciones, setProducciones] = useState<Production[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,6 +65,7 @@ export default function AdminProduccionesPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
+  const [reschedulingId, setReschedulingId] = useState<string | null>(null);
 
   // Entrega R2
   const [uploadingId, setUploadingId] = useState<string | null>(null);
@@ -134,35 +158,53 @@ export default function AdminProduccionesPage() {
 
   async function confirmSchedule(prod: Production) {
     if (!scheduleDate || !scheduleTime) return;
+    const isRescheduling = !!prod.horarioConfirmado;
     try {
+      let agenteEmail = "";
+      let agenteName = prod.agenteNombre;
+      try {
+        const agente = await getUser(prod.agenteId);
+        if (agente) { agenteEmail = agente.email; agenteName = agente.nombre || prod.agenteNombre; }
+      } catch {}
+
+      const serviciosList: string[] = [];
+      if (prod.servicios.soloFotos) {
+        serviciosList.push("Fotos");
+      } else {
+        serviciosList.push("Fotos + Video");
+      }
+      if (prod.servicios.videoAdicional) serviciosList.push("Video Adicional");
+      if (prod.servicios.plano2d) serviciosList.push("Plano 2D");
+      if (prod.servicios.tour360) serviciosList.push("Tour 360°");
+      if (prod.servicios.drone) serviciosList.push("Drone");
+      if (prod.servicios.amoblamiento) serviciosList.push(`Amoblamiento Virtual (${prod.servicios.cantidadFotosAmobladas} fotos)`);
+
+      let metraje = "";
+      if (prod.tipoPropiedad === "departamento") {
+        metraje = `${prod.superficie || 0}m²`;
+      } else {
+        metraje = `${prod.construida || 0}m² construida, ${prod.descubierta || 0}m² descubierta`;
+      }
+      if (prod.amenidades > 0) metraje += ` + ${prod.amenidades} amenidades`;
+
+      // Delete old calendar event if rescheduling
+      if (isRescheduling && prod.horarioConfirmado?.googleCalendarEventId) {
+        try {
+          await fetch("/api/calendar", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "delete",
+              data: { eventId: prod.horarioConfirmado.googleCalendarEventId },
+            }),
+          });
+        } catch {
+          console.warn("Could not delete old calendar event");
+        }
+      }
+
       let calendarEventId: string | null = null;
       try {
-        let agenteEmail = "";
-        try {
-          const agente = await getUser(prod.agenteId);
-          if (agente) agenteEmail = agente.email;
-        } catch {}
-
-        const serviciosList: string[] = [];
-        if (prod.servicios.soloFotos) {
-          serviciosList.push("Fotos");
-        } else {
-          serviciosList.push("Fotos + Video");
-        }
-        if (prod.servicios.videoAdicional) serviciosList.push("Video Adicional");
-        if (prod.servicios.plano2d) serviciosList.push("Plano 2D");
-        if (prod.servicios.tour360) serviciosList.push("Tour 360°");
-        if (prod.servicios.drone) serviciosList.push("Drone");
-        if (prod.servicios.amoblamiento) serviciosList.push(`Amoblamiento Virtual (${prod.servicios.cantidadFotosAmobladas} fotos)`);
-
-        let metraje = "";
-        if (prod.tipoPropiedad === "departamento") {
-          metraje = `${prod.superficie || 0}m²`;
-        } else {
-          metraje = `${prod.construida || 0}m² construida, ${prod.descubierta || 0}m² descubierta`;
-        }
-        if (prod.amenidades > 0) metraje += ` + ${prod.amenidades} amenidades`;
-
         const calRes = await fetch("/api/calendar", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -186,6 +228,38 @@ export default function AdminProduccionesPage() {
         console.warn("Calendar event not created (not configured)");
       }
 
+      // Send email to agent
+      if (agenteEmail) {
+        try {
+          await fetch("/api/email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: isRescheduling ? "horario_reagendado" : "horario_confirmado",
+              to: agenteEmail,
+              data: isRescheduling
+                ? {
+                    nombre: agenteName,
+                    direccion: prod.direccion,
+                    fechaAnterior: prod.horarioConfirmado!.fecha,
+                    horarioAnterior: prod.horarioConfirmado!.horario,
+                    fechaNueva: scheduleDate,
+                    horarioNuevo: scheduleTime,
+                  }
+                : {
+                    nombre: agenteName,
+                    direccion: prod.direccion,
+                    fecha: scheduleDate,
+                    horario: scheduleTime,
+                    servicios: serviciosList,
+                  },
+            }),
+          });
+        } catch {
+          console.warn("Email not sent (not configured)");
+        }
+      }
+
       await updateProduction(prod.id, {
         horarioConfirmado: {
           fecha: scheduleDate,
@@ -195,6 +269,7 @@ export default function AdminProduccionesPage() {
       });
       setScheduleDate("");
       setScheduleTime("");
+      setReschedulingId(null);
       await loadData();
     } catch (err) {
       console.error("Error confirming schedule:", err);
@@ -459,66 +534,100 @@ export default function AdminProduccionesPage() {
                       </div>
                     </div>
 
-                    {/* Schedule */}
-                    {prod.horariosSugeridos?.length > 0 && (
-                      <div>
-                        <p className="text-sm font-medium text-[#E2ECF4] mb-1 flex items-center gap-1">
-                          <Calendar className="w-4 h-4" /> Horarios sugeridos:
+                    {/* Schedule — two side-by-side cards */}
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* Left: Horarios sugeridos */}
+                      <div className="bg-[#0D1C2E] border border-[#1E3A5A] rounded-lg p-3">
+                        <p className="text-xs font-semibold text-[#7AB3D4] uppercase tracking-wide mb-2 flex items-center gap-1">
+                          <Calendar className="w-3.5 h-3.5" /> Sugeridos por el agente
                         </p>
-                        <ul className="text-sm text-[#7A96A8] space-y-0.5">
-                          {prod.horariosSugeridos.map((h, i) => (
-                            <li key={i}>• {h}</li>
-                          ))}
-                        </ul>
+                        {prod.horariosSugeridos?.length > 0 ? (
+                          <ul className="text-sm text-[#A8C8E0] space-y-1">
+                            {prod.horariosSugeridos.map((h, i) => (
+                              <li key={i} className="flex items-start gap-1">
+                                <span className="text-[#5A8AAA] mt-0.5">•</span>
+                                <span>{h}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-xs text-[#4A6070] italic">Sin horarios sugeridos</p>
+                        )}
                       </div>
-                    )}
 
-                    {/* Confirm schedule */}
-                    {prod.horarioConfirmado ? (
-                      <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
-                        <p className="text-sm font-medium text-green-400 flex items-center gap-1">
-                          <Calendar className="w-4 h-4" /> Horario confirmado
-                        </p>
-                        <p className="text-sm text-green-300 mt-1">
-                          {prod.horarioConfirmado.fecha} — {prod.horarioConfirmado.horario}
-                        </p>
-                      </div>
-                    ) : prod.estado === "pendiente" ? (
-                      <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
-                        <p className="text-sm font-medium text-amber-400 mb-2 flex items-center gap-1">
-                          <Calendar className="w-4 h-4" /> Confirmar horario
-                        </p>
-                        <div className="flex gap-2 items-end flex-wrap">
+                      {/* Right: Confirmado / Formulario */}
+                      {prod.horarioConfirmado && reschedulingId !== prod.id ? (
+                        <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 flex flex-col justify-between">
                           <div>
-                            <Label className="text-xs text-amber-400">Fecha</Label>
-                            <Input
-                              type="date"
-                              value={scheduleDate}
-                              onChange={(e) => setScheduleDate(e.target.value)}
-                              className="h-8 text-sm bg-[#0D1117] border-amber-500/30 text-[#E2ECF4]"
-                            />
+                            <p className="text-xs font-semibold text-green-400 uppercase tracking-wide mb-2 flex items-center gap-1">
+                              <Calendar className="w-3.5 h-3.5" /> Horario confirmado
+                            </p>
+                            <p className="text-sm font-bold text-green-300 leading-snug">
+                              {formatFechaConfirmada(prod.horarioConfirmado.fecha)}
+                            </p>
+                            <p className="text-sm text-green-400 mt-0.5">
+                              a las {formatHorario(prod.horarioConfirmado.horario)}
+                            </p>
                           </div>
-                          <div>
-                            <Label className="text-xs text-amber-400">Horario</Label>
-                            <Input
-                              type="text"
-                              placeholder="09:00 - 11:00"
-                              value={scheduleTime}
-                              onChange={(e) => setScheduleTime(e.target.value)}
-                              className="h-8 text-sm bg-[#0D1117] border-amber-500/30 text-[#E2ECF4] placeholder:text-[#7A96A8]"
-                            />
-                          </div>
-                          <Button
-                            size="sm"
-                            onClick={() => confirmSchedule(prod)}
-                            disabled={!scheduleDate || !scheduleTime}
-                            className="bg-amber-500 hover:bg-amber-600 text-[#0D1117] font-semibold h-8"
+                          <button
+                            onClick={() => {
+                              setReschedulingId(prod.id);
+                              setScheduleDate("");
+                              setScheduleTime("");
+                            }}
+                            className="mt-3 text-xs text-[#7A96A8] hover:text-amber-400 underline underline-offset-2 transition text-left"
                           >
-                            Confirmar
-                          </Button>
+                            Cambiar / Reagendar
+                          </button>
                         </div>
-                      </div>
-                    ) : null}
+                      ) : reschedulingId === prod.id || !prod.horarioConfirmado ? (
+                        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+                          <p className="text-xs font-semibold text-amber-400 uppercase tracking-wide mb-2 flex items-center gap-1">
+                            <Calendar className="w-3.5 h-3.5" />
+                            {reschedulingId === prod.id ? "Reagendar" : "Confirmar horario"}
+                          </p>
+                          <div className="space-y-2">
+                            <div>
+                              <Label className="text-xs text-amber-400 mb-0.5 block">Fecha</Label>
+                              <Input
+                                type="date"
+                                value={scheduleDate}
+                                onChange={(e) => setScheduleDate(e.target.value)}
+                                className="h-8 text-sm bg-[#0D1117] border-amber-500/30 text-[#E2ECF4]"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs text-amber-400 mb-0.5 block">Horario</Label>
+                              <Input
+                                type="text"
+                                placeholder="09:00 - 11:00"
+                                value={scheduleTime}
+                                onChange={(e) => setScheduleTime(e.target.value)}
+                                className="h-8 text-sm bg-[#0D1117] border-amber-500/30 text-[#E2ECF4] placeholder:text-[#7A96A8]"
+                              />
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => confirmSchedule(prod)}
+                                disabled={!scheduleDate || !scheduleTime}
+                                className="flex-1 bg-amber-500 hover:bg-amber-600 text-[#0D1117] font-semibold h-8 text-xs"
+                              >
+                                {reschedulingId === prod.id ? "Reagendar" : "Confirmar"}
+                              </Button>
+                              {reschedulingId === prod.id && (
+                                <button
+                                  onClick={() => { setReschedulingId(null); setScheduleDate(""); setScheduleTime(""); }}
+                                  className="text-xs text-[#7A96A8] hover:text-[#E2ECF4] transition px-2"
+                                >
+                                  Cancelar
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
 
                     {prod.observaciones && (
                       <div>

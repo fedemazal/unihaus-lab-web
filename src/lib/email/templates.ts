@@ -183,6 +183,69 @@ export function recordatorioPago(data: {
   };
 }
 
+export function horarioConfirmadoAgente(data: {
+  nombre: string;
+  direccion: string;
+  fecha: string;
+  horario: string;
+  servicios: string[];
+}) {
+  return {
+    subject: `📅 Horario confirmado: ${data.direccion}`,
+    html: layout(`
+      <h2 style="color: ${TEXT_COLOR}; margin: 0 0 16px;">¡Tu producción tiene fecha!</h2>
+      <p style="color: ${MUTED_COLOR}; line-height: 1.6;">
+        Hola ${data.nombre}, confirmamos el horario para la producción en <strong>${data.direccion}</strong>.
+      </p>
+      <div style="background: #F5F5F0; border-radius: 8px; padding: 16px; margin: 16px 0;">
+        <p style="margin: 4px 0; color: ${TEXT_COLOR};"><strong>Fecha:</strong> ${data.fecha}</p>
+        <p style="margin: 4px 0; color: ${TEXT_COLOR};"><strong>Horario:</strong> ${data.horario}</p>
+        ${data.servicios.length > 0 ? `<p style="margin: 12px 0 4px 0; color: ${TEXT_COLOR};"><strong>Servicios:</strong></p>
+        <ul style="margin: 4px 0; padding-left: 20px; color: ${MUTED_COLOR};">
+          ${data.servicios.map((s) => `<li>${s}</li>`).join("")}
+        </ul>` : ""}
+      </div>
+      <p style="color: ${MUTED_COLOR}; line-height: 1.6;">
+        Recibís una invitación de calendario por separado. Si no podés en ese horario, contactanos a la brevedad.
+      </p>
+      <a href="https://unihaus.com.ar/preparacion" style="display: inline-block; background: ${BRAND_COLOR}; color: #fff; text-decoration: none; padding: 12px 24px; border-radius: 8px; margin-top: 16px; font-weight: 600;">
+        Ver guía de preparación
+      </a>
+    `),
+  };
+}
+
+export function horarioReagendadoAgente(data: {
+  nombre: string;
+  direccion: string;
+  fechaAnterior: string;
+  horarioAnterior: string;
+  fechaNueva: string;
+  horarioNuevo: string;
+}) {
+  return {
+    subject: `🔄 Producción reagendada: ${data.direccion}`,
+    html: layout(`
+      <h2 style="color: ${TEXT_COLOR}; margin: 0 0 16px;">Tu producción fue reagendada</h2>
+      <p style="color: ${MUTED_COLOR}; line-height: 1.6;">
+        Hola ${data.nombre}, modificamos el horario de la producción en <strong>${data.direccion}</strong>.
+      </p>
+      <div style="background: #F5F5F0; border-radius: 8px; padding: 16px; margin: 16px 0;">
+        <p style="margin: 0 0 8px; color: ${MUTED_COLOR}; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Fecha anterior</p>
+        <p style="margin: 0 0 4px; color: ${TEXT_COLOR}; text-decoration: line-through; opacity: 0.5;">${data.fechaAnterior} — ${data.horarioAnterior}</p>
+        <p style="margin: 12px 0 8px; color: ${MUTED_COLOR}; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Nueva fecha</p>
+        <p style="margin: 0; color: ${TEXT_COLOR}; font-weight: 700; font-size: 16px;">${data.fechaNueva} — ${data.horarioNuevo}</p>
+      </div>
+      <p style="color: ${MUTED_COLOR}; line-height: 1.6;">
+        Recibís una nueva invitación de calendario. Si tenés alguna consulta, respondé este correo.
+      </p>
+      <a href="https://unihaus.com.ar/producciones" style="display: inline-block; background: ${BRAND_COLOR}; color: #fff; text-decoration: none; padding: 12px 24px; border-radius: 8px; margin-top: 16px; font-weight: 600;">
+        Ver mis producciones
+      </a>
+    `),
+  };
+}
+
 export function produccionLista(data: {
   nombre: string;
   direccion: string;

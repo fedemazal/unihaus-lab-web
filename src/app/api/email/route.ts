@@ -7,6 +7,8 @@ import {
   nuevaProduccionAdmin,
   archivosListos,
   produccionEnProceso,
+  horarioConfirmadoAgente,
+  horarioReagendadoAgente,
 } from "@/lib/email/templates";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -19,7 +21,9 @@ type TemplateType =
   | "cuenta_rechazada"
   | "nueva_produccion"
   | "archivos_listos"
-  | "produccion_en_proceso";
+  | "produccion_en_proceso"
+  | "horario_confirmado"
+  | "horario_reagendado";
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,7 +31,8 @@ export async function POST(req: NextRequest) {
     const { type, to, data } = body as {
       type: TemplateType;
       to: string;
-      data: Record<string, string | number>;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      data: Record<string, any>;
     };
 
     if (!process.env.RESEND_API_KEY) {
@@ -55,6 +60,12 @@ export async function POST(req: NextRequest) {
         break;
       case "produccion_en_proceso":
         email = produccionEnProceso(data as Parameters<typeof produccionEnProceso>[0]);
+        break;
+      case "horario_confirmado":
+        email = horarioConfirmadoAgente(data as Parameters<typeof horarioConfirmadoAgente>[0]);
+        break;
+      case "horario_reagendado":
+        email = horarioReagendadoAgente(data as Parameters<typeof horarioReagendadoAgente>[0]);
         break;
       default:
         return NextResponse.json({ error: "Invalid template type" }, { status: 400 });
