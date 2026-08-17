@@ -55,19 +55,17 @@ export async function POST(req: NextRequest) {
       const addressParts = direccion.split(",").map((p: string) => p.trim());
       const barrio = addressParts.length >= 2 ? addressParts[1] : "";
       const tipoLabel = tipoPropiedad === "casa" ? "Casa" : "Depto";
-      const title = [`📸 ${tipoLabel}`, agenteNombre, barrio].filter(Boolean).join(" - ");
+      const title = [tipoLabel, agenteNombre, barrio].filter(Boolean).join(" - ");
 
       const descLines = [
-        `📍 Dirección: ${direccion}`,
-        `👤 Agente: ${agenteNombre}`,
-        agenteTelefono ? `📞 Teléfono: ${agenteTelefono}` : "",
-        agenteEmail ? `✉️ Email: ${agenteEmail}` : "",
-        `🏠 Tipo: ${tipoPropiedad === "casa" ? "Casa" : "Departamento"}`,
-        metraje ? `📐 Metraje: ${metraje}` : "",
-        "",
-        "🎬 Servicios:",
-        ...(servicios || []).map((s: string) => `  • ${s}`),
-      ].filter((l) => l !== undefined && l !== null && (l !== "" || true));
+        `Direccion: ${direccion}`,
+        `Agente: ${agenteNombre}`,
+        agenteTelefono ? `Tel: ${agenteTelefono}` : null,
+        agenteEmail ? `Email: ${agenteEmail}` : null,
+        `Tipo: ${tipoPropiedad === "casa" ? "Casa" : "Departamento"}`,
+        metraje ? `Metraje: ${metraje}` : null,
+        "Servicios: " + (servicios || []).join(", "),
+      ].filter(Boolean);
 
       const eventData: Record<string, unknown> = {
         title,

@@ -34,6 +34,14 @@ const statusConfig: Record<ProductionStatus, { label: string; color: string; nex
 
 const SUGGESTED_TAGS = ["Premium", "Urgente", "Con Drone", "Video Vertical", "Amoblamiento", "Tour 360"];
 
+const TIME_OPTIONS: string[] = [];
+for (let h = 7; h <= 21; h++) {
+  for (const m of [0, 15, 30, 45]) {
+    if (h === 21 && m > 0) break;
+    TIME_OPTIONS.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
+  }
+}
+
 const DIAS = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
 
 function formatFechaConfirmada(fecha: string): string {
@@ -64,8 +72,11 @@ export default function AdminProduccionesPage() {
   const [busqueda, setBusqueda] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [scheduleDate, setScheduleDate] = useState("");
-  const [scheduleTime, setScheduleTime] = useState("");
+  const [scheduleTimeFrom, setScheduleTimeFrom] = useState("");
+  const [scheduleTimeTo, setScheduleTimeTo] = useState("");
   const [reschedulingId, setReschedulingId] = useState<string | null>(null);
+
+  const scheduleTime = scheduleTimeFrom && scheduleTimeTo ? `${scheduleTimeFrom} - ${scheduleTimeTo}` : "";
 
   // Entrega R2
   const [uploadingId, setUploadingId] = useState<string | null>(null);
@@ -275,7 +286,7 @@ export default function AdminProduccionesPage() {
         },
       });
       setScheduleDate("");
-      setScheduleTime("");
+      setScheduleTimeFrom(""); setScheduleTimeTo("");
       setReschedulingId(null);
       await loadData();
     } catch (err) {
@@ -580,7 +591,7 @@ export default function AdminProduccionesPage() {
                             onClick={() => {
                               setReschedulingId(prod.id);
                               setScheduleDate("");
-                              setScheduleTime("");
+                              setScheduleTimeFrom(""); setScheduleTimeTo("");
                             }}
                             className="mt-3 text-xs text-[#7A96A8] hover:text-amber-400 underline underline-offset-2 transition text-left"
                           >
@@ -604,14 +615,30 @@ export default function AdminProduccionesPage() {
                               />
                             </div>
                             <div>
-                              <Label className="text-xs text-amber-400 mb-0.5 block">Horario</Label>
-                              <Input
-                                type="text"
-                                placeholder="09:00 - 11:00"
-                                value={scheduleTime}
-                                onChange={(e) => setScheduleTime(e.target.value)}
-                                className="h-8 text-sm bg-[#0D1117] border-amber-500/30 text-[#E2ECF4] placeholder:text-[#7A96A8]"
-                              />
+                              <Label className="text-xs text-amber-400 mb-0.5 block">Desde</Label>
+                              <select
+                                value={scheduleTimeFrom}
+                                onChange={(e) => setScheduleTimeFrom(e.target.value)}
+                                className="w-full h-8 text-sm bg-[#0D1117] border border-amber-500/30 rounded-md text-[#E2ECF4] px-2"
+                              >
+                                <option value="">-- hora --</option>
+                                {TIME_OPTIONS.map((t) => (
+                                  <option key={t} value={t}>{t}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <Label className="text-xs text-amber-400 mb-0.5 block">Hasta</Label>
+                              <select
+                                value={scheduleTimeTo}
+                                onChange={(e) => setScheduleTimeTo(e.target.value)}
+                                className="w-full h-8 text-sm bg-[#0D1117] border border-amber-500/30 rounded-md text-[#E2ECF4] px-2"
+                              >
+                                <option value="">-- hora --</option>
+                                {TIME_OPTIONS.filter((t) => t > scheduleTimeFrom).map((t) => (
+                                  <option key={t} value={t}>{t}</option>
+                                ))}
+                              </select>
                             </div>
                             <div className="flex gap-2">
                               <Button
@@ -624,7 +651,7 @@ export default function AdminProduccionesPage() {
                               </Button>
                               {reschedulingId === prod.id && (
                                 <button
-                                  onClick={() => { setReschedulingId(null); setScheduleDate(""); setScheduleTime(""); }}
+                                  onClick={() => { setReschedulingId(null); setScheduleDate(""); setScheduleTimeFrom(""); setScheduleTimeTo(""); }}
                                   className="text-xs text-[#7A96A8] hover:text-[#E2ECF4] transition px-2"
                                 >
                                   Cancelar
