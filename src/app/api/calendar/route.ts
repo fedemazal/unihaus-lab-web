@@ -1,103 +1,120 @@
 import { NextRequest, NextResponse } from "next/server";
-import { google } from "googleapis";
 
-function getCalendarClient() {
-  const oauth2Client = new google.auth.OAuth2(
-    process.env.GOOGLE_CALENDAR_CLIENT_ID,
-    process.env.GOOGLE_CALENDAR_CLIENT_SECRET
+const ZOHO_TOKEN_URL = "https://accounts.zoho.com/oauth/v2/token";
+const ZOHO_API_BASE = "https://calendar.zoho.com/api/v1";
+
+async function getZohoAccessToken(): Promise<string> {
+  const res = await fetch(
+    `${ZOHO_TOKEN_URL}?grant_type=refresh_token&client_id=${process.env.ZOHO_CLIENT_ID}&client_secret=${process.env.ZOHO_CLIENT_SECRET}&refresh_token=${process.env.ZOHO_REFRESH_TOKEN}`,
+    { method: "POST" }
   );
-  oauth2Client.setCredentials({
-    refresh_token: process.env.GOOGLE_CALENDAR_REFRESH_TOKEN,
-  });
-  return google.calendar({ version: "v3", auth: oauth2Client });
+  const data = await res.json();
+  if (!data.access_token) throw new Error("Failed to get Zoho access token");
+  return data.access_token;
+}
+
+function buildZohoDateTime(fecha: string, hora: string): string {
+  // fecha: "2026-08-19", hora: "09:00" → "20260819T090000Z" (Zoho uses UTC-style or local)
+  const clean = hora.replace(":", "").padEnd(4, "0");
+  return `${fecha.replace(/-/g, "")}T${clean}00`;
 }
 
 export async function POST(req: NextRequest) {
   try {
-    if (
-      !process.env.GOOGLE_CALENDAR_CLIENT_ID ||
-      !process.env.GOOGLE_CALENDAR_CLIENT_SECRET ||
-      !process.env.GOOGLE_CALENDAR_REFRESH_TOKEN
-    ) {
-      console.warn("Google Calendar not configured, skipping");
+    if (!process.env.ZOHO_CLIENT_ID || !process.env.ZOHO_CLIENT_SECRET || !process.env.ZOHO_REFRESH_TOKEN) {
+      console.warn("Zoho Calendar not configured, skipping");
       return NextResponse.json({ ok: true, skipped: true });
     }
 
     const body = await req.json();
     const { action, data } = body;
 
-    const calendar = getCalendarClient();
+    const token = await getZohoAccessToken();
+    const calendarId = process.env.ZOHO_CALENDAR_ID;
 
     if (action === "create") {
-      const { fecha, horario, direccion, agenteNombre, agenteEmail, tipoPropiedad, metraje, servicios } = data;
+      const {
+        fecha,
+        horario,
+        direccion,
+        agenteNombre,
+        agenteEmail,
+        agenteTelefono,
+        tipoPropiedad,
+        metraje,
+        servicios,
+      } = data;
 
-      // Parse date (YYYY-MM-DD) and time range
-      const startHour = horario?.split("-")[0]?.trim() || "09:00";
-      const startDateTime = `${fecha}T${startHour}:00`;
-
-      // Default 2 hours for session
-      const endDate = new Date(`${fecha}T${startHour}:00`);
+      const startHora = horario?.split(/[-–]/)[0]?.trim() || "09:00";
+      const endDate = new Date(
+        `${fecha}T${startHora.length === 5 ? startHora : startHora + ":00"}`
+      );
       endDate.setHours(endDate.getHours() + 2);
-      const endDateTime = endDate.toISOString();
+      const endHora = `${String(endDate.getHours()).padStart(2, "0")}:${String(endDate.getMinutes()).padStart(2, "0")}`;
 
-      // Build description with metraje and services (no prices)
-      const descriptionLines = [
-        `📍 Dirección: ${direccion}`,
-        `👤 Agente: ${agenteNombre}`,
-        `🏠 Tipo: ${tipoPropiedad === "casa" ? "Casa" : "Departamento"}`,
-        `📐 Metraje: ${metraje || "No especificado"}`,
-        "",
-        "🎬 Servicios contratados:",
-        ...(servicios || []).map((s: string) => `  • ${s}`),
-      ];
-
-      // Add agent as attendee if email available
-      const attendees = [];
-      if (agenteEmail) {
-        attendees.push({ email: agenteEmail, displayName: agenteNombre });
-      }
-
-      // Extract barrio from address (second part after comma, e.g. "Av. Santa Fe 1234, Palermo, CABA" → "Palermo")
       const addressParts = direccion.split(",").map((p: string) => p.trim());
       const barrio = addressParts.length >= 2 ? addressParts[1] : "";
       const tipoLabel = tipoPropiedad === "casa" ? "Casa" : "Depto";
-      const titleParts = [`📸 ${tipoLabel}`, agenteNombre, barrio].filter(Boolean);
+      const title = [`📸 ${tipoLabel}`, agenteNombre, barrio].filter(Boolean).join(" - ");
 
-      const event = await calendar.events.insert({
-        calendarId: process.env.GOOGLE_CALENDAR_ID || "primary",
-        sendUpdates: agenteEmail ? "all" : "none",
-        requestBody: {
-          summary: titleParts.join(" - "),
-          description: descriptionLines.join("\n"),
-          start: {
-            dateTime: startDateTime,
-            timeZone: "America/Argentina/Buenos_Aires",
-          },
-          end: {
-            dateTime: endDateTime,
-            timeZone: "America/Argentina/Buenos_Aires",
-          },
-          location: direccion,
-          attendees: attendees.length > 0 ? attendees : undefined,
-          reminders: {
-            useDefault: false,
-            overrides: [
-              { method: "popup", minutes: 60 },
-              { method: "popup", minutes: 1440 },
-            ],
-          },
+      const descLines = [
+        `📍 Dirección: ${direccion}`,
+        `👤 Agente: ${agenteNombre}`,
+        agenteTelefono ? `📞 Teléfono: ${agenteTelefono}` : "",
+        agenteEmail ? `✉️ Email: ${agenteEmail}` : "",
+        `🏠 Tipo: ${tipoPropiedad === "casa" ? "Casa" : "Departamento"}`,
+        metraje ? `📐 Metraje: ${metraje}` : "",
+        "",
+        "🎬 Servicios:",
+        ...(servicios || []).map((s: string) => `  • ${s}`),
+      ].filter((l) => l !== undefined && l !== null && (l !== "" || true));
+
+      const attendees = agenteEmail
+        ? [{ email: agenteEmail, name: agenteNombre }]
+        : [];
+
+      const eventData = {
+        title,
+        dateandtime: {
+          start: buildZohoDateTime(fecha, startHora),
+          end: buildZohoDateTime(fecha, endHora),
+          timezone: "America/Argentina/Buenos_Aires",
         },
+        location: direccion,
+        description: descLines.join("\n"),
+        attendees: attendees.map((a) => ({ email: a.email, name: a.name })),
+        reminders: [
+          { action: "popup", minutes: 60 },
+          { action: "popup", minutes: 1440 },
+        ],
+      };
+
+      const res = await fetch(`${ZOHO_API_BASE}/calendars/${calendarId}/events`, {
+        method: "POST",
+        headers: {
+          Authorization: `Zoho-oauthtoken ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ eventdata: eventData }),
       });
 
-      return NextResponse.json({ ok: true, eventId: event.data.id });
+      const result = await res.json();
+      if (!res.ok) {
+        console.error("Zoho create event error:", result);
+        return NextResponse.json({ error: "Failed to create event" }, { status: 500 });
+      }
+
+      const eventId = result?.events?.[0]?.uid || result?.uid || null;
+      return NextResponse.json({ ok: true, eventId });
     }
 
     if (action === "delete") {
       const { eventId } = data;
-      await calendar.events.delete({
-        calendarId: process.env.GOOGLE_CALENDAR_ID || "primary",
-        eventId,
+      const res = await fetch(`${ZOHO_API_BASE}/calendars/${calendarId}/events/${eventId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Zoho-oauthtoken ${token}` },
       });
+      if (!res.ok) console.warn("Zoho delete event warning:", await res.text());
       return NextResponse.json({ ok: true });
     }
 

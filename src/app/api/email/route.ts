@@ -25,6 +25,43 @@ type TemplateType =
   | "horario_confirmado"
   | "horario_reagendado";
 
+function buildIcs(fecha: string, horario: string, title: string, location: string, description: string): string {
+  // fecha: "2026-08-19", horario: "09:00" or "09:00 - 11:00"
+  const startHora = horario.split(/[-–]/)[0].trim();
+  const [sh, sm] = startHora.split(":").map((n) => n.padStart(2, "0"));
+  const startDate = new Date(`${fecha}T${sh}:${sm || "00"}:00`);
+  const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000);
+
+  const fmt = (d: Date) =>
+    d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+
+  const uid = `prod-${fecha}-${Date.now()}@unihaus.com.ar`;
+  const now = fmt(new Date());
+
+  return [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Unihaus LAB//Producciones//ES",
+    "CALSCALE:GREGORIAN",
+    "METHOD:REQUEST",
+    "BEGIN:VEVENT",
+    `UID:${uid}`,
+    `DTSTAMP:${now}`,
+    `DTSTART:${fmt(startDate)}`,
+    `DTEND:${fmt(endDate)}`,
+    `SUMMARY:${title}`,
+    `LOCATION:${location}`,
+    `DESCRIPTION:${description.replace(/\n/g, "\\n")}`,
+    "BEGIN:VALARM",
+    "TRIGGER:-PT60M",
+    "ACTION:DISPLAY",
+    "DESCRIPTION:Recordatorio producción Unihaus",
+    "END:VALARM",
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -41,6 +78,8 @@ export async function POST(req: NextRequest) {
     }
 
     let email: { subject: string; html: string };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let attachments: any[] = [];
 
     switch (type) {
       case "nueva_cuenta":
@@ -61,12 +100,35 @@ export async function POST(req: NextRequest) {
       case "produccion_en_proceso":
         email = produccionEnProceso(data as Parameters<typeof produccionEnProceso>[0]);
         break;
-      case "horario_confirmado":
+      case "horario_confirmado": {
         email = horarioConfirmadoAgente(data as Parameters<typeof horarioConfirmadoAgente>[0]);
+        const icsDesc = [
+          `Dirección: ${data.direccion}`,
+          data.servicios?.length ? `Servicios: ${(data.servicios as string[]).join(", ")}` : "",
+        ].filter(Boolean).join("\n");
+        const ics = buildIcs(
+          data.fecha,
+          data.horario,
+          `📸 Producción Unihaus — ${data.direccion}`,
+          data.direccion,
+          icsDesc
+        );
+        attachments = [{ filename: "produccion-unihaus.ics", content: Buffer.from(ics).toString("base64") }];
         break;
-      case "horario_reagendado":
+      }
+      case "horario_reagendado": {
         email = horarioReagendadoAgente(data as Parameters<typeof horarioReagendadoAgente>[0]);
+        const icsDesc = `Dirección: ${data.direccion}\nReagendado desde ${data.fechaAnterior} ${data.horarioAnterior}`;
+        const ics = buildIcs(
+          data.fechaNueva,
+          data.horarioNuevo,
+          `📸 Producción Unihaus (reagendada) — ${data.direccion}`,
+          data.direccion,
+          icsDesc
+        );
+        attachments = [{ filename: "produccion-unihaus-reagendada.ics", content: Buffer.from(ics).toString("base64") }];
         break;
+      }
       default:
         return NextResponse.json({ error: "Invalid template type" }, { status: 400 });
     }
@@ -76,6 +138,7 @@ export async function POST(req: NextRequest) {
       to,
       subject: email.subject,
       html: email.html,
+      attachments: attachments.length > 0 ? attachments : undefined,
     });
 
     return NextResponse.json({ ok: true, id: result.data?.id });

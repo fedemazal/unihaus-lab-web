@@ -162,9 +162,14 @@ export default function AdminProduccionesPage() {
     try {
       let agenteEmail = "";
       let agenteName = prod.agenteNombre;
+      let agenteTelefono = "";
       try {
         const agente = await getUser(prod.agenteId);
-        if (agente) { agenteEmail = agente.email; agenteName = agente.nombre || prod.agenteNombre; }
+        if (agente) {
+          agenteEmail = agente.email;
+          agenteName = agente.nombre || prod.agenteNombre;
+          agenteTelefono = agente.telefono || "";
+        }
       } catch {}
 
       const serviciosList: string[] = [];
@@ -214,8 +219,9 @@ export default function AdminProduccionesPage() {
               fecha: scheduleDate,
               horario: scheduleTime,
               direccion: prod.direccion,
-              agenteNombre: prod.agenteNombre,
+              agenteNombre: agenteName,
               agenteEmail,
+              agenteTelefono,
               tipoPropiedad: prod.tipoPropiedad,
               metraje,
               servicios: serviciosList,
@@ -252,6 +258,7 @@ export default function AdminProduccionesPage() {
                     fecha: scheduleDate,
                     horario: scheduleTime,
                     servicios: serviciosList,
+                    agenteTelefono,
                   },
             }),
           });
