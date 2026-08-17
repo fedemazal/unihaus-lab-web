@@ -240,9 +240,15 @@ export default function AdminProduccionesPage() {
           }),
         });
         const calData = await calRes.json();
-        if (calData.eventId) calendarEventId = calData.eventId;
-      } catch {
-        console.warn("Calendar event not created (not configured)");
+        console.log("[Calendar response]", JSON.stringify(calData));
+        if (calData.eventId) {
+          calendarEventId = calData.eventId;
+        } else {
+          alert(`Zoho Calendar: ${JSON.stringify(calData)}`);
+        }
+      } catch (calErr) {
+        console.error("Calendar fetch error:", calErr);
+        alert(`Error al crear evento en Zoho: ${calErr}`);
       }
 
       // Send email to agent
