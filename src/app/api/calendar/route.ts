@@ -69,11 +69,7 @@ export async function POST(req: NextRequest) {
         ...(servicios || []).map((s: string) => `  • ${s}`),
       ].filter((l) => l !== undefined && l !== null && (l !== "" || true));
 
-      const attendees = agenteEmail
-        ? [{ email: agenteEmail, name: agenteNombre }]
-        : [];
-
-      const eventData = {
+      const eventData: Record<string, unknown> = {
         title,
         dateandtime: {
           start: buildZohoDateTime(fecha, startHora),
@@ -82,12 +78,12 @@ export async function POST(req: NextRequest) {
         },
         location: direccion,
         description: descLines.join("\n"),
-        attendees: attendees.map((a) => ({ email: a.email, name: a.name })),
-        reminders: [
-          { action: "popup", minutes: 60 },
-          { action: "popup", minutes: 1440 },
-        ],
       };
+
+      // Zoho attendees only accept { email }
+      if (agenteEmail) {
+        eventData.attendees = [{ email: agenteEmail }];
+      }
 
       const formBody = new URLSearchParams();
       formBody.append("eventdata", JSON.stringify(eventData));
