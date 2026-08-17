@@ -9,8 +9,8 @@ const MUTED_COLOR = "#5A5A5A";
 function layout(content: string): string {
   return `
     <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
-      <div style="padding: 32px 24px; border-bottom: 3px solid ${BRAND_COLOR};">
-        <img src="https://unihaus.com.ar/img/logo.svg" alt="Unihaus LAB" style="height: 40px;" />
+      <div style="background: #111111; padding: 20px 28px; border-bottom: 3px solid ${BRAND_COLOR};">
+        <img src="https://unihaus.com.ar/img/Logo-horizontal.svg" alt="Unihaus LAB" style="height: 52px; display: block;" />
       </div>
       <div style="padding: 32px 24px;">
         ${content}
