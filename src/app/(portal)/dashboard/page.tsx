@@ -451,6 +451,42 @@ export default function DashboardPage() {
                     )}
                   </div>
 
+                  {/* Condiciones de pago */}
+                  <div className="bg-[#161C26] rounded-lg p-3 border border-[#263040]">
+                    <p className="text-xs text-[#7A96A8] uppercase tracking-wide mb-2 font-medium">Condiciones de pago</p>
+                    <div className="space-y-1.5">
+                      {inmobiliaria && (
+                        <div className="flex items-start gap-2">
+                          <AlertCircle className="w-3.5 h-3.5 text-[#F2B968] shrink-0 mt-0.5" />
+                          <p className="text-xs text-[#7A96A8]">
+                            Agente de <span className="text-[#E2ECF4] font-medium">{inmobiliaria.nombre}</span>
+                            {inmobiliaria.descuento > 0 && (
+                              <span className="ml-1 text-green-400">· {inmobiliaria.descuento}% de descuento aplicado</span>
+                            )}
+                          </p>
+                        </div>
+                      )}
+                      <div className="flex items-start gap-2">
+                        <AlertCircle className="w-3.5 h-3.5 text-[#7A96A8] shrink-0 mt-0.5" />
+                        <p className="text-xs text-[#7A96A8]">
+                          Tenés <span className="text-[#E2ECF4]">5 días</span> para pagar contados desde la última producción entregada. Si solicitás otra producción durante ese período, el plazo se extiende 5 días desde esa nueva entrega.
+                        </p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <AlertCircle className="w-3.5 h-3.5 text-red-400/70 shrink-0 mt-0.5" />
+                        <p className="text-xs text-[#7A96A8]">
+                          La mora genera un interés del <span className="text-red-400 font-medium">5% mensual</span>, calculado diariamente y aplicado de forma automática a partir del día siguiente al vencimiento.
+                        </p>
+                      </div>
+                      {inmobiliaria?.beneficios && (
+                        <div className="flex items-start gap-2">
+                          <AlertCircle className="w-3.5 h-3.5 text-[#7A96A8] shrink-0 mt-0.5" />
+                          <p className="text-xs text-[#7A96A8] whitespace-pre-line">{inmobiliaria.beneficios}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Datos bancarios colapsable */}
                   <div className="border border-[#263040] rounded-xl overflow-hidden">
                     <button
@@ -464,32 +500,44 @@ export default function DashboardPage() {
                       {expandedBanco ? <ChevronUp className="w-4 h-4 text-[#7A96A8]" /> : <ChevronDown className="w-4 h-4 text-[#7A96A8]" />}
                     </button>
                     {expandedBanco && (
-                      <div className="px-4 pb-4 pt-2 bg-[#0D1117] border-t border-[#263040] grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
-                        {[
-                          { label: "Banco", value: CUENTA_BANCARIA.banco, id: "dash-banco" },
-                          { label: "Tipo de cuenta", value: CUENTA_BANCARIA.tipoCuenta, id: "dash-tipo" },
-                          { label: "CBU", value: CUENTA_BANCARIA.cbu, id: "dash-cbu" },
-                          { label: "Alias", value: CUENTA_BANCARIA.alias, id: "dash-alias" },
-                          { label: "Titular", value: CUENTA_BANCARIA.titular, id: "dash-titular" },
-                          { label: "CUIT", value: CUENTA_BANCARIA.cuit, id: "dash-cuit" },
-                        ].map(({ label, value, id }) => (
-                          <div key={id} className="flex items-center justify-between gap-2">
-                            <div className="min-w-0">
-                              <p className="text-xs text-[#7A96A8]">{label}</p>
-                              <p className="text-sm text-[#E2ECF4] font-medium font-mono truncate">{value}</p>
+                      <div className="px-4 pb-4 pt-2 bg-[#0D1117] border-t border-[#263040]">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 mb-3">
+                          {[
+                            { label: "Banco", value: CUENTA_BANCARIA.banco, id: null },
+                            { label: "Tipo de cuenta", value: CUENTA_BANCARIA.tipoCuenta, id: null },
+                            { label: "CBU", value: CUENTA_BANCARIA.cbu, id: "dash-cbu" },
+                            { label: "Alias", value: CUENTA_BANCARIA.alias, id: "dash-alias" },
+                            { label: "Titular", value: CUENTA_BANCARIA.titular, id: null },
+                            { label: "CUIT", value: CUENTA_BANCARIA.cuit, id: null },
+                          ].map(({ label, value, id }) => (
+                            <div key={label} className="flex items-center justify-between gap-2">
+                              <div className="min-w-0">
+                                <p className="text-xs text-[#7A96A8]">{label}</p>
+                                <p className="text-sm text-[#E2ECF4] font-medium font-mono truncate">{value}</p>
+                              </div>
+                              {id && (
+                                <button
+                                  onClick={() => copyField(value, id)}
+                                  className="shrink-0 p-1.5 rounded hover:bg-[#1E2A38] text-[#7A96A8] hover:text-[#E2ECF4] transition"
+                                  title={`Copiar ${label}`}
+                                >
+                                  {copiedField === id ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+                                </button>
+                              )}
                             </div>
-                            <button
-                              onClick={() => copyField(value, id)}
-                              className="shrink-0 p-1.5 rounded hover:bg-[#1E2A38] text-[#7A96A8] hover:text-[#E2ECF4] transition"
-                              title="Copiar"
-                            >
-                              {copiedField === id ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
-                            </button>
-                          </div>
-                        ))}
-                        <div className="sm:col-span-2 pt-2 border-t border-[#263040]">
-                          <p className="text-xs text-amber-400/80">{CUENTA_BANCARIA.nota}</p>
+                          ))}
                         </div>
+                        <button
+                          onClick={() => copyField(
+                            `Banco: ${CUENTA_BANCARIA.banco}\nTipo: ${CUENTA_BANCARIA.tipoCuenta}\nCBU: ${CUENTA_BANCARIA.cbu}\nAlias: ${CUENTA_BANCARIA.alias}\nTitular: ${CUENTA_BANCARIA.titular}\nCUIT: ${CUENTA_BANCARIA.cuit}`,
+                            "dash-todos"
+                          )}
+                          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-[#263040] hover:border-[#F2B968]/40 hover:bg-[#F2B968]/5 text-xs text-[#7A96A8] hover:text-[#F2B968] transition"
+                        >
+                          {copiedField === "dash-todos"
+                            ? <><Check className="w-3.5 h-3.5 text-green-400" /> Datos copiados</>
+                            : <><Copy className="w-3.5 h-3.5" /> Copiar todos los datos</>}
+                        </button>
                       </div>
                     )}
                   </div>
@@ -609,39 +657,6 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
-                  {/* Condiciones de pago */}
-                  <div className="bg-[#161C26] rounded-lg p-3 border border-[#263040]">
-                    <p className="text-xs text-[#7A96A8] uppercase tracking-wide mb-2 font-medium">Condiciones de pago</p>
-                    {inmobiliaria ? (
-                      <div className="space-y-1.5">
-                        <div className="flex items-start gap-2">
-                          <AlertCircle className="w-3.5 h-3.5 text-[#F2B968] shrink-0 mt-0.5" />
-                          <p className="text-xs text-[#7A96A8]">
-                            Agente de <span className="text-[#E2ECF4] font-medium">{inmobiliaria.nombre}</span>
-                            {inmobiliaria.descuento > 0 && (
-                              <span className="ml-1 text-green-400">· {inmobiliaria.descuento}% de descuento aplicado</span>
-                            )}
-                          </p>
-                        </div>
-                        <div className="flex items-start gap-2">
-                          <AlertCircle className="w-3.5 h-3.5 text-[#7A96A8] shrink-0 mt-0.5" />
-                          <p className="text-xs text-[#7A96A8]">
-                            Tenés <span className="text-[#E2ECF4]">5 días</span> para pagar contados desde la última producción entregada. Si solicitás otra producción durante ese período, el plazo se extiende 5 días desde esa nueva entrega.
-                          </p>
-                        </div>
-                        {inmobiliaria.beneficios && (
-                          <div className="flex items-start gap-2">
-                            <AlertCircle className="w-3.5 h-3.5 text-[#7A96A8] shrink-0 mt-0.5" />
-                            <p className="text-xs text-[#7A96A8] whitespace-pre-line">{inmobiliaria.beneficios}</p>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="text-xs text-[#7A96A8]">
-                        Tenés <span className="text-[#E2ECF4]">5 días</span> para pagar contados desde la última producción entregada. Si solicitás otra producción durante ese período, el plazo se extiende 5 días desde esa nueva entrega.
-                      </p>
-                    )}
-                  </div>
                 </>
               )}
             </div>
