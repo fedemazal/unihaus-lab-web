@@ -345,8 +345,48 @@ export default function AdminProduccionesPage() {
   }
 
   async function handleDelete(prod: Production) {
-    if (!confirm(`¿ELIMINAR permanentemente la producción en ${prod.direccion}? Esta acción no se puede deshacer.`)) return;
+    if (!confirm(`¿ELIMINAR permanentemente la producción en ${prod.direccion}? Esta acción no se puede deshacer.\n\nSe cancelará el evento de calendario y se notificará al agente.`)) return;
     try {
+      // 1. Borrar evento de Zoho Calendar si existe
+      if (prod.horarioConfirmado?.googleCalendarEventId) {
+        try {
+          await fetch("/api/calendar", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "delete",
+              data: { eventId: prod.horarioConfirmado.googleCalendarEventId },
+            }),
+          });
+        } catch {
+          console.warn("Could not delete calendar event");
+        }
+      }
+
+      // 2. Notificar al agente por email
+      try {
+        const agente = await getUser(prod.agenteId);
+        if (agente?.email) {
+          await fetch("/api/email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: "produccion_cancelada",
+              to: agente.email,
+              data: {
+                nombre: agente.nombre || agente.email,
+                direccion: prod.direccion,
+                fecha: prod.horarioConfirmado?.fecha,
+                horario: prod.horarioConfirmado?.horario,
+              },
+            }),
+          });
+        }
+      } catch {
+        console.warn("Could not send cancellation email");
+      }
+
+      // 3. Eliminar de Firestore
       await deleteProduction(prod.id);
       await loadData();
     } catch (err) {

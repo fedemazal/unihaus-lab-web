@@ -9,6 +9,7 @@ import {
   produccionEnProceso,
   horarioConfirmadoAgente,
   horarioReagendadoAgente,
+  produccionCancelada,
 } from "@/lib/email/templates";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -23,7 +24,8 @@ type TemplateType =
   | "archivos_listos"
   | "produccion_en_proceso"
   | "horario_confirmado"
-  | "horario_reagendado";
+  | "horario_reagendado"
+  | "produccion_cancelada";
 
 function buildIcs(fecha: string, horario: string, title: string, location: string, description: string): string {
   // fecha: "2026-08-19", horario: "09:00" or "09:00 - 11:00"
@@ -138,6 +140,9 @@ export async function POST(req: NextRequest) {
         attachments = [{ filename: "produccion-unihaus-reagendada.ics", content: Buffer.from(ics).toString("base64") }];
         break;
       }
+      case "produccion_cancelada":
+        email = produccionCancelada(data as Parameters<typeof produccionCancelada>[0]);
+        break;
       default:
         return NextResponse.json({ error: "Invalid template type" }, { status: 400 });
     }

@@ -299,6 +299,35 @@ export function horarioReagendadoAgente(data: {
   };
 }
 
+export function produccionCancelada(data: {
+  nombre: string;
+  direccion: string;
+  fecha?: string;
+  horario?: string;
+}) {
+  const scheduleInfo = data.fecha
+    ? `<p style="color: ${MUTED_COLOR}; line-height: 1.6; margin-top: 8px;">
+        La producción estaba agendada para el <strong>${data.fecha}</strong>${data.horario ? ` a las <strong>${data.horario}</strong>` : ""}.
+       </p>`
+    : "";
+  return {
+    subject: `Producción cancelada: ${data.direccion}`,
+    html: layout(`
+      <h2 style="color: ${TEXT_COLOR}; margin: 0 0 16px;">Producción cancelada</h2>
+      <p style="color: ${MUTED_COLOR}; line-height: 1.6;">
+        Hola ${data.nombre}, te informamos que la producción en <strong>${data.direccion}</strong> fue cancelada.
+      </p>
+      ${scheduleInfo}
+      <p style="color: ${MUTED_COLOR}; line-height: 1.6; margin-top: 12px;">
+        Si tenés dudas o querés reprogramarla, escribinos por WhatsApp.
+      </p>
+      <a href="https://wa.me/5491126141525" style="display: inline-block; background: #25D366; color: #fff; text-decoration: none; padding: 12px 24px; border-radius: 8px; margin-top: 16px; font-weight: 600;">
+        Contactar por WhatsApp
+      </a>
+    `),
+  };
+}
+
 export function produccionLista(data: {
   nombre: string;
   direccion: string;
